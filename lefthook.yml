@@ -1,0 +1,21 @@
+pre-commit:
+  jobs:
+    - name: biome
+      glob: "*.{js,jsx,ts,tsx,json}"
+      run: npx biome check --write {staged_files}
+      stage_fixed: true
+
+commit-msg:
+  jobs:
+    - name: commitlint
+      run: npx commitlint --edit {1}
+
+pre-push:
+  parallel: true
+
+  jobs:
+    - name: lint
+      run: npm run lint
+
+    - name: typecheck
+      run: npm run typecheck
