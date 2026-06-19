@@ -6,7 +6,7 @@ export async function login(
   authLoginRequest: AuthLoginRequest,
 ): Promise<AuthLoginResponse> {
   console.log(env.WEB_BASE_URL);
-  const response = await fetch("${env.WEB_BASE_URL}/auth/user/login", {
+  const response = await fetch(`${env.WEB_BASE_URL}/auth/user/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
