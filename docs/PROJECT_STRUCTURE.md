@@ -8,7 +8,7 @@ src
 │   ├── favicon.ico
 │   ├── globals.css
 │   ├── layout.tsx
-│   └── page.tsx
+│   └── page1.tsx
 ├── components
 │   ├── atom
 │   │   └── default.txt

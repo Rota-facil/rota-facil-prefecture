@@ -1,0 +1,5 @@
+export const env = {
+  WEB_BASE_URL: process.env.NEXT_PUBLIC_WEB_BASE_URL,
+  GOOGLE_LOGIN_PREFECTURE_URL:
+    process.env.NEXT_PUBLIC_GOOGLE_LOGIN_PREFECTURE_URL,
+};
