@@ -1,5 +1,5 @@
-import LoginOrganism from "@/components/organims/login/LoginOrganism";
+import Login from "@/components/organims/login/Login";
 
 export default function LoginPage() {
-  return <LoginOrganism />;
+  return <Login />;
 }

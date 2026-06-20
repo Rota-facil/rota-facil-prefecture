@@ -1,3 +1,4 @@
+import Separator from "@/components/atom/Separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -18,6 +19,12 @@ export default function AuthEnterEmailPasswordInput(
 ) {
   return (
     <div className="space-y-4 mt-3">
+      <div className="flex items-center justify-center m-1 gap-3">
+        <Separator />
+        <p className="text-xs tracking-wide text-slate-500">OU COM EMAIL</p>
+        <Separator />
+      </div>
+
       <Input
         type="email"
         required={true}

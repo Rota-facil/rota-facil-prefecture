@@ -6,7 +6,6 @@ import { useState } from "react";
 import GoogleLoginButton from "@/components/atom/GoogleLoginButton";
 import RotaFacilLogo from "@/components/atom/Logo Rota-Facil.png";
 import AuthEnterEmailPasswordInput from "@/components/molecules/login/AuthEnterEmailPasswordInput";
-import OptionEmail from "@/components/molecules/login/OptionEmail";
 import {
   Card,
   CardContent,
@@ -14,10 +13,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useAuth } from "@/context/auth/AuthContext";
+import { useAuth } from "@/hooks/auth/UseAuth";
 import { login } from "@/service/auth/loginService";
 
-export default function LoginPage() {
+export default function Login() {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState("");
   const [email, setEmail] = useState("");
@@ -60,8 +59,6 @@ export default function LoginPage() {
               "flex gap-3 w-full h-10 bg-[#f0f0f0] text-black hover:bg-slate-200 cursor-pointer"
             }
           />
-
-          <OptionEmail />
 
           <AuthEnterEmailPasswordInput
             email={email}
