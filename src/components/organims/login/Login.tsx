@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import GoogleLoginButton from "@/components/atom/GoogleLoginButton";
-import RotaFacilLogo from "@/components/atom/Logo Rota-Facil.png";
 import AuthEnterEmailPasswordInput from "@/components/molecules/login/AuthEnterEmailPasswordInput";
 import {
   Card,
@@ -15,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { useAuth } from "@/hooks/auth/UseAuth";
 import { login } from "@/service/auth/loginService";
+import RotaFacilLogo from "../../../../public/Logo Rota-Facil.png";
 
 export default function Login() {
   const router = useRouter();
