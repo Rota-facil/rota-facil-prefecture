@@ -1,54 +1,41 @@
 import Image from "next/image";
 import Link from "next/link";
 
-const textColor = {
-  white: "text-white",
-  blue: "text-blue-500",
-  black: "text-black",
+const typeButtons = {
+  predictiveAnalytic: {
+    description: "Análise preditiva",
+    icon: "/analise-preditiva-icon.png",
+    alt: "predictive analytic",
+    style: "text-blue-500 hover:bg-blue-50/90 bg-white",
+  },
+  dailyReport: {
+    description: "Relatório do dia",
+    icon: "/relatorio-diario-icon.png",
+    alt: "daily report",
+    style: "hover:bg-gray-50/10 text-white",
+  },
 };
 
-const buttonColor = {
-  white: "bg-white",
-  none: "",
-};
-
-const colorHover = {
-  blue: "hover:bg-blue-50/90",
-  gray: "hover:bg-gray-50/10",
-};
-
-const borderColor = {
-  white: "bg-white-300",
-  none: "",
-};
-
-type TextColors = keyof typeof textColor;
-type ButtonColors = keyof typeof buttonColor;
-type ColorsHover = keyof typeof colorHover;
-type BorderColors = keyof typeof borderColor;
+type TypeButtons = keyof typeof typeButtons;
 
 type ButtonWithIconProps = {
-  href?: string;
-  icon: string;
-  altIcon: string;
-  text: string;
-  textColor?: TextColors;
-  buttonColor?: ButtonColors;
-  colorHover?: ColorsHover;
-  borderColor?: BorderColors;
+  typeButton: TypeButtons;
 };
 
 export default function ButtonWithIcon(props: ButtonWithIconProps) {
   return (
     <Link
-      href={props.href ?? "#"}
-      className={`inline-flex gap-1 justify-center items-center p-3 rounded-3xl h-10 text-primary cursor-pointer focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border shadow-sm hover:text-accent-foreground 
-        ${buttonColor[props.buttonColor ?? "white"]} ${colorHover[props.colorHover ?? "blue"]} ${borderColor[props.borderColor ?? "none"]}`}
+      href={"#"}
+      className={`inline-flex gap-1 justify-center items-center p-3 rounded-3xl h-10 text-primary cursor-pointer font-medium focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border shadow-sm hover:text-accent-foreground
+      ${typeButtons[props.typeButton]["style"]}`}
     >
-      <Image src={props.icon} alt={props.altIcon} width={30} height={30} />
-      <p className={`${textColor[props.textColor ?? "black"]} `}>
-        {props.text}
-      </p>
+      <Image
+        src={typeButtons[props.typeButton]["icon"]}
+        alt={typeButtons[props.typeButton]["alt"]}
+        width={30}
+        height={30}
+      />
+      <p>{typeButtons[props.typeButton]["description"]}</p>
     </Link>
   );
 }
