@@ -1,10 +1,24 @@
 import "../globals.css";
 import AuthGuard from "@/components/molecules/login/AuthGuard";
+import { AppSidebar } from "@/components/organims/AppSideBar";
+import PageHeader from "@/components/organims/PageHeader";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <AuthGuard>{children}</AuthGuard>;
+  return (
+    <AuthGuard>
+      <SidebarProvider>
+        <AppSidebar />
+
+        <SidebarInset>
+          <PageHeader />
+          {children}
+        </SidebarInset>
+      </SidebarProvider>
+    </AuthGuard>
+  );
 }
