@@ -8,6 +8,7 @@ import {
   Flame,
   GraduationCap,
   LayoutDashboard,
+  LogOut,
   PinIcon,
   Plane,
   Route,
@@ -18,6 +19,7 @@ import MySideBarMenuButton from "@/components/atom/MySideBarMenuButton";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupLabel,
   SidebarHeader,
@@ -153,6 +155,52 @@ export function AppSidebar() {
           </SidebarGroup>
         </SidebarMenu>
       </SidebarContent>
+
+      <SidebarFooter className="border-t transition-all">
+        <div
+          className={`flex items-center p-2 ${state === "collapsed" ? "justify-center" : "justify-between"}`}
+        >
+          <div className="flex items-center gap-3">
+            <div
+              className="
+          flex
+          h-8.5
+          w-8.5
+          items-center
+          justify-center
+          rounded-full
+          bg-blue-600
+          text-white
+          font-semibold
+        "
+            >
+              G
+            </div>
+
+            {state === "expanded" && (
+              <div className="flex flex-col">
+                <span className="font-semibold text-[14px]">Prefeitura</span>
+
+                <span className="text-[11px] text-muted-foreground">
+                  gabrielthaua13@gmail.com
+                </span>
+              </div>
+            )}
+          </div>
+
+          {state === "expanded" && (
+            <LogOut
+              className="
+          h-3.5
+          w-3.5
+          cursor-pointer
+          text-muted-foreground
+          hover:text-foreground
+        "
+            />
+          )}
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }
