@@ -5,7 +5,7 @@ export default function PrefectureHomeHero() {
   return (
     <div
       className={
-        "flex flex-col gap-4 w-full p-8 max-w-6xl font-medium rounded-3xl bg-blue-700 bg-gradient-mesh opacity-100 text-white"
+        "flex flex-col w-full gap-4 p-8  font-medium rounded-3xl bg-blue-700 bg-gradient-mesh opacity-100 text-white"
       }
     >
       <StatusBar
