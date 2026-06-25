@@ -6,13 +6,15 @@ const typeButtons = {
     description: "Análise preditiva",
     icon: "/analise-preditiva-icon.png",
     alt: "predictive analytic",
-    style: "text-blue-500 hover:bg-blue-50/90 bg-white",
+    style: "hover:bg-blue-50/90 bg-white",
+    textColor: "text-blue-500",
   },
   dailyReport: {
     description: "Relatório do dia",
     icon: "/relatorio-diario-icon.png",
     alt: "daily report",
     style: "hover:bg-gray-50/10 text-white",
+    textColor: "text-white",
   },
 };
 
@@ -35,7 +37,9 @@ export default function ButtonWithIcon(props: ButtonWithIconProps) {
         width={30}
         height={30}
       />
-      <p>{typeButtons[props.typeButton].description}</p>
+      <p className={typeButtons[props.typeButton].textColor}>
+        {typeButtons[props.typeButton].description}
+      </p>
     </Link>
   );
 }

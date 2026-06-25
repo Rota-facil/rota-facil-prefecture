@@ -17,7 +17,7 @@ export default function RootLayout({
         <SidebarInset>
           <PageHeader />
 
-          <div className={"m-5"}>{children}</div>
+          <div className={"m-5 pt-14"}>{children}</div>
         </SidebarInset>
       </SidebarProvider>
     </AuthGuard>
