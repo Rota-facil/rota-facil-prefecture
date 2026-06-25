@@ -19,7 +19,7 @@ const sizes = {
   },
 
   md: {
-    container: "max-w-[380px] h-[180px] p-7",
+    container: "max-w-[380px] h-[180px] p-3",
     iconWrapper: "h-14 w-14",
     icon: "h-7 w-7",
     title: "text-lg",
@@ -28,7 +28,7 @@ const sizes = {
   },
 
   lg: {
-    container: "max-w-[420px] h-[210px] p-8",
+    container: "max-w-[420px] h-[210px] p-3",
     iconWrapper: "h-16 w-16",
     icon: "h-8 w-8",
     title: "text-xl",
