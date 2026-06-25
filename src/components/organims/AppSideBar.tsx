@@ -169,7 +169,7 @@ export function AppSidebar() {
           items-center
           justify-center
           rounded-full
-          bg-blue-600
+          bg-gradient-to-br from-blue-700 to-blue-500
           text-white
           font-semibold
         "

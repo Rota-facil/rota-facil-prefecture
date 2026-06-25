@@ -5,15 +5,10 @@ export default function PrefectureHomeHero() {
   return (
     <div
       className={
-        "flex flex-col gap-4 w-full p-8 max-w-6xl font-medium rounded-3xl bg-blue-700 bg-gradient-mesh opacity-100 text-white"
+        "flex flex-col w-full gap-2 p-8 h-50 font-medium rounded-3xl bg-blue-700 bg-gradient-mesh opacity-100 text-white"
       }
     >
-      <StatusBar
-        BallColor={"green"}
-        text={"em andamento"}
-        textColor={"white"}
-        position={"self-start"}
-      />
+      <StatusBar variant={"progress"} />
 
       <h1 className={"font-bold text-4xl"}>Bom dia, prefeitura! 👋</h1>
 

@@ -23,8 +23,12 @@ export default function PageHeader() {
     panelTitles[usePathName as keyof typeof panelTitles] ?? "Rota Fácil";
 
   return (
-    <header className="flex h-16 items-center border-b px-4 gap-3">
-      <SidebarTrigger variant={"outline"} className={"h-8 w-8"} size={"lg"} />
+    <header className="flex fixed bg-white w-full h-16 items-center border-b px-4 gap-3">
+      <SidebarTrigger
+        variant={"outline"}
+        className={"h-8 w-8 cursor-pointer"}
+        size={"lg"}
+      />
       <div className={"w-[0.2px] h-6 bg-gray-300"}></div>
 
       <div className={"flex-col"}>
