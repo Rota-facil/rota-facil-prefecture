@@ -90,7 +90,9 @@ export default function AnalysisCard({
             {description}
           </p>
 
-          <Button className={`mt-5 w-fit rounded-full px-6 ${v.button}`}>
+          <Button
+            className={`mt-5 w-fit rounded-full px-6 cursor-pointer ${v.button}`}
+          >
             <Sparkles className="mr-2 h-6 w-6" />
             {buttonText}
           </Button>
