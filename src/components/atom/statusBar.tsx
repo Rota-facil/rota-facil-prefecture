@@ -1,4 +1,18 @@
 const typeStatusBar = {
+  canceledTrip: {
+    ballColor: "bg-red-500",
+    textColor: "text-red-500",
+    background: "bg-red-100 border border-red-300",
+    text: "Cancelamento de viagem",
+  },
+
+  delayReported: {
+    ballColor: "bg-slate-500",
+    textColor: "text-slate-500",
+    background: "bg-slate-100 border border-slate-300",
+    text: "Cancelamento de viagem",
+  },
+
   offDuty: {
     ballColor: "bg-slate-500",
     textColor: "text-slate-500",
@@ -83,7 +97,7 @@ const sizes = {
   },
 };
 
-type TypeStatusBar = keyof typeof typeStatusBar;
+export type TypeStatusBar = keyof typeof typeStatusBar;
 type SizeStatusBar = keyof typeof sizes;
 
 type StatusBarProps = {
