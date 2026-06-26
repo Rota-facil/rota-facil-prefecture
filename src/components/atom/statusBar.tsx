@@ -1,4 +1,32 @@
 const typeStatusBar = {
+  offDuty: {
+    ballColor: "bg-slate-500",
+    textColor: "text-slate-500",
+    background: "bg-slate-100 border border-slate-300",
+    text: "Em folga",
+  },
+
+  waiting1: {
+    ballColor: "bg-red-600",
+    textColor: "text-red-500",
+    background: "bg-red-100 border border-red-300",
+    text: "Aguardando",
+  },
+
+  available: {
+    ballColor: "bg-blue-600",
+    textColor: "text-blue-500",
+    background: "bg-blue-400/15 border border-blue-300",
+    text: "Disponível",
+  },
+
+  onRoute: {
+    ballColor: "bg-green-600",
+    textColor: "text-green-500",
+    background: "bg-green-400/15 border border-green-300",
+    text: "Em rota",
+  },
+
   progress: {
     ballColor: "bg-green-600",
     textColor: "text-white",
