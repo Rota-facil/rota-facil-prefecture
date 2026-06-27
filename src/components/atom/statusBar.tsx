@@ -78,6 +78,12 @@ const typeStatusBar = {
 };
 
 const sizes = {
+  xsm: {
+    container: "gap-1 rounded-xl px-2 py-0.4",
+    ball: "h-1.5 w-1.5",
+    text: "text-[0.68rem]",
+  },
+
   sm: {
     container: "gap-1 rounded-xl px-2 py-0.4",
     ball: "h-1.5 w-1.5",

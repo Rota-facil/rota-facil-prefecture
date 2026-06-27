@@ -47,7 +47,7 @@ type SizeAnalysisCard = "sm" | "md" | "lg";
 
 const sizes = {
   sm: {
-    container: "max-w-[490px] min-h-[140px] p-5",
+    container: "w-[520px] h-[150px] p-5",
 
     iconWrapper: "h-12 w-12",
 
@@ -177,6 +177,7 @@ export default function AnalysisCard({
               w-fit
               rounded-full
               shadow-md
+              cursor-pointer
               ${s.button}
               ${card.button}
             `}
