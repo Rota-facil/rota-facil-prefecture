@@ -8,7 +8,7 @@ export default function TripsInRealTime() {
   return (
     <div
       className={
-        "flex flex-col  p-7 w-4/7 gap-8 border bg-card text-card-foreground shadow rounded-2xl border-border/70 shadow-soft"
+        "flex flex-col  p-7 w-5/7 gap-8 border bg-card text-card-foreground shadow rounded-2xl border-border/70 shadow-soft h-full"
       }
     >
       <div className={"flex justify-between"}>
@@ -30,7 +30,7 @@ export default function TripsInRealTime() {
         </div>
       </div>
 
-      <div className={"flex flex-col gap-5"}>
+      <div className={"flex flex-col gap-10"}>
         {tripStatus.map((ts) => (
           <div key={ts} className={"flex justify-between cursor-pointer"}>
             <div>

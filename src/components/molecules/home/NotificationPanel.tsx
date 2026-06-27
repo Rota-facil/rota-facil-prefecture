@@ -5,13 +5,13 @@ export default function NotificationPanel() {
   return (
     <div
       className={
-        "flex flex-col p-4 gap-6 w-fit bg-card text-card-foreground shadow rounded-2xl border-border/70 shadow-soft"
+        "flex flex-col p-4 gap-6 w-fit bg-card text-card-foreground shadow rounded-2xl border-border/70 shadow-soft h-full"
       }
     >
-      <div className={"flex  justify-between items-center"}>
+      <div className={"flex justify-between items-center"}>
         <div className={"flex justify-center items-center gap-2"}>
-          <Bell size={18} />
-          <h3 className={"font-bold text-[1.3rem]"}>Notificações</h3>
+          <Bell size={17} />
+          <h3 className={"font-bold text-[1.2rem]"}>Notificações</h3>
         </div>
 
         <div
