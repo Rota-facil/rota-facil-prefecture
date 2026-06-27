@@ -13,6 +13,7 @@ interface DriverCardProps {
   documentsStatus?: string;
   status: "onRoute" | "available" | "offDuty" | "waiting1";
   size?: "sm" | "md";
+  onViewProfile?: () => void;
 }
 
 const sizes = {
@@ -38,6 +39,7 @@ export default function DriverCard({
   documentsStatus = "Docs: Em dia",
   status,
   size = "sm",
+  onViewProfile,
 }: DriverCardProps) {
   const s = sizes[size];
 
@@ -92,6 +94,7 @@ export default function DriverCard({
         </div>
 
         <Button
+          onClick={onViewProfile}
           variant="ghost"
           className={`
             mt-4
