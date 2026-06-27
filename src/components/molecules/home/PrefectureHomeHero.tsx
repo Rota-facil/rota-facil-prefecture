@@ -1,7 +1,12 @@
+"use client";
+
 import ButtonWithIcon from "@/components/atom/ButtonWithIcon";
 import StatusBar from "@/components/atom/statusBar";
+import { useCurrentUser } from "@/hooks/UseCurrentUser";
 
 export default function PrefectureHomeHero() {
+  const { user } = useCurrentUser();
+
   return (
     <div
       className={
@@ -10,7 +15,9 @@ export default function PrefectureHomeHero() {
     >
       <StatusBar variant={"progress"} />
 
-      <h1 className={"font-bold text-4xl"}>Bom dia, prefeitura! 👋</h1>
+      <h1 className={"font-bold text-4xl"}>
+        Bom dia, {user?.prefecture.name ?? "prefeitura"}! 👋
+      </h1>
 
       <div className={"flex justify-between"}>
         <div className={"w-7/12"}>
