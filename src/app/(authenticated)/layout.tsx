@@ -3,6 +3,7 @@ import AuthGuard from "@/components/molecules/login/AuthGuard";
 import { AppSidebar } from "@/components/organims/AppSideBar";
 import PageHeader from "@/components/organims/PageHeader";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { UserProvider } from "@/context/UserContext";
 
 export default function RootLayout({
   children,
@@ -12,13 +13,15 @@ export default function RootLayout({
   return (
     <AuthGuard>
       <SidebarProvider>
-        <AppSidebar />
+        <UserProvider>
+          <AppSidebar />
 
-        <SidebarInset>
-          <PageHeader />
+          <SidebarInset>
+            <PageHeader />
 
-          <div className={"m-5 pt-14"}>{children}</div>
-        </SidebarInset>
+            <div className={"m-5 pt-14"}>{children}</div>
+          </SidebarInset>
+        </UserProvider>
       </SidebarProvider>
     </AuthGuard>
   );
