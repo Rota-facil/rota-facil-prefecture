@@ -12,7 +12,11 @@ export default function Home() {
 
   return (
     <div className={"flex flex-col gap-4"}>
-      <PrefectureHomeHero />
+      <PrefectureHomeHero
+        percentPointTrips={metrics?.percentPointTrips}
+        tripsStarted={metrics?.totalTripsStarted}
+        studentsServed={metrics?.studentsServed}
+      />
 
       <div className={"flex justify-between gap-4"}>
         <AnalysisCard variant={"predictiveAnalytic"} />

@@ -4,9 +4,21 @@ import ButtonWithIcon from "@/components/atom/ButtonWithIcon";
 import StatusBar from "@/components/atom/statusBar";
 import { useCurrentUser } from "@/hooks/UseCurrentUser";
 
-export default function PrefectureHomeHero() {
-  const { user } = useCurrentUser();
+type PrefectureHomeHeroProps = {
+  tripsStarted?: number;
+  percentPointTrips?: number;
+  studentsServed?: number;
+};
 
+export default function PrefectureHomeHero(props: PrefectureHomeHeroProps) {
+  const { user } = useCurrentUser();
+  const hour = new Date().getHours();
+
+  console.log(props.tripsStarted);
+  console.log(props.percentPointTrips);
+  console.log(props.studentsServed);
+  const greeting =
+    hour < 12 ? "Bom dia" : hour < 18 ? "Boa tarde" : "Boa noite";
   return (
     <div
       className={
@@ -16,14 +28,14 @@ export default function PrefectureHomeHero() {
       <StatusBar variant={"progress"} />
 
       <h1 className={"font-bold text-4xl"}>
-        Bom dia, {user?.prefecture.name ?? "prefeitura"}! 👋
+        {greeting}, {user?.prefecture.name ?? "prefeitura"}! 👋
       </h1>
 
       <div className={"flex justify-between"}>
         <div className={"w-7/12"}>
           <p>
-            126 viagens em andamento agora, 27 ônibus em circulação e 2.318
-            alunos atendidos hoje pelo transporte escolar municipal.
+            {`${props.tripsStarted ?? "0"} viagens em andamento agora, ${props.percentPointTrips ?? "0"}% das viagens no horário e ${props.studentsServed ?? "0"}
+            alunos atendidos hoje pelo transporte escolar municipal.`}
           </p>
         </div>
         <div className={"flex items-center justify-center gap-5"}>

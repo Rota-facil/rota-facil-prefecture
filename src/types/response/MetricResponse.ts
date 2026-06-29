@@ -5,4 +5,7 @@ export interface MetricResponse {
   students: number;
   drivers: number;
   bus: number;
+  totalTripsStarted: number;
+  percentPointTrips: number;
+  studentsServed: number;
 }

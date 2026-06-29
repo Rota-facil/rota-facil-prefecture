@@ -1,10 +1,13 @@
 import { ArrowUpRight } from "lucide-react";
 import PhotoWithNameAndDescriptions from "@/components/atom/PhotoWithNameAndDescriptions";
 import StatusBar from "@/components/atom/statusBar";
+import { useTrips } from "@/hooks/UseTrips";
+import { ProgressMap } from "@/types/enums/Progress";
 
 export default function TripsInRealTime() {
   const tripStatus = ["inRoute", "embarking", "waiting", "cancelled"] as const;
-
+  const trips = useTrips().tripPage?.content;
+  let tripCount = 1;
   return (
     <div
       className={
@@ -31,17 +34,40 @@ export default function TripsInRealTime() {
       </div>
 
       <div className={"flex flex-col gap-10"}>
-        {tripStatus.map((ts) => (
-          <div key={ts} className={"flex justify-between cursor-pointer"}>
-            <div>
-              <PhotoWithNameAndDescriptions size={"sm"} />
-            </div>
+        {trips === undefined
+          ? tripStatus.map((ts) => (
+              <div key={ts} className={"flex justify-between cursor-pointer"}>
+                <div>
+                  <PhotoWithNameAndDescriptions size={"sm"} />
+                </div>
 
-            <div>
-              <StatusBar variant={ts} size={"sm"} />
-            </div>
-          </div>
-        ))}
+                <div>
+                  <StatusBar variant={ts} size={"sm"} />
+                </div>
+              </div>
+            ))
+          : trips.map((trip) => (
+              <div
+                key={trip.id}
+                className={"flex justify-between cursor-pointer"}
+              >
+                <div>
+                  <PhotoWithNameAndDescriptions
+                    photo={`${trip.name[0].toUpperCase()}-${tripCount++}`}
+                    title={trip.name}
+                    description={`${trip.bus.driver.name} • ${trip.students} alunos`}
+                    size={"sm"}
+                  />
+                </div>
+
+                <div>
+                  <StatusBar
+                    variant={ProgressMap[trip.actualStatus].value}
+                    size={"sm"}
+                  />
+                </div>
+              </div>
+            ))}
       </div>
     </div>
   );
