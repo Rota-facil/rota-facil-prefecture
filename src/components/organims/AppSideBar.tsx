@@ -15,6 +15,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import MySideBarMenuButton from "@/components/atom/MySideBarMenuButton";
 import {
   Sidebar,
@@ -27,9 +28,14 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useCurrentUser } from "@/hooks/UseCurrentUser";
+import { removeToken } from "@/service/auth/TokenService";
 
 export function AppSidebar() {
   const { state } = useSidebar();
+  const { user } = useCurrentUser();
+  const router = useRouter();
+
   return (
     <Sidebar
       collapsible={"icon"}
@@ -174,15 +180,17 @@ export function AppSidebar() {
           font-semibold
         "
             >
-              G
+              {user?.name[0].toUpperCase() ?? "P"}
             </div>
 
             {state === "expanded" && (
               <div className="flex flex-col">
-                <span className="font-semibold text-[14px]">Prefeitura</span>
+                <span className="font-semibold text-[14px]">
+                  {user?.prefecture.name ?? "Prefeitura"}
+                </span>
 
                 <span className="text-[11px] text-muted-foreground">
-                  gabrielthaua13@gmail.com
+                  {user?.email ?? "email@gmail.com"}
                 </span>
               </div>
             )}
@@ -197,6 +205,10 @@ export function AppSidebar() {
           text-muted-foreground
           hover:text-foreground
         "
+              onClick={() => {
+                removeToken();
+                window.location.reload();
+              }}
             />
           )}
         </div>
