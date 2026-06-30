@@ -17,16 +17,11 @@ export default function DriverHeader({ driver, onClose }: DriverHeaderProps) {
         <h2 className="text-2xl font-bold text-white">{driver.name}</h2>
 
         <div className="flex items-center gap-3 text-sm">
-          <div className="flex items-center gap-1">
+          <div className={"flex gap-1"}>
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
             <span className="font-semibold text-white">{driver.rating}</span>
           </div>
-          <span className="text-blue-100">
-            {driver.totalTrips} viagens realizadas
-          </span>
-        </div>
 
-        <div className="mt-1">
           <StatusBar variant={driver.status} size="sm" />
         </div>
       </div>

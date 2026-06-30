@@ -1,12 +1,4 @@
-import {
-  Bus,
-  Calendar,
-  FileText,
-  IdCard,
-  Mail,
-  MapPin,
-  Phone,
-} from "lucide-react";
+import { Bus, Calendar, FileText, IdCard, Mail, Send } from "lucide-react";
 import DriverInfoItem from "@/components/atom/DriverInfoItem";
 import DriverHeader from "@/components/molecules/drivers/DriverHeader";
 import type { Driver } from "@/types/entites/Driver";
@@ -27,19 +19,20 @@ export default function DriverDetailsModal({
   if (!open) return null;
 
   return (
-    <button
-      type="button"
-      aria-label="Fechar modal"
-      className="fixed inset-0 z-50 flex w-full cursor-default items-center justify-center bg-black/50"
-      onClick={onClose}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="driver-details-title"
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="w-full max-w-[780px] overflow-hidden rounded-2xl shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => e.stopPropagation()}
-      >
+      <button
+        type="button"
+        aria-label="Fechar modal"
+        className="absolute inset-0 bg-black/50"
+        onClick={onClose}
+      />
+
+      <div className="relative z-10 w-full max-w-[780px] overflow-hidden rounded-2xl shadow-2xl">
         <DriverHeader driver={driver} onClose={onClose} />
 
         <div className="grid grid-cols-2 gap-3 bg-slate-50 p-6">
@@ -49,24 +42,14 @@ export default function DriverDetailsModal({
             value={driver.cpf}
           />
           <DriverInfoItem
-            icon={<IdCard className="h-5 w-5" />}
-            label="CNH"
-            value={`${driver.cnh} (Cat. ${driver.cnhCategory})`}
-          />
-          <DriverInfoItem
-            icon={<Phone className="h-5 w-5" />}
-            label="Telefone"
-            value={driver.phone}
-          />
-          <DriverInfoItem
             icon={<Mail className="h-5 w-5" />}
             label="E-mail"
             value={driver.email}
           />
           <DriverInfoItem
-            icon={<MapPin className="h-5 w-5" />}
-            label="Endereço"
-            value={driver.address}
+            icon={<Send className="h-5 w-5" />}
+            label="Viagens realizadas"
+            value={String(driver.totalTrips)}
           />
           <DriverInfoItem
             icon={<Calendar className="h-5 w-5" />}
@@ -93,6 +76,7 @@ export default function DriverDetailsModal({
           >
             Fechar
           </button>
+
           <button
             type="button"
             onClick={() => onEdit(driver)}
@@ -102,6 +86,6 @@ export default function DriverDetailsModal({
           </button>
         </div>
       </div>
-    </button>
+    </div>
   );
 }
