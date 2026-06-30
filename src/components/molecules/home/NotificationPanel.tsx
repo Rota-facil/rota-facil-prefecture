@@ -1,7 +1,17 @@
+"use client";
+
+import { formatDistanceToNow } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Bell } from "lucide-react";
 import NotificationCard from "@/components/atom/NotificationCard";
+import { UseNotifications } from "@/hooks/UseNotifications";
+import { NotificationMap } from "@/types/enums/NotificationType";
 
 export default function NotificationPanel() {
+  const { notificationsPage } = UseNotifications();
+
+  const notifications = notificationsPage?.content;
+
   return (
     <div
       className={
@@ -19,14 +29,24 @@ export default function NotificationPanel() {
             "flex justify-center items-center font-medium h-5 w-13 rounded-full bg-amber-200/70 text-accent-foreground"
           }
         >
-          <p className={"text-[0.65rem]"}>3 novas</p>
+          <p
+            className={"text-[0.65rem]"}
+          >{`${notifications?.length ?? "3"} novas`}</p>
         </div>
       </div>
 
       <div className={"flex flex-col gap-5"}>
-        <NotificationCard />
-        <NotificationCard statusBar={"delayReported"} />
-        <NotificationCard />
+        {notifications?.map((n) => (
+          <NotificationCard
+            statusBar={NotificationMap[n.notificationType].value}
+            description={n.message}
+            key={n.id}
+            time={formatDistanceToNow(new Date(n.createdAt), {
+              addSuffix: true,
+              locale: ptBR,
+            })}
+          />
+        ))}
       </div>
     </div>
   );
