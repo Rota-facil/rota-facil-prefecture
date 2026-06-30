@@ -36,17 +36,25 @@ export default function NotificationPanel() {
       </div>
 
       <div className={"flex flex-col gap-5"}>
-        {notifications?.map((n) => (
-          <NotificationCard
-            statusBar={NotificationMap[n.notificationType].value}
-            description={n.message}
-            key={n.id}
-            time={formatDistanceToNow(new Date(n.createdAt), {
-              addSuffix: true,
-              locale: ptBR,
-            })}
-          />
-        ))}
+        {notifications === undefined ? (
+          <>
+            <NotificationCard statusBar="canceledTrip" />
+            <NotificationCard statusBar="canceledTrip" />
+            <NotificationCard statusBar="canceledTrip" />
+          </>
+        ) : (
+          notifications.map((n) => (
+            <NotificationCard
+              key={n.id}
+              statusBar={NotificationMap[n.notificationType].value}
+              description={n.message}
+              time={formatDistanceToNow(new Date(n.createdAt), {
+                addSuffix: true,
+                locale: ptBR,
+              })}
+            />
+          ))
+        )}
       </div>
     </div>
   );
