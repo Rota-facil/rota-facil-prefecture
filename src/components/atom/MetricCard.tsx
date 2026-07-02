@@ -1,12 +1,4 @@
-import {
-  Bus,
-  CircleX,
-  GraduationCap,
-  Icon,
-  Route,
-  Send,
-  Users,
-} from "lucide-react";
+import { Bus, CircleX, GraduationCap, Route, Send, Users } from "lucide-react";
 
 interface MetricCardProps {
   variants: MetricCardType;

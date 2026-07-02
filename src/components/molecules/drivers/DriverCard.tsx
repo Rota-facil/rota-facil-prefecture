@@ -1,4 +1,4 @@
-import { Car, FileText, Star } from "lucide-react";
+import { Car, FileText, Star, Trash2 } from "lucide-react";
 import DriverAvatar from "@/components/atom/DriverAvatar";
 import DriverChip from "@/components/atom/DriverChip";
 import StatusBar from "@/components/atom/statusBar";
@@ -13,6 +13,8 @@ interface DriverCardProps {
   documentsStatus?: string;
   status: "onRoute" | "available" | "offDuty" | "waiting1";
   size?: "sm" | "md";
+  onViewProfile?: () => void;
+  onDelete?: () => void;
 }
 
 const sizes = {
@@ -38,6 +40,8 @@ export default function DriverCard({
   documentsStatus = "Docs: Em dia",
   status,
   size = "sm",
+  onViewProfile,
+  onDelete,
 }: DriverCardProps) {
   const s = sizes[size];
 
@@ -72,10 +76,8 @@ export default function DriverCard({
                 <div className="mt-1 flex items-center gap-4 text-[14px] text-slate-500">
                   <div className="flex items-center gap-1">
                     <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-
                     <span>{rating}</span>
                   </div>
-
                   <span>{trips} viagens</span>
                 </div>
               </div>
@@ -85,31 +87,41 @@ export default function DriverCard({
 
             <div className="mt-3 flex gap-2">
               <DriverChip icon={Car} text={vehicle} size={size} />
-
               <DriverChip icon={FileText} text={documentsStatus} size={size} />
             </div>
           </div>
         </div>
 
-        <Button
-          variant="ghost"
-          className={`
-            mt-4
-            h-10
-            rounded-full
-            bg-slate-100
-            text-slate-900
-            shadow-sm
-            transition-colors
-            duration-200
-            hover:bg-orange-400
-            hover:text-orange-800
-            cursor-pointer
-            ${s.button}
-          `}
-        >
-          Ver perfil
-        </Button>
+        <div className="mt-4 flex items-center gap-2">
+          <Button
+            onClick={onViewProfile}
+            variant="ghost"
+            className={`
+              flex-1
+              rounded-full
+              bg-slate-100
+              text-slate-900
+              shadow-sm
+              transition-colors
+              duration-200
+              hover:bg-orange-400
+              hover:text-orange-800
+              cursor-pointer
+              ${s.button}
+            `}
+          >
+            Ver perfil
+          </Button>
+
+          <Button
+            type="button"
+            onClick={onDelete}
+            variant="ghost"
+            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-xl bg-slate-100 text-slate-700 shadow-sm transition-colors duration-200 hover:bg-orange-400 hover:text-red-500"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );
