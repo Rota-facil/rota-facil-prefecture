@@ -1,9 +1,5 @@
-import SelectFilter from "@/components/atom/SelectFilter";
+import Routes from "@/components/organims/routes/Routes";
 
 export default function RoutePage() {
-  return (
-    <div>
-      <SelectFilter />
-    </div>
-  );
+  return <Routes />;
 }
