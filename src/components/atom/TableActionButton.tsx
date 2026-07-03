@@ -24,7 +24,7 @@ export default function TableActionButton({
       type="button"
       variant="ghost"
       size="icon-lg"
-      className={`h-11 w-11 cursor-pointer rounded-xl ${variantClassName}`}
+      className={`h-8 w-8 cursor-pointer rounded-lg ${variantClassName}`}
       title={label}
       aria-label={label}
       onClick={onClick}
