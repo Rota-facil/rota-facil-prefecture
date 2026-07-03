@@ -1,1 +1,5 @@
-export default function StudentPage() {}
+import Students from "@/components/organims/students/Students";
+
+export default function StudentPage() {
+  return <Students />;
+}

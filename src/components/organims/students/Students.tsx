@@ -1,0 +1,276 @@
+"use client";
+
+import { Star } from "lucide-react";
+import { useMemo, useState } from "react";
+import StudentStatusBadge from "@/components/atom/StudentStatusBadge";
+import DataTable, {
+  type DataTableColumn,
+} from "@/components/molecules/DataTable";
+import StudentFilters, {
+  type StudentEmailFilter,
+  type StudentFrequencyFilter,
+  type StudentScoreFilter,
+} from "@/components/molecules/students/StudentFilters";
+import type { StudentEntity } from "@/types/entites/StudentEntity";
+
+const initialStudents: StudentEntity[] = [
+  {
+    id: "student-001",
+    code: "A-0001",
+    name: "Lucas Oliveira",
+    email: "lucas.oliveira@aluno.rotafacil.gov.br",
+    frequency: 96,
+    score: 4.8,
+    status: "ACTIVE",
+  },
+  {
+    id: "student-002",
+    code: "A-0002",
+    name: "Beatriz Santos",
+    email: "beatriz.santos@gmail.com",
+    frequency: 92,
+    score: 4.6,
+    status: "ACTIVE",
+  },
+  {
+    id: "student-003",
+    code: "A-0003",
+    name: "Gabriel Costa",
+    email: "gabriel.costa@outlook.com",
+    frequency: 88,
+    score: 4.1,
+    status: "ACTIVE",
+  },
+  {
+    id: "student-004",
+    code: "A-0004",
+    name: "Sofia Almeida",
+    email: "sofia.almeida@aluno.rotafacil.gov.br",
+    frequency: 100,
+    score: 5.0,
+    status: "ACTIVE",
+  },
+  {
+    id: "student-005",
+    code: "A-0005",
+    name: "Mateus Pereira",
+    email: "mateus.pereira@gmail.com",
+    frequency: 74,
+    score: 2.7,
+    status: "INACTIVE",
+  },
+  {
+    id: "student-006",
+    code: "A-0006",
+    name: "Helena Rocha",
+    email: "helena.rocha@aluno.rotafacil.gov.br",
+    frequency: 99,
+    score: 4.9,
+    status: "ACTIVE",
+  },
+  {
+    id: "student-007",
+    code: "A-0007",
+    name: "Rafael Lima",
+    email: "rafael.lima@outlook.com",
+    frequency: 82,
+    score: 3.4,
+    status: "ACTIVE",
+  },
+  {
+    id: "student-008",
+    code: "A-0008",
+    name: "Marina Souza",
+    email: "marina.souza@gmail.com",
+    frequency: 69,
+    score: 2.4,
+    status: "INACTIVE",
+  },
+];
+
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function getFrequencyBarColor(frequency: number) {
+  if (frequency >= 90) {
+    return "bg-emerald-500";
+  }
+
+  if (frequency >= 75) {
+    return "bg-[#3B82F6]";
+  }
+
+  return "bg-[#DC2626]";
+}
+
+function matchesScoreFilter(
+  student: StudentEntity,
+  filter: StudentScoreFilter,
+) {
+  if (filter === "ALL") {
+    return true;
+  }
+
+  if (filter === "HIGH") {
+    return student.score >= 4;
+  }
+
+  if (filter === "MEDIUM") {
+    return student.score >= 3 && student.score < 4;
+  }
+
+  return student.score < 3;
+}
+
+function matchesFrequencyFilter(
+  student: StudentEntity,
+  filter: StudentFrequencyFilter,
+) {
+  if (filter === "ALL") {
+    return true;
+  }
+
+  if (filter === "EXCELLENT") {
+    return student.frequency >= 90;
+  }
+
+  if (filter === "ATTENTION") {
+    return student.frequency >= 75 && student.frequency < 90;
+  }
+
+  return student.frequency < 75;
+}
+
+export default function Students() {
+  const [scoreFilter, setScoreFilter] = useState<StudentScoreFilter>("ALL");
+  const [frequencyFilter, setFrequencyFilter] =
+    useState<StudentFrequencyFilter>("ALL");
+
+  const filteredStudents = useMemo(() => {
+    return initialStudents.filter((student) => {
+      return (
+        matchesScoreFilter(student, scoreFilter) &&
+        matchesFrequencyFilter(student, frequencyFilter)
+      );
+    });
+  }, [scoreFilter, frequencyFilter]);
+
+  const columns: DataTableColumn<StudentEntity>[] = [
+    {
+      id: "student",
+      header: "Aluno",
+      cell: (student) => (
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-700 to-blue-500 text-xs font-bold text-white shadow-sm">
+            {getInitials(student.name)}
+          </div>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-slate-800">
+              {student.name}
+            </p>
+            <p className="font-mono text-[11px] text-slate-400">
+              {student.code}
+            </p>
+          </div>
+        </div>
+      ),
+      className: "min-w-64",
+    },
+    {
+      id: "email",
+      header: "Email",
+      cell: (student) => (
+        <span className="font-mono text-xs text-slate-600">
+          {student.email}
+        </span>
+      ),
+      className: "min-w-72",
+    },
+    {
+      id: "frequency",
+      header: "Frequência",
+      cell: (student) => (
+        <div className="flex items-center gap-2">
+          <div className="h-1.5 w-24 overflow-hidden rounded-full bg-slate-100">
+            <div
+              className={`h-full rounded-full ${getFrequencyBarColor(
+                student.frequency,
+              )}`}
+              style={{ width: `${student.frequency}%` }}
+            />
+          </div>
+          <span className="w-9 text-xs font-semibold text-slate-700">
+            {student.frequency}%
+          </span>
+        </div>
+      ),
+      className: "min-w-44",
+    },
+    {
+      id: "score",
+      header: "Score",
+      cell: (student) => (
+        <div className={"flex justify-center items-center gap-1"}>
+          <span className="font-mono text-xs font-semibold text-slate-700">
+            {student.score.toFixed(1)}
+          </span>
+
+          <Star
+            className={"fill-amber-500 text-amber-500 mb-0.5"}
+            size={"14"}
+            fill={"100"}
+          />
+        </div>
+      ),
+      className: "text-center",
+      headerClassName: "text-center",
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: (student) => <StudentStatusBadge status={student.status} />,
+      className: "text-right",
+      headerClassName: "text-right",
+    },
+  ];
+
+  return (
+    <div className="-m-5 flex min-h-[calc(100vh-4rem)] flex-col gap-6 bg-slate-50 px-6 py-6">
+      <div>
+        <p className="text-3xl font-bold tracking-tight text-slate-950">
+          Alunos
+        </p>
+        <p className="mt-1 max-w-2xl text-sm text-slate-500">
+          Acompanhe frequência, score e status dos alunos cadastrados no
+          transporte escolar municipal.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <StudentFilters
+          score={scoreFilter}
+          frequency={frequencyFilter}
+          onScoreChange={setScoreFilter}
+          onFrequencyChange={setFrequencyFilter}
+        />
+        <p className="text-sm font-medium text-slate-500">
+          {filteredStudents.length} aluno(s) encontrado(s)
+        </p>
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={filteredStudents}
+        getRowId={(student) => student.id}
+        emptyMessage="Nenhum aluno encontrado para os filtros selecionados."
+        pageSize={6}
+      />
+    </div>
+  );
+}
