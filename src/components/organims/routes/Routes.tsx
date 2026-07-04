@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Pencil, Plus, Route, Trash2, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import RouteStatusBadge from "@/components/atom/RouteStatusBadge";
 import TableActionButton from "@/components/atom/TableActionButton";
@@ -358,10 +358,16 @@ export default function Routes() {
       />
 
       {routePendingDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-md">
-          <div className="w-full max-w-md rounded-3xl border border-[#E5EAF0]/80 bg-white p-6 shadow-[0_24px_80px_-28px_rgba(15,23,42,0.55)]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 cursor-default bg-slate-950/55 backdrop-blur-md"
+            aria-label="Fechar exclusão de rota"
+            onClick={() => setRoutePendingDelete(undefined)}
+          />
+          <div className="relative w-full max-w-md rounded-3xl border border-[#E5EAF0]/80 bg-white p-6 shadow-[0_24px_80px_-28px_rgba(15,23,42,0.55)]">
             <div className="flex items-start gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-[#DC2626]">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-[#DC2626]">
                 <AlertTriangle className="h-5 w-5" />
               </div>
               <div>
@@ -378,7 +384,7 @@ export default function Routes() {
                 type="button"
                 variant="outline"
                 size="xs"
-                className="h-11 cursor-pointer rounded-xl border-[#E5EAF0] px-5 text-sm font-semibold hover:bg-[#EEF2F7]"
+                className="h-9 cursor-pointer rounded-xl border-[#E5EAF0] px-4 text-xs font-semibold hover:bg-[#EEF2F7]"
                 onClick={() => setRoutePendingDelete(undefined)}
               >
                 Cancelar
@@ -387,7 +393,7 @@ export default function Routes() {
                 type="button"
                 variant="destructive"
                 size="xs"
-                className="h-11 cursor-pointer rounded-xl bg-[#DC2626] px-5 text-sm font-semibold text-white shadow-[0_16px_36px_-20px_rgba(220,38,38,0.9)] hover:bg-red-700"
+                className="h-9 cursor-pointer rounded-xl bg-[#DC2626] px-4 text-xs font-semibold text-white shadow-[0_16px_36px_-20px_rgba(220,38,38,0.9)] hover:bg-red-700"
                 onClick={() => {
                   setRoutes((currentRoutes) =>
                     currentRoutes.filter((currentRoute) => {
@@ -405,27 +411,54 @@ export default function Routes() {
       )}
 
       {isFormOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-md">
-          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl border border-[#E5EAF0]/80 bg-white p-6 shadow-[0_24px_80px_-28px_rgba(15,23,42,0.55)]">
-            <div className="mb-5">
-              <p className="text-lg font-bold text-slate-950">
-                {editingRoute ? "Editar rota" : "Nova rota"}
-              </p>
-              <p className="text-sm text-slate-500">
-                Campos alinhados ao contrato de criação e atualização do
-                transport-service.
-              </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 cursor-default bg-slate-950/55 backdrop-blur-md"
+            aria-label="Fechar formulário de rota"
+            onClick={closeForm}
+          />
+          <div className="relative max-h-[90vh] w-full max-w-4xl overflow-hidden rounded-3xl border border-[#E5EAF0]/80 bg-white shadow-[0_24px_80px_-28px_rgba(15,23,42,0.55)]">
+            <div className="relative overflow-hidden rounded-t-3xl bg-gradient-to-br from-[#1E3A8A] via-[#2563EB] to-[#38BDF8] px-6 py-5 text-white">
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_20%,rgba(255,255,255,0.26),transparent_34%),radial-gradient(circle_at_84%_30%,rgba(255,255,255,0.16),transparent_32%)]" />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-lg"
+                className="absolute right-4 top-4 h-8 w-8 cursor-pointer rounded-xl text-white/80 hover:bg-white/15 hover:text-white"
+                aria-label="Fechar formulário de rota"
+                onClick={closeForm}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+
+              <div className="relative flex items-start gap-4 pr-10">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20">
+                  <Route className="h-5 w-5" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-lg font-bold">
+                    {editingRoute ? "Editar rota" : "Nova rota"}
+                  </p>
+                  <p className="mt-1 text-sm text-white/75">
+                    Configure trajeto, recorrência, horários, ônibus e pontos de
+                    embarque da rota.
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <RouteForm
-              key={editingRoute?.id ?? "new-route"}
-              initialRoute={editingRoute}
-              institutions={institutionOptions}
-              bus={busOptions}
-              boardPoints={boardPointOptions}
-              onSubmit={saveRoute}
-              onCancel={closeForm}
-            />
+            <div className="max-h-[calc(90vh-116px)] overflow-y-auto p-6 [scrollbar-color:#CBD5E1_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-track]:bg-transparent">
+              <RouteForm
+                key={editingRoute?.id ?? "new-route"}
+                initialRoute={editingRoute}
+                institutions={institutionOptions}
+                bus={busOptions}
+                boardPoints={boardPointOptions}
+                onSubmit={saveRoute}
+                onCancel={closeForm}
+              />
+            </div>
           </div>
         </div>
       )}
