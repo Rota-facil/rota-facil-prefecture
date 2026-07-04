@@ -1,10 +1,19 @@
-import { Bus, CircleX, GraduationCap, Route, Send, Users } from "lucide-react";
+import {
+  Bus,
+  CircleX,
+  Clock,
+  GraduationCap,
+  MapPinned,
+  Route,
+  Send,
+  Users,
+} from "lucide-react";
 
 interface MetricCardProps {
   variants: MetricCardType;
   value: number | string;
   trend?: number;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
 }
 
 const metricCardVariants = {
@@ -27,6 +36,34 @@ const metricCardVariants = {
     iconWrapperColor: "bg-red-300/30",
     iconColor: "red",
     title: "Viagens canceladas",
+  },
+
+  tripsInRoute: {
+    icon: MapPinned,
+    iconWrapperColor: "bg-blue-300/30",
+    iconColor: "blue",
+    title: "Em rota",
+  },
+
+  tripsFinishedToday: {
+    icon: Send,
+    iconWrapperColor: "bg-green-300/30",
+    iconColor: "green",
+    title: "Finalizadas hoje",
+  },
+
+  tripsCancelledToday: {
+    icon: CircleX,
+    iconWrapperColor: "bg-red-300/30",
+    iconColor: "red",
+    title: "Canceladas",
+  },
+
+  tripsWaiting: {
+    icon: Clock,
+    iconWrapperColor: "bg-amber-300/30",
+    iconColor: "orange",
+    title: "Aguardando",
   },
 
   students: {
@@ -54,6 +91,15 @@ const metricCardVariants = {
 type MetricCardType = keyof typeof metricCardVariants;
 
 const sizes = {
+  xs: {
+    container: "w-full min-h-24 p-4",
+    iconWrapper: "h-10 w-10",
+    icon: "h-5 w-5",
+    title: "text-xs",
+    value: "text-2xl",
+    badge: "px-2 py-0.5 text-xs",
+  },
+
   sm: {
     container: "w-2/6 h-2/3 p-3",
     iconWrapper: "h-10 w-10",
