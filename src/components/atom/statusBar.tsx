@@ -30,14 +30,28 @@ const typeStatusBar = {
   available: {
     ballColor: "bg-blue-600",
     textColor: "text-blue-500",
-    background: "bg-blue-400/15 border border-blue-300",
+    background: "bg-blue-50 border border-blue-200",
     text: "Disponível",
+  },
+
+  busOperating: {
+    ballColor: "bg-green-600",
+    textColor: "text-green-500",
+    background: "bg-white/95 border border-green-200",
+    text: "Em operação",
+  },
+
+  busOutOfOperation: {
+    ballColor: "bg-slate-500",
+    textColor: "text-slate-500",
+    background: "bg-slate-100 border border-slate-300",
+    text: "Fora de operação",
   },
 
   onRoute: {
     ballColor: "bg-green-600",
     textColor: "text-green-500",
-    background: "bg-green-400/15 border border-green-300",
+    background: "bg-white/95 border border-green-200",
     text: "Em rota",
   },
 
@@ -51,28 +65,28 @@ const typeStatusBar = {
   inRoute: {
     ballColor: "bg-green-600",
     textColor: "text-green-500",
-    background: "bg-green-400/15 b-green-400 border border-green-300",
+    background: "bg-green-50 border border-green-200",
     text: "Em rota",
   },
 
   embarking: {
     ballColor: "bg-blue-600",
     textColor: "text-blue-500",
-    background: "bg-blue-400/15 b-blue-400 border border-blue-300",
+    background: "bg-blue-50 border border-blue-200",
     text: "Embarcando",
   },
 
   waiting: {
     ballColor: "bg-amber-600",
     textColor: "text-amber-500",
-    background: "bg-amber-400/15 b-amber-400 border border-amber-300",
+    background: "bg-amber-50 border border-amber-200",
     text: "Aguardando",
   },
 
   cancelled: {
     ballColor: "bg-red-600",
     textColor: "text-red-500",
-    background: "bg-red-400/15 b-red-400 border border-red-300",
+    background: "bg-red-50 border border-red-200",
     text: "Cancelado",
   },
 };
@@ -117,7 +131,7 @@ export default function StatusBar({ variant, size = "md" }: StatusBarProps) {
 
   return (
     <div
-      className={`inline-flex w-fit items-center font-medium ${status.background} ${s.container}`}
+      className={`inline-flex w-fit items-center font-medium shadow-[0_8px_18px_-12px_rgba(15,23,42,0.75)] ring-1 ring-white/45 backdrop-blur-sm ${status.background} ${s.container}`}
     >
       <div className={`${status.ballColor} ${s.ball} rounded-full`} />
 
