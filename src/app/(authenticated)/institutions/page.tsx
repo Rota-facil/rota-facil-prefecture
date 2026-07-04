@@ -1,1 +1,5 @@
-export default function InstitutionPage() {}
+import Institutions from "@/components/organims/institutions/Institutions";
+
+export default function InstitutionPage() {
+  return <Institutions />;
+}
