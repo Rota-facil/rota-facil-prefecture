@@ -156,7 +156,7 @@ export default function TripProgressModal({
   const ignoredBoardPoints = trip.ignoredBoardPoints ?? [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
       <button
         type="button"
         className="absolute inset-0 cursor-default bg-slate-950/55 backdrop-blur-md"
