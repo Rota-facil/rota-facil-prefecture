@@ -12,6 +12,7 @@ import {
   PinIcon,
   Plane,
   Route,
+  ShieldCheck,
   UsersRound,
 } from "lucide-react";
 import Image from "next/image";
@@ -156,6 +157,13 @@ export function AppSidebar() {
               <MySideBarMenuButton href={"/report"}>
                 <FileText />
                 <span>Relatórios</span>
+              </MySideBarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <MySideBarMenuButton href={"/audit"}>
+                <ShieldCheck />
+                <span>Auditoria</span>
               </MySideBarMenuButton>
             </SidebarMenuItem>
           </SidebarGroup>
