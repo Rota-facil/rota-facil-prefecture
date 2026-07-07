@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, Plus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import DriverCard from "@/components/molecules/drivers/DriverCard";
 import DriverDetailsModal from "@/components/molecules/drivers/DriverDetailsModal";
 import { Button } from "@/components/ui/button";
@@ -9,86 +9,94 @@ import type {
   DriverCreateFormData,
   DriverFormData,
 } from "@/lib/schemas/driverSchema";
-import type { Driver } from "@/types/entites/Driver";
+import { changeBusDriver } from "@/service/BusService";
+import {
+  createNewDriver,
+  deactivateDriver,
+  listDrivers,
+  updateDriverInfo,
+} from "@/service/UserService";
+import type { DriverEntity } from "@/types/entites/DriverEntity";
+import { DriverStatus, DriverStatusMap } from "@/types/enums/DriverStatus";
 
-const initialDrivers: Driver[] = [
+const initialDrivers: DriverEntity[] = [
   {
     id: "driver-001",
     initials: "CM",
     name: "Carlos Mendes",
-    rating: 4.9,
-    totalTrips: 312,
-    busPlate: "ABC-1D45",
+    score: 4.9,
+    completedTrips: 312,
+    bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Em dia",
-    status: "onRoute",
+    status: DriverStatus.AVAILABLE,
     cpf: "123.456.789-00",
     email: "carlos.mendes@rotafacil.com",
-    admissionDate: "12/03/2022",
+    createdAt: "12/03/2022",
   },
   {
     id: "driver-002",
     initials: "AL",
     name: "Ana Lima",
-    rating: 4.8,
-    totalTrips: 281,
-    busPlate: "QRT-2H88",
+    score: 4.8,
+    completedTrips: 281,
+    bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Em dia",
-    status: "available",
+    status: DriverStatus.ON_ROUTE,
     cpf: "234.567.890-11",
     email: "ana.lima@rotafacil.com",
-    admissionDate: "04/07/2021",
+    createdAt: "04/07/2021",
   },
   {
     id: "driver-003",
     initials: "PR",
     name: "Pedro Rocha",
-    rating: 4.7,
-    totalTrips: 156,
-    busPlate: "XYZ-9P12",
+    score: 4.7,
+    completedTrips: 156,
+    bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Em dia",
-    status: "onRoute",
+    status: DriverStatus.ON_ROUTE,
     cpf: "345.678.901-22",
     email: "pedro.rocha@rotafacil.com",
-    admissionDate: "19/11/2023",
+    createdAt: "19/11/2023",
   },
   {
     id: "driver-004",
     initials: "MC",
     name: "Marina Costa",
-    rating: 4.6,
-    totalTrips: 198,
-    busPlate: "JKL-7M22",
+    score: 4.6,
+    completedTrips: 198,
+    bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Pendente",
-    status: "offDuty",
+    status: DriverStatus.AVAILABLE,
     cpf: "456.789.012-33",
     email: "marina.costa@rotafacil.com",
-    admissionDate: "27/05/2022",
+    createdAt: "27/05/2022",
   },
   {
     id: "driver-005",
     initials: "RS",
     name: "Roberto Silva",
-    rating: 4.9,
-    totalTrips: 402,
-    busPlate: "DEF-5K10",
+    score: 4.9,
+    completedTrips: 402,
+    bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Em dia",
-    status: "waiting1",
+    status: DriverStatus.ON_ROUTE,
     cpf: "567.890.123-44",
     email: "roberto.silva@rotafacil.com",
-    admissionDate: "02/02/2020",
+    createdAt: "02/02/2020",
   },
   {
     id: "driver-006",
     initials: "JA",
     name: "Juliana Alves",
-    rating: 5.0,
-    totalTrips: 89,
-    busPlate: "—",
+    score: 5.0,
+    completedTrips: 89,
+    bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Em dia",
-    status: "available",
+    status: DriverStatus.ON_ROUTE,
     cpf: "678.901.234-55",
     email: "juliana.alves@rotafacil.com",
-    admissionDate: "15/09/2024",
+    createdAt: "15/09/2024",
   },
 ];
 
@@ -104,12 +112,20 @@ function buildInitials(name: string): string {
 }
 
 export default function Drivers() {
-  const [drivers, setDrivers] = useState<Driver[]>(initialDrivers);
-  const [selectedDriver, setSelectedDriver] = useState<Driver>();
+  const [drivers, setDrivers] = useState<DriverEntity[]>([]);
+  const [selectedDriver, setSelectedDriver] = useState<DriverEntity>();
   const [modalMode, setModalMode] = useState<"details" | "create">("details");
-  const [driverPendingDelete, setDriverPendingDelete] = useState<Driver>();
+  const [driverPendingDelete, setDriverPendingDelete] =
+    useState<DriverEntity>();
 
-  function openDetails(driver: Driver) {
+  useEffect(() => {
+    async function listDriversFromService() {
+      setDrivers(await listDrivers());
+    }
+    listDriversFromService();
+  }, []);
+
+  function openDetails(driver: DriverEntity) {
     setModalMode("details");
     setSelectedDriver(driver);
   }
@@ -120,46 +136,59 @@ export default function Drivers() {
       id: crypto.randomUUID(),
       initials: "",
       name: "",
-      rating: 0,
-      totalTrips: 0,
-      busPlate: "",
+      score: 0,
+      completedTrips: 0,
       documentationStatus: "Docs: Em dia",
-      status: "available",
+      status: DriverStatus.ON_ROUTE,
       cpf: "",
       email: "",
-      admissionDate: new Date().toLocaleDateString("pt-BR"),
+      createdAt: new Date().toLocaleDateString("pt-BR"),
     });
   }
 
-  function editDriver(updatedFields: DriverFormData) {
+  async function editDriver(updatedFields: DriverFormData) {
     if (!selectedDriver) return;
 
-    const updatedDriver: Driver = {
-      ...selectedDriver,
-      ...updatedFields,
-    };
+    await updateDriverInfo(selectedDriver.id, {
+      name: updatedFields.name,
+      email: updatedFields.email,
+      cpf: updatedFields.cpf,
+    });
 
-    setDrivers((currentDrivers) =>
-      currentDrivers.map((driver) =>
-        driver.id === updatedDriver.id ? updatedDriver : driver,
-      ),
+    if (
+      updatedFields.busId &&
+      String(selectedDriver.bus?.id ?? "") !== updatedFields.busId
+    ) {
+      await changeBusDriver(selectedDriver.id, {
+        busId: updatedFields.busId,
+      });
+    }
+
+    const drivers = await listDrivers();
+    setDrivers(drivers);
+    setSelectedDriver(
+      drivers.find((driver) => driver.id === selectedDriver.id),
     );
-    setSelectedDriver(updatedDriver);
   }
 
-  function createDriver(data: DriverCreateFormData) {
+  async function createDriver(data: DriverCreateFormData) {
     if (!selectedDriver) return;
 
-    const newDriver: Driver = {
-      ...selectedDriver,
+    await createNewDriver({
       name: data.name,
-      email: data.email,
       cpf: data.cpf,
-      initials: buildInitials(data.name),
-    };
+      email: data.email,
+      password: data.password,
+    });
 
-    setDrivers((currentDrivers) => [newDriver, ...currentDrivers]);
+    setDrivers(await listDrivers());
     setSelectedDriver(undefined);
+  }
+
+  async function deleteDriver(driver: DriverEntity) {
+    await deactivateDriver(driver.id);
+    setDriverPendingDelete(undefined);
+    setDrivers(await listDrivers());
   }
 
   return (
@@ -193,11 +222,11 @@ export default function Drivers() {
         {drivers.map((driver) => (
           <DriverCard
             key={driver.id}
-            initials={driver.initials}
+            initials={driver.name[0].toUpperCase()}
             name={driver.name}
-            rating={driver.rating}
-            trips={driver.totalTrips}
-            vehicle={driver.busPlate}
+            rating={driver.score}
+            trips={driver.completedTrips}
+            vehicle={driver.bus?.plate ?? "-"}
             documentsStatus={driver.documentationStatus}
             status={driver.status}
             onViewProfile={() => openDetails(driver)}
@@ -250,14 +279,7 @@ export default function Drivers() {
                 variant="destructive"
                 size="xs"
                 className="h-9 cursor-pointer rounded-xl bg-[#DC2626] px-4 text-xs font-semibold text-white shadow-[0_16px_36px_-20px_rgba(220,38,38,0.9)] hover:bg-red-700"
-                onClick={() => {
-                  setDrivers((currentDrivers) =>
-                    currentDrivers.filter(
-                      (driver) => driver.id !== driverPendingDelete.id,
-                    ),
-                  );
-                  setDriverPendingDelete(undefined);
-                }}
+                onClick={() => deleteDriver(driverPendingDelete)}
               >
                 Excluir motorista
               </Button>

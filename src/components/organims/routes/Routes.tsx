@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, Pencil, Plus, Route, Trash2, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import RouteStatusBadge from "@/components/atom/RouteStatusBadge";
 import TableActionButton from "@/components/atom/TableActionButton";
 import DataTable, {
@@ -15,6 +15,14 @@ import RouteFilters, {
 } from "@/components/molecules/routes/RouteFilters";
 import RouteForm from "@/components/molecules/routes/RouteForm";
 import { Button } from "@/components/ui/button";
+import { useRoutes } from "@/hooks/UseRoutes";
+import { listBoardPoints } from "@/service/BoardPointService";
+import { listBus } from "@/service/BusService";
+import { listInstitutions } from "@/service/InstitutionService";
+import { addRoute, listRoutes } from "@/service/RouteService";
+import type { BoardPointEntity } from "@/types/entites/BoardPointEntity";
+import type { BusEntity } from "@/types/entites/BusEntity";
+import type { InstitutionEntity } from "@/types/entites/InstitutionEntity";
 import type {
   RouteBusEntity,
   RouteEntity,
@@ -23,164 +31,164 @@ import type {
 } from "@/types/entites/RouteEntity";
 import type { CreateRouteRequest } from "@/types/request/RouteRequest";
 
-const institutionOptions = [
-  { id: "11111111-1111-4111-8111-111111111111", label: "E.M. João Paulo" },
-  { id: "22222222-2222-4222-8222-222222222222", label: "E.E. Santos Dumont" },
-  { id: "33333333-3333-4333-8333-333333333333", label: "CMEI Girassol" },
-  { id: "44444444-4444-4444-8444-444444444444", label: "IFMG Campus 2" },
-];
+// const institutionOptions = [
+//   { id: "11111111-1111-4111-8111-111111111111", label: "E.M. João Paulo" },
+//   { id: "22222222-2222-4222-8222-222222222222", label: "E.E. Santos Dumont" },
+//   { id: "33333333-3333-4333-8333-333333333333", label: "CMEI Girassol" },
+//   { id: "44444444-4444-4444-8444-444444444444", label: "IFMG Campus 2" },
+// ];
+//
+// const busOptions = [
+//   { id: "55555555-5555-4555-8555-555555555555", label: "Ônibus 01" },
+//   { id: "66666666-6666-4666-8666-666666666666", label: "Ônibus 02" },
+//   { id: "77777777-7777-4777-8777-777777777777", label: "Ônibus 03" },
+// ];
+//
+// const boardPointOptions = [
+//   { id: "88888888-8888-4888-8888-888888888888", label: "Praça Central" },
+//   { id: "99999999-9999-4999-8999-999999999999", label: "Posto Vila Nova" },
+//   { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", label: "Comunidade Rural" },
+//   { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", label: "Rua das Flores" },
+// ];
+//
+// const initialRoutes: RouteEntity[] = [
+//   {
+//     id: "route-12",
+//     code: "R-12",
+//     name: "Centro -> E.M. João Paulo",
+//     shift: "MORNING",
+//     going: "06:30",
+//     goingFinish: "07:20",
+//     return_: "12:00",
+//     returnFinish: "12:50",
+//     daysOfWeek: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"],
+//     institutions: [
+//       { id: institutionOptions[0].id, name: institutionOptions[0].label },
+//       { id: institutionOptions[1].id, name: institutionOptions[1].label },
+//     ],
+//     bus: [{ id: busOptions[0].id, label: busOptions[0].label }],
+//     boardPoints: [
+//       {
+//         boardPointId: boardPointOptions[0].id,
+//         name: boardPointOptions[0].label,
+//         boardTimeGoing: "06:40",
+//         boardTimeFinish: "12:10",
+//       },
+//       {
+//         boardPointId: boardPointOptions[1].id,
+//         name: boardPointOptions[1].label,
+//         boardTimeGoing: "06:55",
+//         boardTimeFinish: "12:25",
+//       },
+//     ],
+//     status: "ACTIVE",
+//     updatedAtLabel: "Atualizada há 2 dias",
+//   },
+//   {
+//     id: "route-08",
+//     code: "R-08",
+//     name: "Vila Nova -> E.E. Santos Dumont",
+//     shift: "MORNING",
+//     going: "06:20",
+//     goingFinish: "07:10",
+//     return_: "11:50",
+//     returnFinish: "12:35",
+//     daysOfWeek: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"],
+//     institutions: [
+//       { id: institutionOptions[1].id, name: institutionOptions[1].label },
+//     ],
+//     bus: [{ id: busOptions[1].id, label: busOptions[1].label }],
+//     boardPoints: [
+//       {
+//         boardPointId: boardPointOptions[1].id,
+//         name: boardPointOptions[1].label,
+//         boardTimeGoing: "06:35",
+//         boardTimeFinish: "12:10",
+//       },
+//     ],
+//     status: "ACTIVE",
+//     updatedAtLabel: "Atualizada há 2 dias",
+//   },
+//   {
+//     id: "route-04",
+//     code: "R-04",
+//     name: "Bairro Alto -> CMEI Girassol",
+//     shift: "AFTERNOON",
+//     going: "12:30",
+//     goingFinish: "13:20",
+//     return_: "17:00",
+//     returnFinish: "17:45",
+//     daysOfWeek: ["MONDAY", "WEDNESDAY", "FRIDAY"],
+//     institutions: [
+//       { id: institutionOptions[2].id, name: institutionOptions[2].label },
+//     ],
+//     bus: [{ id: busOptions[2].id, label: busOptions[2].label }],
+//     boardPoints: [
+//       {
+//         boardPointId: boardPointOptions[3].id,
+//         name: boardPointOptions[3].label,
+//         boardTimeGoing: "12:45",
+//         boardTimeFinish: "17:15",
+//       },
+//     ],
+//     status: "PAUSED",
+//     updatedAtLabel: "Atualizada há 2 dias",
+//   },
+// ];
 
-const busOptions = [
-  { id: "55555555-5555-4555-8555-555555555555", label: "Ônibus 01" },
-  { id: "66666666-6666-4666-8666-666666666666", label: "Ônibus 02" },
-  { id: "77777777-7777-4777-8777-777777777777", label: "Ônibus 03" },
-];
+// function resolveInstitutions(ids: string[]): RouteInstitutionEntity[] {
+//   return ids.map((id) => {
+//     const institution = institutionOptions.find((option) => option.id === id);
+//     return { id, name: institution?.label ?? id };
+//   });
+// }
+//
+// function resolveBus(ids: string[]): RouteBusEntity[] {
+//   return ids.map((id) => {
+//     const busItem = busOptions.find((option) => option.id === id);
+//     return { id, label: busItem?.label ?? id };
+//   });
+// }
+//
+// function resolveBoardPoints(request: CreateRouteRequest) {
+//   return request.boardPoints.map((boardPoint) => {
+//     const option = boardPointOptions.find(
+//       (item) => item.id === boardPoint.boardPointId,
+//     );
+//
+//     return {
+//       ...boardPoint,
+//       name: option?.label ?? boardPoint.boardPointId,
+//     };
+//   });
+// }
 
-const boardPointOptions = [
-  { id: "88888888-8888-4888-8888-888888888888", label: "Praça Central" },
-  { id: "99999999-9999-4999-8999-999999999999", label: "Posto Vila Nova" },
-  { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", label: "Comunidade Rural" },
-  { id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", label: "Rua das Flores" },
-];
-
-const initialRoutes: RouteEntity[] = [
-  {
-    id: "route-12",
-    code: "R-12",
-    name: "Centro -> E.M. João Paulo",
-    shift: "MORNING",
-    going: "06:30",
-    goingFinish: "07:20",
-    return_: "12:00",
-    returnFinish: "12:50",
-    daysOfWeek: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"],
-    institutions: [
-      { id: institutionOptions[0].id, name: institutionOptions[0].label },
-      { id: institutionOptions[1].id, name: institutionOptions[1].label },
-    ],
-    bus: [{ id: busOptions[0].id, label: busOptions[0].label }],
-    boardPoints: [
-      {
-        boardPointId: boardPointOptions[0].id,
-        name: boardPointOptions[0].label,
-        boardTimeGoing: "06:40",
-        boardTimeFinish: "12:10",
-      },
-      {
-        boardPointId: boardPointOptions[1].id,
-        name: boardPointOptions[1].label,
-        boardTimeGoing: "06:55",
-        boardTimeFinish: "12:25",
-      },
-    ],
-    status: "ACTIVE",
-    updatedAtLabel: "Atualizada há 2 dias",
-  },
-  {
-    id: "route-08",
-    code: "R-08",
-    name: "Vila Nova -> E.E. Santos Dumont",
-    shift: "MORNING",
-    going: "06:20",
-    goingFinish: "07:10",
-    return_: "11:50",
-    returnFinish: "12:35",
-    daysOfWeek: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"],
-    institutions: [
-      { id: institutionOptions[1].id, name: institutionOptions[1].label },
-    ],
-    bus: [{ id: busOptions[1].id, label: busOptions[1].label }],
-    boardPoints: [
-      {
-        boardPointId: boardPointOptions[1].id,
-        name: boardPointOptions[1].label,
-        boardTimeGoing: "06:35",
-        boardTimeFinish: "12:10",
-      },
-    ],
-    status: "ACTIVE",
-    updatedAtLabel: "Atualizada há 2 dias",
-  },
-  {
-    id: "route-04",
-    code: "R-04",
-    name: "Bairro Alto -> CMEI Girassol",
-    shift: "AFTERNOON",
-    going: "12:30",
-    goingFinish: "13:20",
-    return_: "17:00",
-    returnFinish: "17:45",
-    daysOfWeek: ["MONDAY", "WEDNESDAY", "FRIDAY"],
-    institutions: [
-      { id: institutionOptions[2].id, name: institutionOptions[2].label },
-    ],
-    bus: [{ id: busOptions[2].id, label: busOptions[2].label }],
-    boardPoints: [
-      {
-        boardPointId: boardPointOptions[3].id,
-        name: boardPointOptions[3].label,
-        boardTimeGoing: "12:45",
-        boardTimeFinish: "17:15",
-      },
-    ],
-    status: "PAUSED",
-    updatedAtLabel: "Atualizada há 2 dias",
-  },
-];
-
-function resolveInstitutions(ids: string[]): RouteInstitutionEntity[] {
-  return ids.map((id) => {
-    const institution = institutionOptions.find((option) => option.id === id);
-    return { id, name: institution?.label ?? id };
-  });
-}
-
-function resolveBus(ids: string[]): RouteBusEntity[] {
-  return ids.map((id) => {
-    const busItem = busOptions.find((option) => option.id === id);
-    return { id, label: busItem?.label ?? id };
-  });
-}
-
-function resolveBoardPoints(request: CreateRouteRequest) {
-  return request.boardPoints.map((boardPoint) => {
-    const option = boardPointOptions.find(
-      (item) => item.id === boardPoint.boardPointId,
-    );
-
-    return {
-      ...boardPoint,
-      name: option?.label ?? boardPoint.boardPointId,
-    };
-  });
-}
-
-function createRouteFromRequest(
-  request: CreateRouteRequest,
-  status: RouteStatus,
-  id?: string,
-  code?: string,
-): RouteEntity {
-  return {
-    id: id ?? crypto.randomUUID(),
-    code: code ?? `R-${String(Math.floor(Math.random() * 90) + 10)}`,
-    name: request.name,
-    shift: request.shift,
-    going: request.going,
-    return_: request.return_,
-    goingFinish: request.goingFinish,
-    returnFinish: request.returnFinish,
-    daysOfWeek: request.daysOfWeek,
-    institutions: resolveInstitutions(request.institutionsIds),
-    bus: resolveBus(request.busIds),
-    boardPoints: resolveBoardPoints(request),
-    status,
-    updatedAtLabel: "Atualizada agora",
-  };
-}
+// function createRouteFromRequest(
+//   request: CreateRouteRequest,
+//   status: RouteStatus,
+//   id?: string,
+//   code?: string,
+// ): RouteEntity {
+//   return {
+//     id: id ?? crypto.randomUUID(),
+//     code: code ?? `R-${String(Math.floor(Math.random() * 90) + 10)}`,
+//     name: request.name,
+//     shift: request.shift,
+//     going: request.going,
+//     return_: request.return_,
+//     goingFinish: request.goingFinish,
+//     returnFinish: request.returnFinish,
+//     daysOfWeek: request.daysOfWeek,
+//     institutions: resolveInstitutions(request.institutionsIds),
+//     bus: resolveBus(request.busIds),
+//     boardPoints: resolveBoardPoints(request),
+//     status,
+//     updatedAtLabel: "Atualizada agora",
+//   };
+// }
 
 export default function Routes() {
-  const [routes, setRoutes] = useState<RouteEntity[]>(initialRoutes);
+  const [routes, setRoutes] = useState<RouteEntity[]>([]);
   const [shiftFilter, setShiftFilter] = useState<RouteShiftFilter>("ALL");
   const [statusFilter, setStatusFilter] = useState<RouteStatusFilter>("ALL");
   const [editingRoute, setEditingRoute] = useState<RouteEntity | undefined>();
@@ -286,30 +294,29 @@ export default function Routes() {
     setEditingRoute(undefined);
   }
 
-  function saveRoute(request: CreateRouteRequest) {
+  async function saveRoute(request: CreateRouteRequest) {
     if (editingRoute) {
-      setRoutes((currentRoutes) =>
-        currentRoutes.map((routeItem) =>
-          routeItem.id === editingRoute.id
-            ? createRouteFromRequest(
-                request,
-                routeItem.status,
-                routeItem.id,
-                routeItem.code,
-              )
-            : routeItem,
-        ),
-      );
     } else {
-      setRoutes((currentRoutes) => [
-        createRouteFromRequest(request, "ACTIVE"),
-        ...currentRoutes,
-      ]);
+      await addRoute(request);
+      const response = await listRoutes(0, 5);
+      setRoutes(response.content);
     }
 
     closeForm();
   }
 
+  const [institutions, setInstitutions] = useState<InstitutionEntity[]>([]);
+  const [boardPoints, setBoardPoints] = useState<BoardPointEntity[]>([]);
+  const [bus, setBus] = useState<BusEntity[]>([]);
+
+  useEffect(() => {
+    async function fetchResources() {
+      setInstitutions(await listInstitutions());
+      setBoardPoints(await listBoardPoints());
+      setBus(await listBus());
+    }
+    fetchResources();
+  }, []);
   return (
     <div className="-m-5 flex min-h-[calc(100vh-4rem)] flex-col gap-6 bg-slate-50 px-6 py-6 ">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -452,9 +459,15 @@ export default function Routes() {
               <RouteForm
                 key={editingRoute?.id ?? "new-route"}
                 initialRoute={editingRoute}
-                institutions={institutionOptions}
-                bus={busOptions}
-                boardPoints={boardPointOptions}
+                institutions={institutions.map((i) => {
+                  return { id: i.id as string, label: i.name };
+                })}
+                bus={bus.map((b) => {
+                  return { id: b.id as string, label: b.plate };
+                })}
+                boardPoints={boardPoints.map((b) => {
+                  return { id: b.id as string, label: b.name };
+                })}
                 onSubmit={saveRoute}
                 onCancel={closeForm}
               />

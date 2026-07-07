@@ -4,6 +4,7 @@ import DriverAvatar from "@/components/atom/DriverAvatar";
 import DriverChip from "@/components/atom/DriverChip";
 import StatusBar from "@/components/atom/statusBar";
 import { Button } from "@/components/ui/button";
+import { type DriverStatus, DriverStatusMap } from "@/types/enums/DriverStatus";
 
 interface DriverCardProps {
   initials: string;
@@ -12,7 +13,7 @@ interface DriverCardProps {
   trips: number;
   vehicle: string;
   documentsStatus?: string;
-  status: "onRoute" | "available" | "offDuty" | "waiting1";
+  status: DriverStatus;
   size?: "sm" | "md";
   onViewProfile?: () => void;
   onDelete?: () => void;
@@ -97,7 +98,10 @@ export default function DriverCard({
                 </div>
               </div>
 
-              <StatusBar variant={status} size={s.status as "sm" | "md"} />
+              <StatusBar
+                variant={DriverStatusMap[status].value}
+                size={s.status as "sm" | "md"}
+              />
             </div>
 
             <div className="mt-3 flex flex-wrap gap-2">
