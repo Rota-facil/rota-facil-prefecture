@@ -29,12 +29,12 @@ import {
   driverCreateSchema,
   driverSchema,
 } from "@/lib/schemas/driverSchema";
-import type { Driver } from "@/types/entites/Driver";
-
-const busOptions = ["ABC-1D45", "QRT-2H88", "XYZ-9P12", "JKL-3F77"];
+import { listBus } from "@/service/BusService";
+import type { BusEntity } from "@/types/entites/BusEntity";
+import type { DriverEntity } from "@/types/entites/DriverEntity";
 
 interface DriverDetailsModalProps {
-  driver: Driver;
+  driver: DriverEntity;
   open: boolean;
   mode?: "details" | "create";
   onClose: () => void;
@@ -69,9 +69,17 @@ export default function DriverDetailsModal({
       name: driver.name,
       cpf: driver.cpf,
       email: driver.email,
-      busPlate: driver.busPlate,
+      busId: driver.bus?.id ? String(driver.bus.id) : undefined,
     },
   });
+
+  const [busOptions, setBusOptions] = useState<BusEntity[]>([]);
+  useEffect(() => {
+    async function listBusFromService() {
+      setBusOptions(await listBus());
+    }
+    listBusFromService();
+  }, []);
 
   const {
     register: registerCreate,
@@ -88,7 +96,10 @@ export default function DriverDetailsModal({
     },
   });
 
-  const selectedBusPlate = useWatch({ control, name: "busPlate" });
+  const selectedBusId = useWatch({ control, name: "busId" });
+  const selectedBus = busOptions.find(
+    (bus) => String(bus.id) === selectedBusId,
+  );
 
   useEffect(() => {
     if (!isCreating) {
@@ -96,7 +107,7 @@ export default function DriverDetailsModal({
         name: driver.name,
         cpf: driver.cpf,
         email: driver.email,
-        busPlate: driver.busPlate,
+        busId: driver.bus?.id ? String(driver.bus.id) : undefined,
       });
     }
   }, [driver, isCreating, reset]);
@@ -412,7 +423,7 @@ export default function DriverDetailsModal({
                           : "border-[#E5EAF0]"
                       }`}
                     >
-                      <span>{selectedBusPlate || "Selecione um ônibus"}</span>
+                      <span>{selectedBus?.plate ?? "Selecione um ônibus"}</span>
                       <ChevronDown
                         className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isSelectOpen ? "rotate-180" : ""}`}
                       />
@@ -420,14 +431,14 @@ export default function DriverDetailsModal({
 
                     {isSelectOpen && (
                       <div className="absolute left-0 right-0 top-[105%] z-30 mt-1 max-h-60 overflow-auto rounded-xl border border-[#E5EAF0] bg-white p-1 shadow-[0_16px_36px_-20px_rgba(15,23,42,0.35)] animate-in fade-in slide-in-from-top-1 duration-150">
-                        {busOptions.map((plate) => {
-                          const isSelected = plate === selectedBusPlate;
+                        {busOptions.map((bus) => {
+                          const isSelected = String(bus.id) === selectedBusId;
                           return (
                             <button
-                              key={plate}
+                              key={bus.id}
                               type="button"
                               onClick={() => {
-                                setValue("busPlate", plate, {
+                                setValue("busId", String(bus.id), {
                                   shouldValidate: true,
                                 });
                                 setIsSelectOpen(false);
@@ -438,7 +449,7 @@ export default function DriverDetailsModal({
                                   : "text-slate-700 hover:bg-[#EEF2F7]"
                               }`}
                             >
-                              <span>{plate}</span>
+                              <span>{bus.plate}</span>
                               {isSelected && <Check className="h-4 w-4" />}
                             </button>
                           );
@@ -446,11 +457,11 @@ export default function DriverDetailsModal({
                       </div>
                     )}
 
-                    <input type="hidden" {...register("busPlate")} />
+                    <input type="hidden" {...register("busId")} />
 
-                    {errors.busPlate && (
+                    {errors.busId && (
                       <span className="text-[11px] font-medium text-[#DC2626]">
-                        {errors.busPlate.message}
+                        {errors.busId.message}
                       </span>
                     )}
                   </div>
@@ -459,13 +470,13 @@ export default function DriverDetailsModal({
                 <DriverInfoItem
                   icon={<Send className="h-5 w-5" />}
                   label="Viagens realizadas"
-                  value={String(driver.totalTrips)}
+                  value={String(driver.completedTrips)}
                 />
 
                 <DriverInfoItem
                   icon={<Calendar className="h-5 w-5" />}
                   label="Admissão"
-                  value={driver.admissionDate}
+                  value={driver.createdAt}
                 />
 
                 <DriverInfoItem
@@ -487,7 +498,7 @@ export default function DriverDetailsModal({
                       name: driver.name,
                       cpf: driver.cpf,
                       email: driver.email,
-                      busPlate: driver.busPlate,
+                      busId: driver.bus?.id ? String(driver.bus.id) : undefined,
                     });
                   }}
                 >
@@ -524,17 +535,17 @@ export default function DriverDetailsModal({
                 <DriverInfoItem
                   icon={<Bus className="h-5 w-5" />}
                   label="Ônibus"
-                  value={driver.busPlate}
+                  value={driver.bus?.plate ?? "Sem ônibus"}
                 />
                 <DriverInfoItem
                   icon={<Send className="h-5 w-5" />}
                   label="Viagens realizadas"
-                  value={String(driver.totalTrips)}
+                  value={String(driver.completedTrips)}
                 />
                 <DriverInfoItem
                   icon={<Calendar className="h-5 w-5" />}
                   label="Admissão"
-                  value={driver.admissionDate}
+                  value={driver.createdAt}
                 />
                 <DriverInfoItem
                   icon={<FileText className="h-5 w-5" />}

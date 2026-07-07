@@ -1,17 +1,18 @@
 import { Star, X } from "lucide-react";
 import DriverAvatar from "@/components/atom/DriverAvatar";
 import StatusBar from "@/components/atom/statusBar";
-import type { Driver } from "@/types/entites/Driver";
+import type { DriverEntity } from "@/types/entites/DriverEntity";
+import { DriverStatusMap } from "@/types/enums/DriverStatus";
 
 interface DriverHeaderProps {
-  driver: Driver;
+  driver: DriverEntity;
   onClose: () => void;
 }
 
 export default function DriverHeader({ driver, onClose }: DriverHeaderProps) {
   return (
     <div className="relative flex items-center gap-5 rounded-t-2xl bg-gradient-to-r from-blue-700 to-blue-500 px-7 py-6">
-      <DriverAvatar initials={driver.initials} size="md" />
+      <DriverAvatar initials={driver.name[0].toUpperCase()} size="md" />
 
       <div className="flex flex-col gap-1">
         <h2 className="text-2xl font-bold text-white">{driver.name}</h2>
@@ -19,10 +20,10 @@ export default function DriverHeader({ driver, onClose }: DriverHeaderProps) {
         <div className="flex items-center gap-3 text-sm">
           <div className={"flex gap-1"}>
             <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-            <span className="font-semibold text-white">{driver.rating}</span>
+            <span className="font-semibold text-white">{driver.score}</span>
           </div>
 
-          <StatusBar variant={driver.status} size="sm" />
+          <StatusBar variant={DriverStatusMap[driver.status].value} size="sm" />
         </div>
       </div>
 
