@@ -17,6 +17,10 @@ interface DataTableProps<TData> {
   getRowId: (item: TData) => string;
   emptyMessage?: string;
   pageSize?: number;
+  currentPage?: number;
+  totalItems?: number;
+  totalPages?: number;
+  onPageChange?: (page: number) => void;
 }
 
 export default function DataTable<TData>({
@@ -25,22 +29,45 @@ export default function DataTable<TData>({
   getRowId,
   emptyMessage = "Nenhum registro encontrado.",
   pageSize = 10,
+  currentPage: controlledCurrentPage,
+  totalItems: controlledTotalItems,
+  totalPages: controlledTotalPages,
+  onPageChange,
 }: DataTableProps<TData>) {
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(data.length / pageSize));
-  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const [internalCurrentPage, setInternalCurrentPage] = useState(1);
+  const isControlledPagination = onPageChange !== undefined;
+  const totalItems = controlledTotalItems ?? data.length;
+  const totalPages = Math.max(
+    1,
+    controlledTotalPages ?? Math.ceil(data.length / pageSize),
+  );
+  const currentPage = controlledCurrentPage ?? internalCurrentPage;
+  const safeCurrentPage = Math.min(Math.max(currentPage, 1), totalPages);
 
   const paginatedData = useMemo(() => {
+    if (isControlledPagination) {
+      return data;
+    }
+
     const startIndex = (safeCurrentPage - 1) * pageSize;
     return data.slice(startIndex, startIndex + pageSize);
-  }, [data, pageSize, safeCurrentPage]);
+  }, [data, isControlledPagination, pageSize, safeCurrentPage]);
 
-  const firstItem =
-    data.length === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1;
-  const lastItem = Math.min(safeCurrentPage * pageSize, data.length);
+  const firstItem = totalItems === 0 ? 0 : (safeCurrentPage - 1) * pageSize + 1;
+  const lastItem = Math.min(
+    firstItem === 0 ? 0 : firstItem + paginatedData.length - 1,
+    totalItems,
+  );
 
   function goToPage(page: number) {
-    setCurrentPage(Math.min(Math.max(page, 1), totalPages));
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+
+    if (isControlledPagination) {
+      onPageChange?.(nextPage);
+      return;
+    }
+
+    setInternalCurrentPage(nextPage);
   }
 
   return (
@@ -99,7 +126,7 @@ export default function DataTable<TData>({
 
       <div className="flex flex-col gap-3 border-t border-[#E5EAF0] bg-white px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm font-medium text-slate-500">
-          Mostrando {firstItem}-{lastItem} de {data.length} registro(s)
+          Mostrando {firstItem}-{lastItem} de {totalItems} registro(s)
         </p>
 
         <div className="flex items-center gap-2">
