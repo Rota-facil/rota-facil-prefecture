@@ -1,92 +1,19 @@
 "use client";
 
 import { Star } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import StudentStatusBadge from "@/components/atom/StudentStatusBadge";
 import DataTable, {
   type DataTableColumn,
 } from "@/components/molecules/DataTable";
 import StudentFilters, {
-  type StudentEmailFilter,
   type StudentFrequencyFilter,
   type StudentScoreFilter,
 } from "@/components/molecules/students/StudentFilters";
+import { listStudents } from "@/service/UserService";
 import type { StudentEntity } from "@/types/entites/StudentEntity";
 
-const initialStudents: StudentEntity[] = [
-  {
-    id: "student-001",
-    code: "A-0001",
-    name: "Lucas Oliveira",
-    email: "lucas.oliveira@aluno.rotafacil.gov.br",
-    frequency: 96,
-    score: 4.8,
-    status: "ACTIVE",
-  },
-  {
-    id: "student-002",
-    code: "A-0002",
-    name: "Beatriz Santos",
-    email: "beatriz.santos@gmail.com",
-    frequency: 92,
-    score: 4.6,
-    status: "ACTIVE",
-  },
-  {
-    id: "student-003",
-    code: "A-0003",
-    name: "Gabriel Costa",
-    email: "gabriel.costa@outlook.com",
-    frequency: 88,
-    score: 4.1,
-    status: "ACTIVE",
-  },
-  {
-    id: "student-004",
-    code: "A-0004",
-    name: "Sofia Almeida",
-    email: "sofia.almeida@aluno.rotafacil.gov.br",
-    frequency: 100,
-    score: 5.0,
-    status: "ACTIVE",
-  },
-  {
-    id: "student-005",
-    code: "A-0005",
-    name: "Mateus Pereira",
-    email: "mateus.pereira@gmail.com",
-    frequency: 74,
-    score: 2.7,
-    status: "INACTIVE",
-  },
-  {
-    id: "student-006",
-    code: "A-0006",
-    name: "Helena Rocha",
-    email: "helena.rocha@aluno.rotafacil.gov.br",
-    frequency: 99,
-    score: 4.9,
-    status: "ACTIVE",
-  },
-  {
-    id: "student-007",
-    code: "A-0007",
-    name: "Rafael Lima",
-    email: "rafael.lima@outlook.com",
-    frequency: 82,
-    score: 3.4,
-    status: "ACTIVE",
-  },
-  {
-    id: "student-008",
-    code: "A-0008",
-    name: "Marina Souza",
-    email: "marina.souza@gmail.com",
-    frequency: 69,
-    score: 2.4,
-    status: "INACTIVE",
-  },
-];
+const PAGE_SIZE = 6;
 
 function getInitials(name: string) {
   return name
@@ -151,15 +78,30 @@ export default function Students() {
   const [scoreFilter, setScoreFilter] = useState<StudentScoreFilter>("ALL");
   const [frequencyFilter, setFrequencyFilter] =
     useState<StudentFrequencyFilter>("ALL");
+  const [students, setStudents] = useState<StudentEntity[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  useEffect(() => {
+    async function fetchStudents() {
+      const response = await listStudents(currentPage - 1, PAGE_SIZE);
+      setStudents(response.content);
+      setTotalItems(response.page.totalElements);
+      setTotalPages(response.page.totalPages);
+    }
+
+    fetchStudents();
+  }, [currentPage]);
 
   const filteredStudents = useMemo(() => {
-    return initialStudents.filter((student) => {
+    return students.filter((student) => {
       return (
         matchesScoreFilter(student, scoreFilter) &&
         matchesFrequencyFilter(student, frequencyFilter)
       );
     });
-  }, [scoreFilter, frequencyFilter]);
+  }, [students, scoreFilter, frequencyFilter]);
 
   const columns: DataTableColumn<StudentEntity>[] = [
     {
@@ -269,7 +211,11 @@ export default function Students() {
         data={filteredStudents}
         getRowId={(student) => student.id}
         emptyMessage="Nenhum aluno encontrado para os filtros selecionados."
-        pageSize={6}
+        pageSize={PAGE_SIZE}
+        currentPage={currentPage}
+        totalItems={totalItems}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
       />
     </div>
   );
