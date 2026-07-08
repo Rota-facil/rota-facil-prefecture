@@ -3,11 +3,13 @@ import type { PredictiveAnalysisEntity } from "@/types/entites/PredictiveAnalysi
 
 interface PredictiveAnalysisRecentCardProps {
   analysis: PredictiveAnalysisEntity;
+  routeLabel: string;
   onSelect: (analysis: PredictiveAnalysisEntity) => void;
 }
 
 export default function PredictiveAnalysisRecentCard({
   analysis,
+  routeLabel,
   onSelect,
 }: PredictiveAnalysisRecentCardProps) {
   return (
@@ -17,7 +19,7 @@ export default function PredictiveAnalysisRecentCard({
       onClick={() => onSelect(analysis)}
     >
       <div className="flex items-center justify-between gap-3">
-        <PredictiveRouteCodeBadge code={analysis.route.code} />
+        <PredictiveRouteCodeBadge label={routeLabel} />
         <span className="text-xs font-medium text-slate-400">
           {analysis.createdAtLabel}
         </span>

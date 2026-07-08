@@ -5,12 +5,14 @@ import type { HeatMapEntity } from "@/types/entites/HeatMapEntity";
 
 interface HeatMapHistoryCardProps {
   heatMap: HeatMapEntity;
+  routeLabel: string;
   selected: boolean;
   onSelect: (heatMap: HeatMapEntity) => void;
 }
 
 export default function HeatMapHistoryCard({
   heatMap,
+  routeLabel,
   selected,
   onSelect,
 }: HeatMapHistoryCardProps) {
@@ -27,7 +29,7 @@ export default function HeatMapHistoryCard({
       <div className="overflow-hidden rounded-xl bg-slate-900">
         <Image
           src={heatMap.preSignedUrlHeatMap}
-          alt={`Miniatura do mapa de calor da rota ${heatMap.route.code}`}
+          alt={`Miniatura do mapa de calor da rota ${heatMap.route.name}`}
           width={640}
           height={360}
           unoptimized
@@ -35,7 +37,7 @@ export default function HeatMapHistoryCard({
         />
       </div>
       <div className="mt-3 flex items-center justify-between gap-2">
-        <HeatMapRouteBadge code={heatMap.route.code} />
+        <HeatMapRouteBadge label={routeLabel} />
         <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500">
           <CalendarDays className="h-3 w-3" />
           {heatMap.createdAtLabel}

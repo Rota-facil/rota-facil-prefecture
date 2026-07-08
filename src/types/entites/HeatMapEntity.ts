@@ -5,5 +5,6 @@ export interface HeatMapEntity {
   route: RouteEntity;
   preSignedUrlHeatMap: string;
   createdAtLabel: string;
+  createdAt?: Date;
   pointsCount: number;
 }
