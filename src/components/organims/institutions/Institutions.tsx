@@ -1,179 +1,40 @@
 "use client";
 
-import { AlertTriangle, Plus } from "lucide-react";
-import { useState } from "react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import InstitutionCard from "@/components/molecules/institutions/InstitutionCard";
 import InstitutionDetailsModal from "@/components/molecules/institutions/InstitutionDetailsModal";
 import { Button } from "@/components/ui/button";
+import {
+  createInstitution,
+  deleteInstitution,
+  listInstitutionsPage,
+  updateInstitution,
+} from "@/service/InstitutionService";
 import type { InstitutionEntity } from "@/types/entites/InstitutionEntity";
 
-const initialInstitutions: InstitutionEntity[] = [
-  {
-    id: "institution-001",
-    name: "E.M. João Paulo II",
-    latitude: -19.9187,
-    longitude: -43.9386,
-    routeCount: 4,
-    routes: [
-      {
-        id: "route-12",
-        code: "R-12",
-        name: "Centro -> E.M. João Paulo",
-        shift: "Matutino",
-      },
-      {
-        id: "route-15",
-        code: "R-15",
-        name: "Vila Norte -> João Paulo",
-        shift: "Vespertino",
-      },
-      {
-        id: "route-18",
-        code: "R-18",
-        name: "Distrito Rural -> João Paulo",
-        shift: "Matutino",
-      },
-      {
-        id: "route-22",
-        code: "R-22",
-        name: "Jardim Sul -> João Paulo",
-        shift: "Noturno",
-      },
-    ],
-  },
-  {
-    id: "institution-002",
-    name: "E.E. Santos Dumont",
-    latitude: -19.9234,
-    longitude: -43.942,
-    routeCount: 3,
-    routes: [
-      {
-        id: "route-08",
-        code: "R-08",
-        name: "Vila Nova -> Santos Dumont",
-        shift: "Matutino",
-      },
-      {
-        id: "route-11",
-        code: "R-11",
-        name: "Bairro Alto -> Santos Dumont",
-        shift: "Vespertino",
-      },
-      {
-        id: "route-16",
-        code: "R-16",
-        name: "Centro -> Santos Dumont",
-        shift: "Matutino",
-      },
-    ],
-  },
-  {
-    id: "institution-003",
-    name: "CMEI Girassol",
-    latitude: -19.9301,
-    longitude: -43.9588,
-    routeCount: 2,
-    routes: [
-      {
-        id: "route-04",
-        code: "R-04",
-        name: "Bairro Alto -> CMEI Girassol",
-        shift: "Vespertino",
-      },
-      {
-        id: "route-09",
-        code: "R-09",
-        name: "Centro -> CMEI Girassol",
-        shift: "Matutino",
-      },
-    ],
-  },
-  {
-    id: "institution-004",
-    name: "IFMG Campus 2",
-    latitude: -19.9402,
-    longitude: -43.9601,
-    routeCount: 5,
-    routes: [
-      {
-        id: "route-20",
-        code: "R-20",
-        name: "Centro -> IFMG Campus 2",
-        shift: "Matutino",
-      },
-      {
-        id: "route-21",
-        code: "R-21",
-        name: "Setor Norte -> IFMG Campus 2",
-        shift: "Vespertino",
-      },
-      {
-        id: "route-24",
-        code: "R-24",
-        name: "Vila Nova -> IFMG Campus 2",
-        shift: "Noturno",
-      },
-      {
-        id: "route-27",
-        code: "R-27",
-        name: "Rural km 4 -> IFMG Campus 2",
-        shift: "Matutino",
-      },
-      {
-        id: "route-30",
-        code: "R-30",
-        name: "Jardim Sul -> IFMG Campus 2",
-        shift: "Vespertino",
-      },
-    ],
-  },
-  {
-    id: "institution-005",
-    name: "E.M. Castro Alves",
-    latitude: -19.9012,
-    longitude: -43.9501,
-    routeCount: 2,
-    routes: [
-      {
-        id: "route-31",
-        code: "R-31",
-        name: "Setor Norte -> Castro Alves",
-        shift: "Matutino",
-      },
-      {
-        id: "route-34",
-        code: "R-34",
-        name: "Centro -> Castro Alves",
-        shift: "Vespertino",
-      },
-    ],
-  },
-  {
-    id: "institution-006",
-    name: "E.M. Vereda Verde",
-    latitude: -19.9652,
-    longitude: -43.9824,
-    routeCount: 1,
-    routes: [
-      {
-        id: "route-40",
-        code: "R-40",
-        name: "Distrito Rural -> Vereda Verde",
-        shift: "Matutino",
-      },
-    ],
-  },
-];
+const PAGE_SIZE = 6;
 
 export default function Institutions() {
-  const [institutions, setInstitutions] =
-    useState<InstitutionEntity[]>(initialInstitutions);
+  const [institutions, setInstitutions] = useState<InstitutionEntity[]>([]);
   const [selectedInstitution, setSelectedInstitution] =
     useState<InstitutionEntity>();
   const [modalMode, setModalMode] = useState<"details" | "create">("details");
   const [institutionPendingDelete, setInstitutionPendingDelete] =
     useState<InstitutionEntity>();
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalInstitutions, setTotalInstitutions] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const fetchInstitutions = useCallback(
+    async (page = currentPage) => {
+      const response = await listInstitutionsPage(page, PAGE_SIZE);
+      setInstitutions(response.content);
+      setTotalInstitutions(response.page.totalElements);
+      setTotalPages(response.page.totalPages || 1);
+    },
+    [currentPage],
+  );
 
   function openDetails(institution: InstitutionEntity) {
     setModalMode("details");
@@ -192,25 +53,54 @@ export default function Institutions() {
     });
   }
 
-  function saveInstitution(updatedInstitution: InstitutionEntity) {
-    setInstitutions((currentInstitutions) => {
-      const institutionExists = currentInstitutions.some(
-        (institution) => institution.id === updatedInstitution.id,
-      );
+  async function saveInstitution(updatedInstitution: InstitutionEntity) {
+    const request = {
+      name: updatedInstitution.name,
+      latitude: updatedInstitution.latitude,
+      longitude: updatedInstitution.longitude,
+    };
 
-      if (!institutionExists) {
-        return [updatedInstitution, ...currentInstitutions];
-      }
+    if (modalMode === "create") {
+      const createdInstitution = await createInstitution(request);
+      setCurrentPage(0);
+      await fetchInstitutions(0);
+      setModalMode("details");
+      setSelectedInstitution(createdInstitution);
+      return;
+    }
 
-      return currentInstitutions.map((institution) =>
-        institution.id === updatedInstitution.id
-          ? updatedInstitution
-          : institution,
-      );
-    });
+    const savedInstitution = await updateInstitution(
+      updatedInstitution.id,
+      request,
+    );
+    await fetchInstitutions();
     setModalMode("details");
-    setSelectedInstitution(updatedInstitution);
+    setSelectedInstitution(savedInstitution);
   }
+
+  async function deleteInstitutionFromService(institution: InstitutionEntity) {
+    await deleteInstitution(institution.id);
+    setInstitutionPendingDelete(undefined);
+
+    if (selectedInstitution?.id === institution.id) {
+      setSelectedInstitution(undefined);
+    }
+
+    if (institutions.length === 1 && currentPage > 0) {
+      const previousPage = currentPage - 1;
+      setCurrentPage(previousPage);
+      await fetchInstitutions(previousPage);
+      return;
+    }
+
+    await fetchInstitutions();
+  }
+
+  useEffect(() => {
+    fetchInstitutions();
+  }, [fetchInstitutions]);
+
+  const safeCurrentPage = Math.min(currentPage + 1, totalPages);
 
   return (
     <div className="-m-5 flex min-h-[calc(100vh-4rem)] flex-col gap-6 bg-slate-50 px-6 py-6">
@@ -237,7 +127,7 @@ export default function Institutions() {
       </div>
 
       <p className="text-sm font-medium text-slate-500">
-        {institutions.length} instituição(ões) cadastrada(s)
+        {totalInstitutions} instituição(ões) cadastrada(s)
       </p>
 
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
@@ -249,6 +139,44 @@ export default function Institutions() {
             onDelete={setInstitutionPendingDelete}
           />
         ))}
+      </div>
+
+      {institutions.length === 0 && (
+        <div className="rounded-2xl border border-slate-200/80 bg-white px-6 py-10 text-center text-sm text-muted-foreground shadow-[0_18px_45px_-28px_rgba(15,23,42,0.45)]">
+          Nenhuma instituição cadastrada.
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3 rounded-2xl border border-[#E5EAF0] bg-white px-6 py-4 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.45)] sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm font-medium text-slate-500">
+          Página {safeCurrentPage} de {totalPages}
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-lg"
+            className="h-7 w-11 cursor-pointer rounded-xl border-[#E5EAF0] text-slate-600 hover:bg-[#EEF2F7] disabled:cursor-not-allowed"
+            aria-label="Página anterior"
+            disabled={currentPage === 0}
+            onClick={() => setCurrentPage((page) => Math.max(0, page - 1))}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-lg"
+            className="h-7 w-11 cursor-pointer rounded-xl border-[#E5EAF0] text-slate-600 hover:bg-[#EEF2F7] disabled:cursor-not-allowed"
+            aria-label="Próxima página"
+            disabled={safeCurrentPage >= totalPages}
+            onClick={() =>
+              setCurrentPage((page) => Math.min(totalPages - 1, page + 1))
+            }
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {selectedInstitution && (
@@ -273,7 +201,7 @@ export default function Institutions() {
                 </p>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
                   Deseja excluir {institutionPendingDelete.name}? Esta ação
-                  remove o item da listagem local desta tela.
+                  remove a instituição no cadastro de locais.
                 </p>
               </div>
             </div>
@@ -293,15 +221,9 @@ export default function Institutions() {
                 variant="destructive"
                 size="xs"
                 className="h-9 cursor-pointer rounded-xl bg-[#DC2626] px-4 text-xs font-semibold text-white shadow-[0_16px_36px_-20px_rgba(220,38,38,0.9)] hover:bg-red-700"
-                onClick={() => {
-                  setInstitutions((currentInstitutions) =>
-                    currentInstitutions.filter(
-                      (institution) =>
-                        institution.id !== institutionPendingDelete.id,
-                    ),
-                  );
-                  setInstitutionPendingDelete(undefined);
-                }}
+                onClick={() =>
+                  deleteInstitutionFromService(institutionPendingDelete)
+                }
               >
                 Excluir instituição
               </Button>

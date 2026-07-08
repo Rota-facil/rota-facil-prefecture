@@ -11,7 +11,7 @@ interface InstitutionDetailsModalProps {
   institution: InstitutionEntity;
   mode?: "details" | "create";
   onClose: () => void;
-  onSave: (institution: InstitutionEntity) => void;
+  onSave: (institution: InstitutionEntity) => void | Promise<void>;
 }
 
 interface InstitutionFormState {
@@ -51,10 +51,10 @@ export default function InstitutionDetailsModal({
     setForm((currentForm) => ({ ...currentForm, [field]: value }));
   }
 
-  function submitForm(event: FormEvent<HTMLFormElement>) {
+  async function submitForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    onSave({
+    await onSave({
       ...institution,
       name: form.name.trim(),
       latitude: Number(form.latitude),
