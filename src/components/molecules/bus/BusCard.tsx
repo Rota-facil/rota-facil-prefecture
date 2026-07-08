@@ -12,8 +12,8 @@ interface BusCardProps {
 }
 
 const statusMap = {
-  operating: "busOperating",
-  outOfOperation: "busOutOfOperation",
+  OPERATION: "busOperating",
+  OUT_OF_OPERATION: "busOutOfOperation",
 } as const;
 
 export default function BusCard({
@@ -28,7 +28,7 @@ export default function BusCard({
         <Bus className="relative h-16 w-16 text-white/90" strokeWidth={1.5} />
         <div className="absolute right-3 top-3">
           <StatusBar
-            variant={statusMap[bus.status ?? "outOfOperation"]}
+            variant={statusMap[bus.status ?? "OUT_OF_OPERATION"]}
             size="xsm"
           />
         </div>
@@ -46,7 +46,7 @@ export default function BusCard({
         </div>
 
         <p className="mt-1 truncate text-xs text-slate-500">
-          Motorista: {bus.driver.name}
+          Motorista: {bus.driver?.name ?? "Sem motorista"}
         </p>
 
         <div className="mt-4 flex items-center gap-2">

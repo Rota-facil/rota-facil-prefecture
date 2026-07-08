@@ -19,6 +19,11 @@ import {
 import type { DriverEntity } from "@/types/entites/DriverEntity";
 import { DriverStatus, DriverStatusMap } from "@/types/enums/DriverStatus";
 
+const mockPrefecture = {
+  id: "prefecture-001",
+  name: "Prefeitura Municipal",
+};
+
 const initialDrivers: DriverEntity[] = [
   {
     id: "driver-001",
@@ -28,6 +33,7 @@ const initialDrivers: DriverEntity[] = [
     completedTrips: 312,
     bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Em dia",
+    prefecture: mockPrefecture,
     status: DriverStatus.AVAILABLE,
     cpf: "123.456.789-00",
     email: "carlos.mendes@rotafacil.com",
@@ -41,6 +47,7 @@ const initialDrivers: DriverEntity[] = [
     completedTrips: 281,
     bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Em dia",
+    prefecture: mockPrefecture,
     status: DriverStatus.ON_ROUTE,
     cpf: "234.567.890-11",
     email: "ana.lima@rotafacil.com",
@@ -54,6 +61,7 @@ const initialDrivers: DriverEntity[] = [
     completedTrips: 156,
     bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Em dia",
+    prefecture: mockPrefecture,
     status: DriverStatus.ON_ROUTE,
     cpf: "345.678.901-22",
     email: "pedro.rocha@rotafacil.com",
@@ -67,6 +75,7 @@ const initialDrivers: DriverEntity[] = [
     completedTrips: 198,
     bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Pendente",
+    prefecture: mockPrefecture,
     status: DriverStatus.AVAILABLE,
     cpf: "456.789.012-33",
     email: "marina.costa@rotafacil.com",
@@ -80,6 +89,7 @@ const initialDrivers: DriverEntity[] = [
     completedTrips: 402,
     bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Em dia",
+    prefecture: mockPrefecture,
     status: DriverStatus.ON_ROUTE,
     cpf: "567.890.123-44",
     email: "roberto.silva@rotafacil.com",
@@ -93,6 +103,7 @@ const initialDrivers: DriverEntity[] = [
     completedTrips: 89,
     bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Em dia",
+    prefecture: mockPrefecture,
     status: DriverStatus.ON_ROUTE,
     cpf: "678.901.234-55",
     email: "juliana.alves@rotafacil.com",
@@ -139,6 +150,7 @@ export default function Drivers() {
       score: 0,
       completedTrips: 0,
       documentationStatus: "Docs: Em dia",
+      prefecture: mockPrefecture,
       status: DriverStatus.ON_ROUTE,
       cpf: "",
       email: "",
@@ -149,18 +161,24 @@ export default function Drivers() {
   async function editDriver(updatedFields: DriverFormData) {
     if (!selectedDriver) return;
 
-    await updateDriverInfo(selectedDriver.id, {
-      name: updatedFields.name,
-      email: updatedFields.email,
-      cpf: updatedFields.cpf,
-    });
+    const driverInfoChanged =
+      selectedDriver.name !== updatedFields.name ||
+      selectedDriver.email !== updatedFields.email ||
+      selectedDriver.cpf !== updatedFields.cpf;
 
-    if (
-      updatedFields.busId &&
-      String(selectedDriver.bus?.id ?? "") !== updatedFields.busId
-    ) {
+    if (driverInfoChanged) {
+      await updateDriverInfo(selectedDriver.id, {
+        name: updatedFields.name,
+        email: updatedFields.email,
+        cpf: updatedFields.cpf,
+      });
+    }
+
+    const nextBusId = updatedFields.busId ?? "";
+
+    if (String(selectedDriver.bus?.id ?? "") !== nextBusId) {
       await changeBusDriver(selectedDriver.id, {
-        busId: updatedFields.busId,
+        busId: nextBusId || null,
       });
     }
 

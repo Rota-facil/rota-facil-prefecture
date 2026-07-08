@@ -1,5 +1,6 @@
 import { env } from "@/config/env";
 import { getToken } from "@/service/auth/TokenService";
+import { handleHttpError } from "@/service/HttpErrorService";
 import type { MetricResponse } from "@/types/response/MetricResponse";
 
 export async function getMetrics(): Promise<MetricResponse> {
@@ -12,7 +13,7 @@ export async function getMetrics(): Promise<MetricResponse> {
   });
 
   if (!response.ok) {
-    throw new Error("Erro ao buscar metricas");
+    await handleHttpError(response, "Erro ao buscar métricas");
   }
   return response.json();
 }

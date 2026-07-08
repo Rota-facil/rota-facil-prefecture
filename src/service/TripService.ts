@@ -1,5 +1,6 @@
 import { env } from "@/config/env";
 import { getToken } from "@/service/auth/TokenService";
+import { handleHttpError } from "@/service/HttpErrorService";
 import type { TripEntity } from "@/types/entites/TripEntity";
 import type { PageResponse } from "@/types/response/PageResponse";
 
@@ -18,7 +19,7 @@ export async function listTrips(
   );
 
   if (!response.ok) {
-    throw Error("Erro ao listar viagens");
+    await handleHttpError(response, "Erro ao listar viagens");
   }
 
   return response.json();

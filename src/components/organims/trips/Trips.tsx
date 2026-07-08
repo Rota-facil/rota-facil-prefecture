@@ -454,7 +454,7 @@ export default function Trips() {
     {
       id: "driver",
       header: "Motorista",
-      cell: (trip) => trip.bus.driver.name,
+      cell: (trip) => trip.bus.driver?.name ?? "Sem motorista",
     },
     {
       id: "bus",

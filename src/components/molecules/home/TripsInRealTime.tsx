@@ -55,7 +55,7 @@ export default function TripsInRealTime() {
                   <PhotoWithNameAndDescriptions
                     photo={`${trip.name[0].toUpperCase()}-${tripCount++}`}
                     title={trip.name}
-                    description={`${trip.bus.driver.name} • ${trip.students} alunos`}
+                    description={`${trip.bus.driver?.name ?? "Sem motorista"} • ${trip.students} alunos`}
                     size={"sm"}
                   />
                 </div>

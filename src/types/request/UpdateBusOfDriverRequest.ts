@@ -1,3 +1,3 @@
 export interface UpdateBusOfDriverRequest {
-  busId: string;
+  busId: string | null;
 }

@@ -1,4 +1,5 @@
 import { BusEntity, type BusOperationStatus } from "@/types/entites/BusEntity";
+import type { PrefectureEntity } from "@/types/entites/PrefectureEntity";
 import type { UserEntity } from "@/types/entites/UserEntity";
 import type { DriverStatus } from "@/types/enums/DriverStatus";
 
@@ -18,6 +19,7 @@ export interface DriverEntity {
   score: number;
   completedTrips: number;
   status: DriverStatus;
+  prefecture: PrefectureEntity;
   cpf: string;
   email: string;
   createdAt: string;
