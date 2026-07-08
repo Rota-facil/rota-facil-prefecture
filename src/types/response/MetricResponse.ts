@@ -8,4 +8,8 @@ export interface MetricResponse {
   totalTripsStarted: number;
   percentPointTrips: number;
   studentsServed: number;
+  tripsInRoute: number;
+  tripsFinishedToday: number;
+  tripsCancelledToday: number;
+  tripsWaiting: number;
 }
