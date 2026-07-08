@@ -312,7 +312,7 @@ export default function Routes() {
   useEffect(() => {
     async function fetchResources() {
       setInstitutions(await listInstitutions());
-      setBoardPoints(await listBoardPoints());
+      setBoardPoints((await listBoardPoints(0, 100)).content);
       setBus(await listBus());
     }
     fetchResources();

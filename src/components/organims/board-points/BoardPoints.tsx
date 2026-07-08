@@ -1,81 +1,33 @@
 "use client";
 
 import { AlertTriangle, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import TableActionButton from "@/components/atom/TableActionButton";
 import BoardPointForm from "@/components/molecules/board-points/BoardPointForm";
 import DataTable, {
   type DataTableColumn,
 } from "@/components/molecules/DataTable";
 import { Button } from "@/components/ui/button";
+import {
+  createBoardPoint,
+  deleteBoardPoint,
+  listBoardPoints,
+  updateBoardPoint,
+} from "@/service/BoardPointService";
 import type { BoardPointEntity } from "@/types/entites/BoardPointEntity";
 import type { CreateBoardPointRequest } from "@/types/request/BoardPointRequest";
-
-const initialBoardPoints: BoardPointEntity[] = [
-  {
-    id: "board-point-001",
-    name: "Praça Central",
-    latitude: -19.9187,
-    longitude: -43.9386,
-    createdAtLabel: "Criado há 4 dias",
-    routeCount: 4,
-  },
-  {
-    id: "board-point-002",
-    name: "Av. das Palmeiras, 240",
-    latitude: -19.9012,
-    longitude: -43.9501,
-    createdAtLabel: "Criado há 4 dias",
-    routeCount: 2,
-  },
-  {
-    id: "board-point-003",
-    name: "Esquina Bahia / Goiás",
-    latitude: -19.9234,
-    longitude: -43.942,
-    createdAtLabel: "Criado há 3 dias",
-    routeCount: 3,
-  },
-  {
-    id: "board-point-004",
-    name: "Mercado do Bairro",
-    latitude: -19.9301,
-    longitude: -43.9588,
-    createdAtLabel: "Criado há 2 dias",
-    routeCount: 2,
-  },
-  {
-    id: "board-point-005",
-    name: "Igreja São José",
-    latitude: -19.9402,
-    longitude: -43.9601,
-    createdAtLabel: "Criado ontem",
-    routeCount: 1,
-  },
-];
 
 function formatCoordinate(value: number) {
   return value.toFixed(4);
 }
 
-function buildBoardPointFromRequest(
-  request: CreateBoardPointRequest,
-  routeCount: number,
-  id?: string,
-): BoardPointEntity {
-  return {
-    id: id ?? crypto.randomUUID(),
-    name: request.name,
-    latitude: request.latitude,
-    longitude: request.longitude,
-    createdAtLabel: id ? "Atualizado agora" : "Criado agora",
-    routeCount,
-  };
-}
+const PAGE_SIZE = 5;
 
 export default function BoardPoints() {
-  const [boardPoints, setBoardPoints] =
-    useState<BoardPointEntity[]>(initialBoardPoints);
+  const [boardPoints, setBoardPoints] = useState<BoardPointEntity[]>([]);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalBoardPoints, setTotalBoardPoints] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
   const [editingBoardPoint, setEditingBoardPoint] =
     useState<BoardPointEntity>();
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -91,7 +43,9 @@ export default function BoardPoints() {
           <span className="font-mono text-xs font-semibold text-[#1E3A8A]">
             P-
             {String(
-              boardPoints.findIndex((item) => item.id === boardPoint.id) + 1,
+              currentPage * PAGE_SIZE +
+                boardPoints.findIndex((item) => item.id === boardPoint.id) +
+                1,
             ).padStart(3, "0")}
           </span>
         ),
@@ -165,7 +119,7 @@ export default function BoardPoints() {
         headerClassName: "text-right",
       },
     ],
-    [boardPoints],
+    [boardPoints, currentPage],
   );
 
   function closeForm() {
@@ -173,29 +127,46 @@ export default function BoardPoints() {
     setEditingBoardPoint(undefined);
   }
 
-  function saveBoardPoint(request: CreateBoardPointRequest) {
+  const fetchBoardPoints = useCallback(
+    async (page = currentPage) => {
+      const response = await listBoardPoints(page, PAGE_SIZE);
+      setBoardPoints(response.content);
+      setTotalBoardPoints(response.page.totalElements);
+      setTotalPages(response.page.totalPages || 1);
+    },
+    [currentPage],
+  );
+
+  async function saveBoardPoint(request: CreateBoardPointRequest) {
     if (editingBoardPoint) {
-      setBoardPoints((currentBoardPoints) =>
-        currentBoardPoints.map((boardPoint) =>
-          boardPoint.id === editingBoardPoint.id
-            ? buildBoardPointFromRequest(
-                request,
-                boardPoint.routeCount,
-                boardPoint.id,
-              )
-            : boardPoint,
-        ),
-      );
+      await updateBoardPoint(editingBoardPoint.id, request);
+      await fetchBoardPoints();
     } else {
-      setBoardPoints((currentBoardPoints) => [
-        buildBoardPointFromRequest(request, 0),
-        ...currentBoardPoints,
-      ]);
+      await createBoardPoint(request);
+      setCurrentPage(0);
+      await fetchBoardPoints(0);
     }
 
     closeForm();
   }
 
+  async function deleteBoardPointFromService(boardPoint: BoardPointEntity) {
+    await deleteBoardPoint(boardPoint.id);
+    setBoardPointPendingDelete(undefined);
+
+    if (boardPoints.length === 1 && currentPage > 0) {
+      const previousPage = currentPage - 1;
+      setCurrentPage(previousPage);
+      await fetchBoardPoints(previousPage);
+      return;
+    }
+
+    await fetchBoardPoints();
+  }
+
+  useEffect(() => {
+    fetchBoardPoints();
+  }, [fetchBoardPoints]);
   return (
     <div className="-m-5 flex min-h-[calc(100vh-4rem)] flex-col gap-6 bg-slate-50 px-6 py-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -225,7 +196,7 @@ export default function BoardPoints() {
 
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-slate-500">
-          {boardPoints.length} ponto(s) cadastrado(s)
+          {totalBoardPoints} ponto(s) cadastrado(s)
         </p>
       </div>
 
@@ -234,7 +205,11 @@ export default function BoardPoints() {
         data={boardPoints}
         getRowId={(boardPoint) => boardPoint.id}
         emptyMessage="Nenhum ponto de embarque cadastrado."
-        pageSize={5}
+        pageSize={PAGE_SIZE}
+        currentPage={currentPage + 1}
+        totalItems={totalBoardPoints}
+        totalPages={totalPages}
+        onPageChange={(page) => setCurrentPage(page - 1)}
       />
 
       {boardPointPendingDelete && (
@@ -250,7 +225,7 @@ export default function BoardPoints() {
                 </p>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
                   Deseja excluir o ponto {boardPointPendingDelete.name}? Esta
-                  ação remove o item da listagem local desta tela.
+                  ação remove o ponto no cadastro de locais.
                 </p>
               </div>
             </div>
@@ -270,15 +245,9 @@ export default function BoardPoints() {
                 variant="destructive"
                 size="xs"
                 className="h-9 cursor-pointer rounded-xl bg-[#DC2626] px-4 text-xs font-semibold text-white shadow-[0_16px_36px_-20px_rgba(220,38,38,0.9)] hover:bg-red-700"
-                onClick={() => {
-                  setBoardPoints((currentBoardPoints) =>
-                    currentBoardPoints.filter(
-                      (boardPoint) =>
-                        boardPoint.id !== boardPointPendingDelete.id,
-                    ),
-                  );
-                  setBoardPointPendingDelete(undefined);
-                }}
+                onClick={() =>
+                  deleteBoardPointFromService(boardPointPendingDelete)
+                }
               >
                 Excluir ponto
               </Button>
