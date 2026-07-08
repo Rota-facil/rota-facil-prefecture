@@ -1,160 +1,86 @@
 "use client";
 
 import { AlertCircle } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import PredictiveFeatureBadge from "@/components/atom/predictive-analysis/PredictiveFeatureBadge";
 import PredictiveSummaryCard from "@/components/atom/predictive-analysis/PredictiveSummaryCard";
 import PredictiveAnalysisRecentCard from "@/components/molecules/predictive-analysis/PredictiveAnalysisRecentCard";
 import PredictiveAnalysisResult from "@/components/molecules/predictive-analysis/PredictiveAnalysisResult";
 import PredictiveGeneratePanel from "@/components/molecules/predictive-analysis/PredictiveGeneratePanel";
+import {
+  generateRouteAnalysis,
+  listRouteAnalyses,
+  listRoutesSimple,
+} from "@/service/RouteService";
 import type { PredictiveAnalysisEntity } from "@/types/entites/PredictiveAnalysisEntity";
 import type { RouteEntity } from "@/types/entites/RouteEntity";
 
-const mockRoutes: RouteEntity[] = [
-  {
-    id: "route-12",
-    code: "R-12",
-    name: "Centro -> E.M. João Paulo",
-    shift: "MORNING",
-    going: "06:30",
-    goingFinish: "07:20",
-    return_: "12:00",
-    returnFinish: "12:50",
-    daysOfWeek: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"],
-    institutions: [
-      { id: "inst-01", name: "E.M. João Paulo" },
-      { id: "inst-02", name: "E.E. Santos Dumont" },
-    ],
-    bus: [{ id: "bus-01", label: "Ônibus 01" }],
-    boardPoints: [
-      {
-        boardPointId: "point-01",
-        name: "Praça Central",
-        boardTimeGoing: "06:40",
-        boardTimeFinish: "12:10",
-      },
-      {
-        boardPointId: "point-02",
-        name: "Posto Vila Nova",
-        boardTimeGoing: "06:55",
-        boardTimeFinish: "12:25",
-      },
-    ],
-    status: "ACTIVE",
-    updatedAtLabel: "Atualizada há 2 dias",
-  },
-  {
-    id: "route-08",
-    code: "R-08",
-    name: "Vila Nova -> E.E. Santos Dumont",
-    shift: "MORNING",
-    going: "06:20",
-    goingFinish: "07:10",
-    return_: "11:50",
-    returnFinish: "12:35",
-    daysOfWeek: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"],
-    institutions: [{ id: "inst-02", name: "E.E. Santos Dumont" }],
-    bus: [{ id: "bus-02", label: "Ônibus 02" }],
-    boardPoints: [
-      {
-        boardPointId: "point-02",
-        name: "Posto Vila Nova",
-        boardTimeGoing: "06:35",
-        boardTimeFinish: "12:10",
-      },
-      {
-        boardPointId: "point-03",
-        name: "Comunidade Rural",
-        boardTimeGoing: "06:50",
-        boardTimeFinish: "12:22",
-      },
-    ],
-    status: "ACTIVE",
-    updatedAtLabel: "Atualizada ontem",
-  },
-  {
-    id: "route-04",
-    code: "R-04",
-    name: "Bairro Alto -> CMEI Girassol",
-    shift: "AFTERNOON",
-    going: "12:30",
-    goingFinish: "13:20",
-    return_: "17:00",
-    returnFinish: "17:45",
-    daysOfWeek: ["MONDAY", "WEDNESDAY", "FRIDAY"],
-    institutions: [{ id: "inst-03", name: "CMEI Girassol" }],
-    bus: [{ id: "bus-03", label: "Ônibus 03" }],
-    boardPoints: [
-      {
-        boardPointId: "point-04",
-        name: "Rua das Flores",
-        boardTimeGoing: "12:45",
-        boardTimeFinish: "17:15",
-      },
-    ],
-    status: "PAUSED",
-    updatedAtLabel: "Atualizada há 4 dias",
-  },
-];
-
-const mockAnalyses: PredictiveAnalysisEntity[] = [
-  {
-    id: "analysis-01",
-    route: mockRoutes[0],
-    createdAtLabel: "Gerada há 2 horas",
-    interpretation:
-      "A rota R-12 apresenta comportamento estável no turno matutino. O histórico indica maior pressão operacional entre 06:40 e 07:05, principalmente nos dois primeiros pontos de embarque. Recomenda-se acompanhar a pontualidade da saída inicial e manter o ônibus atual para evitar perda de margem no horário de chegada.",
-  },
-  {
-    id: "analysis-02",
-    route: mockRoutes[1],
-    createdAtLabel: "Gerada ontem",
-    interpretation:
-      "A rota R-08 tende a concentrar embarques em pontos afastados, com risco moderado de atraso quando há variação no tempo de deslocamento até a Comunidade Rural. O planejamento atual é adequado, mas a rota se beneficiaria de uma revisão fina nos horários de embarque caso o volume de estudantes aumente.",
-  },
-];
-
-function createMockInterpretation(route: RouteEntity) {
-  const firstPoint = route.boardPoints[0]?.name ?? "primeiro ponto";
-  const lastPoint = route.boardPoints.at(-1)?.name ?? "último ponto";
-
-  return `A rota ${route.code} foi avaliada com base nos horários cadastrados, pontos de embarque e recorrência semanal. A operação aparenta maior sensibilidade entre ${firstPoint} e ${lastPoint}, especialmente no período de saída. Recomenda-se monitorar a ocupação do ônibus ${route.bus[0]?.label ?? "vinculado"} e comparar a pontualidade das próximas viagens para confirmar a tendência.`;
-}
-
 export default function PredictiveAnalysis() {
-  const [selectedRouteId, setSelectedRouteId] = useState(
-    mockRoutes[0]?.id ?? "",
-  );
-  const [currentResult, setCurrentResult] = useState(
-    mockAnalyses[0]?.interpretation ?? "",
-  );
-  const [recentAnalyses, setRecentAnalyses] =
-    useState<PredictiveAnalysisEntity[]>(mockAnalyses);
+  const [routes, setRoutes] = useState<RouteEntity[]>([]);
+  const [selectedRouteId, setSelectedRouteId] = useState("");
+  const [currentResult, setCurrentResult] = useState("");
+  const [recentAnalyses, setRecentAnalyses] = useState<
+    PredictiveAnalysisEntity[]
+  >([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState("");
   const [routeSelectOpen, setRouteSelectOpen] = useState(false);
 
   const selectedRoute = useMemo(
-    () => mockRoutes.find((route) => route.id === selectedRouteId),
-    [selectedRouteId],
+    () => routes.find((route) => route.id === selectedRouteId),
+    [routes, selectedRouteId],
   );
 
   const selectedRouteHasAnalysis = recentAnalyses.some(
     (analysis) => analysis.route.id === selectedRoute?.id,
   );
 
-  function handleRouteChange(routeId: string) {
-    const routeAnalysis = recentAnalyses.find(
-      (analysis) => analysis.route.id === routeId,
-    );
+  const fetchAnalyses = useCallback(async (route: RouteEntity) => {
+    const analyses = await listRouteAnalyses(route);
+    setRecentAnalyses(analyses);
+    setCurrentResult(analyses[0]?.interpretation ?? "");
+  }, []);
+
+  useEffect(() => {
+    async function fetchRoutes() {
+      try {
+        setError("");
+        const routesFound = await listRoutesSimple();
+        setRoutes(routesFound);
+
+        const firstRoute = routesFound[0];
+        if (firstRoute) {
+          setSelectedRouteId(firstRoute.id);
+          await fetchAnalyses(firstRoute);
+        }
+      } catch (e) {
+        setError((e as Error).message);
+      }
+    }
+
+    fetchRoutes();
+  }, [fetchAnalyses]);
+
+  async function handleRouteChange(routeId: string) {
+    const route = routes.find((routeItem) => routeItem.id === routeId);
 
     setSelectedRouteId(routeId);
-    setCurrentResult(routeAnalysis?.interpretation ?? "");
+    setCurrentResult("");
     setError("");
     setRouteSelectOpen(false);
+
+    if (!route) {
+      return;
+    }
+
+    try {
+      await fetchAnalyses(route);
+    } catch (e) {
+      setError((e as Error).message);
+    }
   }
 
-  function handleGenerateAnalysis() {
+  async function handleGenerateAnalysis() {
     if (!selectedRoute) {
       setError("Escolha uma rota antes de gerar a análise.");
       return;
@@ -163,24 +89,20 @@ export default function PredictiveAnalysis() {
     setIsGenerating(true);
     setError("");
 
-    window.setTimeout(() => {
-      const interpretation = createMockInterpretation(selectedRoute);
-      const nextAnalysis: PredictiveAnalysisEntity = {
-        id: `analysis-${Date.now()}`,
-        route: selectedRoute,
-        interpretation,
-        createdAtLabel: "Gerada agora",
-      };
-
-      setCurrentResult(interpretation);
+    try {
+      const nextAnalysis = await generateRouteAnalysis(selectedRoute);
+      setCurrentResult(nextAnalysis.interpretation);
       setRecentAnalyses((currentAnalyses) => [
         nextAnalysis,
         ...currentAnalyses.filter(
-          (analysis) => analysis.route.id !== selectedRoute.id,
+          (analysis) => analysis.id !== nextAnalysis.id,
         ),
       ]);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
       setIsGenerating(false);
-    }, 700);
+    }
   }
 
   function handleSelectAnalysis(analysis: PredictiveAnalysisEntity) {
@@ -205,7 +127,7 @@ export default function PredictiveAnalysis() {
         <div className="grid gap-3 sm:grid-cols-2 lg:min-w-96">
           <PredictiveSummaryCard
             label="Rotas disponíveis"
-            value={mockRoutes.length}
+            value={routes.length}
           />
           <PredictiveSummaryCard
             label="Análises recentes"
@@ -223,7 +145,7 @@ export default function PredictiveAnalysis() {
 
       <div className="grid gap-5 xl:grid-cols-[420px_1fr]">
         <PredictiveGeneratePanel
-          routes={mockRoutes}
+          routes={routes}
           selectedRoute={selectedRoute}
           selectedRouteId={selectedRouteId}
           routeSelectOpen={routeSelectOpen}
@@ -247,20 +169,26 @@ export default function PredictiveAnalysis() {
               Análises recentes
             </p>
             <p className="text-sm text-slate-500">
-              Histórico de interpretações geradas para rotas diferentes.
+              Histórico de interpretações geradas para a rota selecionada.
             </p>
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {recentAnalyses.slice(0, 6).map((analysis) => (
-            <PredictiveAnalysisRecentCard
-              key={analysis.id}
-              analysis={analysis}
-              onSelect={handleSelectAnalysis}
-            />
-          ))}
-        </div>
+        {recentAnalyses.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center text-sm font-medium text-slate-500">
+            Nenhuma análise gerada para esta rota.
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {recentAnalyses.slice(0, 6).map((analysis) => (
+              <PredictiveAnalysisRecentCard
+                key={analysis.id}
+                analysis={analysis}
+                onSelect={handleSelectAnalysis}
+              />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
