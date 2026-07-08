@@ -14,17 +14,26 @@ interface TripProgressModalProps {
   onClose: () => void;
 }
 
+function hasValidCoordinates(latitude: number, longitude: number) {
+  return latitude !== 0 || longitude !== 0;
+}
+
 function buildOpenStreetMapHtml(trip: TripEntity) {
-  const busMarker = {
-    type: "bus",
-    label: "Ônibus",
-    name: trip.bus.plate,
-    latitude: trip.latitude,
-    longitude: trip.longitude,
-  };
+  const shouldShowBus = hasValidCoordinates(trip.latitude, trip.longitude);
+  const busMarker = shouldShowBus
+    ? [
+        {
+          type: "bus",
+          label: "Ônibus",
+          name: trip.bus.plate,
+          latitude: trip.latitude,
+          longitude: trip.longitude,
+        },
+      ]
+    : [];
   const boardPointMarkers = trip.route.boardPoints.map((point) => ({
     type: "boarding",
-    label: "Ponto",
+    label: "Ponto de embarque",
     name: point.name,
     latitude: point.latitude,
     longitude: point.longitude,
@@ -36,7 +45,8 @@ function buildOpenStreetMapHtml(trip: TripEntity) {
     latitude: point.latitude,
     longitude: point.longitude,
   }));
-  const markers = [busMarker, ...boardPointMarkers, ...institutionMarkers];
+  const markers = [...busMarker, ...boardPointMarkers, ...institutionMarkers];
+  const firstMarker = markers[0] ?? { latitude: -14.235, longitude: -51.9253 };
 
   return `<!doctype html>
 <html>
@@ -46,9 +56,12 @@ function buildOpenStreetMapHtml(trip: TripEntity) {
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     html, body, #map { height: 100%; margin: 0; }
-    .bus-marker { width: 26px; height: 26px; border-radius: 999px; background: #1E3A8A; border: 5px solid #fff; box-shadow: 0 0 0 5px rgba(30,58,138,.22), 0 10px 28px rgba(30,58,138,.45); }
-    .point-marker { width: 20px; height: 20px; border-radius: 999px; background: #059669; border: 4px solid #fff; box-shadow: 0 0 0 4px rgba(5,150,105,.2), 0 8px 22px rgba(15,23,42,.35); }
-    .institution-marker { width: 21px; height: 21px; border-radius: 6px; background: #F59E0B; border: 4px solid #fff; box-shadow: 0 0 0 4px rgba(245,158,11,.22), 0 8px 22px rgba(15,23,42,.35); }
+    body { background: #EEF2F7; }
+    .marker-shell { width: 44px; height: 44px; border-radius: 999px; display: grid; place-items: center; border: 4px solid #fff; box-shadow: 0 0 0 5px var(--glow), 0 14px 30px rgba(15,23,42,.34); }
+    .marker-shell svg { width: 24px; height: 24px; stroke: #fff; stroke-width: 2.35; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .bus-marker { --glow: rgba(30,58,138,.24); background: #1E3A8A; }
+    .boarding-marker { --glow: rgba(5,150,105,.24); background: #059669; }
+    .institution-marker { --glow: rgba(245,158,11,.28); background: #F59E0B; border-radius: 14px; }
     .leaflet-popup-content { font-family: Arial, sans-serif; font-size: 12px; }
   </style>
 </head>
@@ -57,16 +70,22 @@ function buildOpenStreetMapHtml(trip: TripEntity) {
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const markers = ${JSON.stringify(markers)};
-    const map = L.map('map', { zoomControl: true }).setView([${trip.latitude}, ${trip.longitude}], 16);
+    const map = L.map('map', { zoomControl: true }).setView([${firstMarker.latitude}, ${firstMarker.longitude}], 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
+    const iconHtml = {
+      bus: '<div class="marker-shell bus-marker"><svg viewBox="0 0 24 24"><path d="M6 17h12"/><path d="M6 17v2"/><path d="M18 17v2"/><path d="M5 6c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v10H5V6Z"/><path d="M7 8h10"/><path d="M8 13h.01"/><path d="M16 13h.01"/></svg></div>',
+      boarding: '<div class="marker-shell boarding-marker"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.1 7-11a7 7 0 1 0-14 0c0 5.9 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg></div>',
+      institution: '<div class="marker-shell institution-marker"><svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/><path d="M9 10h.01"/><path d="M15 10h.01"/></svg></div>'
+    };
+
     const icons = {
-      bus: L.divIcon({ className: '', html: '<div class="bus-marker"></div>', iconSize: [36, 36], iconAnchor: [18, 18] }),
-      boarding: L.divIcon({ className: '', html: '<div class="point-marker"></div>', iconSize: [28, 28], iconAnchor: [14, 14] }),
-      institution: L.divIcon({ className: '', html: '<div class="institution-marker"></div>', iconSize: [29, 29], iconAnchor: [14, 14] })
+      bus: L.divIcon({ className: '', html: iconHtml.bus, iconSize: [52, 52], iconAnchor: [26, 26] }),
+      boarding: L.divIcon({ className: '', html: iconHtml.boarding, iconSize: [52, 52], iconAnchor: [26, 26] }),
+      institution: L.divIcon({ className: '', html: iconHtml.institution, iconSize: [52, 52], iconAnchor: [26, 26] })
     };
 
     const bounds = [];
@@ -77,6 +96,10 @@ function buildOpenStreetMapHtml(trip: TripEntity) {
         .addTo(map)
         .bindPopup('<strong>' + marker.label + '</strong><br />' + marker.name);
     });
+
+    if (bounds.length > 1) {
+      map.fitBounds(bounds, { padding: [48, 48], maxZoom: 16 });
+    }
 
     setTimeout(() => map.invalidateSize(), 150);
   </script>
@@ -111,6 +134,51 @@ function getDelayClassName(delay: string) {
   }
 
   return "bg-emerald-50 text-emerald-700 ring-emerald-200";
+}
+
+function LegendIcon({
+  type,
+  icon,
+}: {
+  type: "bus" | "boarding" | "institution";
+  icon: React.ReactNode;
+}) {
+  const classNames = {
+    bus: "bg-[#1E3A8A] shadow-[0_0_0_4px_rgba(30,58,138,0.16)]",
+    boarding: "bg-emerald-600 shadow-[0_0_0_4px_rgba(5,150,105,0.16)]",
+    institution:
+      "rounded-lg bg-amber-500 shadow-[0_0_0_4px_rgba(245,158,11,0.18)]",
+  };
+
+  return (
+    <span
+      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-white text-white ${classNames[type]}`}
+    >
+      {icon}
+    </span>
+  );
+}
+
+function MapLegend({ showBus }: { showBus: boolean }) {
+  return (
+    <div className="flex flex-wrap gap-3 border-t border-[#E5EAF0] bg-white px-4 py-3 text-xs font-medium text-slate-600">
+      <div className="flex items-center gap-2">
+        <LegendIcon type="bus" icon={<Bus className="h-4 w-4" />} />
+        <span>{showBus ? "Ônibus" : "Ônibus sem localização"}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <LegendIcon type="boarding" icon={<MapPin className="h-4 w-4" />} />
+        <span>Ponto de embarque</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <LegendIcon
+          type="institution"
+          icon={<Building2 className="h-4 w-4" />}
+        />
+        <span>Instituição</span>
+      </div>
+    </div>
+  );
 }
 
 function PointList({
@@ -154,6 +222,7 @@ export default function TripProgressModal({
   const status = ProgressMap[trip.actualStatus];
   const ignoredInstitutions = trip.ignoredInstitutions ?? [];
   const ignoredBoardPoints = trip.ignoredBoardPoints ?? [];
+  const showBusOnMap = hasValidCoordinates(trip.latitude, trip.longitude);
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
@@ -197,6 +266,7 @@ export default function TripProgressModal({
                 className="h-[360px] w-full border-0"
                 loading="lazy"
               />
+              <MapLegend showBus={showBusOnMap} />
             </div>
 
             <div className="grid gap-3">
@@ -229,7 +299,9 @@ export default function TripProgressModal({
                   <div className="flex justify-between gap-3">
                     <span>Coordenadas atuais</span>
                     <strong className="text-right font-mono text-xs text-slate-900">
-                      {trip.latitude.toFixed(5)}, {trip.longitude.toFixed(5)}
+                      {showBusOnMap
+                        ? `${trip.latitude.toFixed(5)}, ${trip.longitude.toFixed(5)}`
+                        : "Aguardando localização"}
                     </strong>
                   </div>
                 </div>
