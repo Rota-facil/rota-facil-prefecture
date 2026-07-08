@@ -15,14 +15,16 @@ import StatusBar from "@/components/atom/statusBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { BusEntity, BusOperationStatus } from "@/types/entites/BusEntity";
-import type { UserEntity } from "@/types/entites/UserEntity";
+import type { DriverEntity } from "@/types/entites/DriverEntity";
+import type { CreateBusRequest } from "@/types/request/CreateBusRequest";
 
 interface BusDetailsModalProps {
   bus: BusEntity;
   mode?: "details" | "create" | "edit";
   onClose: () => void;
   onSave: (bus: BusEntity) => void;
-  availableDrivers: UserEntity[];
+  onCreate: (request: CreateBusRequest) => void | Promise<void>;
+  availableDrivers: DriverEntity[];
 }
 
 interface BusFormState {
@@ -33,16 +35,16 @@ interface BusFormState {
 }
 
 const statusMap = {
-  operating: "busOperating",
-  outOfOperation: "busOutOfOperation",
+  OPERATION: "busOperating",
+  OUT_OF_OPERATION: "busOutOfOperation",
 } as const;
 
 function mapBusToForm(bus: BusEntity): BusFormState {
   return {
     plate: bus.plate,
     capacity: String(bus.capacity),
-    driverId: bus.driver.id,
-    status: bus.status ?? "outOfOperation",
+    driverId: bus.driver?.id ?? "",
+    status: bus.status ?? "OUT_OF_OPERATION",
   };
 }
 
@@ -51,6 +53,7 @@ export default function BusDetailsModal({
   mode = "details",
   onClose,
   onSave,
+  onCreate,
   availableDrivers,
 }: BusDetailsModalProps) {
   const isCreating = mode === "create";
@@ -62,12 +65,12 @@ export default function BusDetailsModal({
   const driverSelectRef = useRef<HTMLDivElement>(null);
   const statusSelectRef = useRef<HTMLDivElement>(null);
 
-  const selectedDriver =
-    availableDrivers.find((driver) => driver.id === form.driverId) ??
-    availableDrivers[0];
+  const selectedDriver = availableDrivers.find(
+    (driver) => driver.id === form.driverId,
+  );
   const statusOptions = [
-    { value: "operating", label: "Em operação" },
-    { value: "outOfOperation", label: "Fora de operação" },
+    { value: "OPERATION", label: "Em operação" },
+    { value: "OUT_OF_OPERATION", label: "Fora de operação" },
   ] satisfies { value: BusOperationStatus; label: string }[];
   const selectedStatus = statusOptions.find(
     (option) => option.value === form.status,
@@ -103,15 +106,24 @@ export default function BusDetailsModal({
     setForm((currentForm) => ({ ...currentForm, [field]: value }));
   }
 
-  function submitForm(event: FormEvent<HTMLFormElement>) {
+  async function submitForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (isCreating) {
+      await onCreate({
+        plate: form.plate.trim().toUpperCase(),
+        capacity: Number(form.capacity),
+        driverId: selectedDriver?.id ?? null,
+      });
+      return;
+    }
 
     onSave({
       ...bus,
       plate: form.plate.trim().toUpperCase(),
       capacity: Number(form.capacity),
       status: form.status,
-      driver: selectedDriver,
+      driver: selectedDriver ?? null,
     });
     setIsEditing(false);
   }
@@ -232,7 +244,7 @@ export default function BusDetailsModal({
                       onClick={() => setIsDriverSelectOpen((isOpen) => !isOpen)}
                     >
                       <span className="truncate">
-                        {selectedDriver?.name ?? "Selecione um motorista"}
+                        {selectedDriver?.name ?? "Sem motorista"}
                       </span>
                       <ChevronDown
                         className={`h-4 w-4 shrink-0 text-slate-500 transition-transform duration-200 ${
@@ -243,6 +255,37 @@ export default function BusDetailsModal({
 
                     {isDriverSelectOpen && (
                       <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-40 max-h-60 overflow-auto rounded-2xl border border-slate-100 bg-white p-1 shadow-xl animate-in fade-in slide-in-from-top-1 duration-150">
+                        <button
+                          type="button"
+                          className={`flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2 text-left text-sm font-semibold transition-colors ${
+                            form.driverId === ""
+                              ? "bg-[#1E3A8A] text-white"
+                              : "text-slate-700 hover:bg-slate-50"
+                          }`}
+                          onClick={() => {
+                            updateField("driverId", "");
+                            setIsDriverSelectOpen(false);
+                          }}
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate">
+                              Sem motorista
+                            </span>
+                            <span
+                              className={`block truncate text-[11px] ${
+                                form.driverId === ""
+                                  ? "text-white/70"
+                                  : "text-slate-400"
+                              }`}
+                            >
+                              Vincular depois
+                            </span>
+                          </span>
+                          {form.driverId === "" && (
+                            <Check className="h-4 w-4" />
+                          )}
+                        </button>
+
                         {availableDrivers.map((driver) => {
                           const isSelected = driver.id === form.driverId;
 
@@ -376,7 +419,7 @@ export default function BusDetailsModal({
                   </p>
                   <div className="mt-2">
                     <StatusBar
-                      variant={statusMap[bus.status ?? "outOfOperation"]}
+                      variant={statusMap[bus.status ?? "OUT_OF_OPERATION"]}
                       size="sm"
                     />
                   </div>
@@ -393,9 +436,12 @@ export default function BusDetailsModal({
                   </p>
                 </div>
                 <p className="text-sm font-semibold text-slate-800">
-                  {bus.driver.name}
+                  {bus.driver?.name ?? "Sem motorista"}
                 </p>
-                <p className="text-xs text-slate-500">{bus.driver.email}</p>
+                <p className="text-xs text-slate-500">
+                  {bus.driver?.email ??
+                    "Vincule um motorista para operar este ônibus"}
+                </p>
               </div>
             )}
 

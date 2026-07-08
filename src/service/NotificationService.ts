@@ -1,5 +1,6 @@
 import { env } from "@/config/env";
 import { getToken } from "@/service/auth/TokenService";
+import { handleHttpError } from "@/service/HttpErrorService";
 import type { NotificationEntity } from "@/types/entites/NotificationEntity";
 import type { PageResponse } from "@/types/response/PageResponse";
 
@@ -18,7 +19,7 @@ export async function listMyNotifications(
   );
 
   if (!response.ok) {
-    throw Error("Erro ao listar notificações");
+    await handleHttpError(response, "Erro ao listar notificações");
   }
   return response.json();
 }

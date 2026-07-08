@@ -211,7 +211,7 @@ export default function TripProgressModal({
                   <div className="flex justify-between gap-3">
                     <span>Motorista</span>
                     <strong className="text-right text-slate-900">
-                      {trip.bus.driver.name}
+                      {trip.bus.driver?.name ?? "Sem motorista"}
                     </strong>
                   </div>
                   <div className="flex justify-between gap-3">

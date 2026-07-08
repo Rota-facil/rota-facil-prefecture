@@ -1,89 +1,37 @@
 "use client";
 
 import { AlertTriangle, Plus } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BusCard from "@/components/molecules/bus/BusCard";
 import BusDetailsModal from "@/components/molecules/bus/BusDetailsModal";
 import { Button } from "@/components/ui/button";
+import { createBus, deleteBus, listBus, updateBus } from "@/service/BusService";
+import { listDrivers } from "@/service/UserService";
 import type { BusEntity } from "@/types/entites/BusEntity";
+import type { DriverEntity } from "@/types/entites/DriverEntity";
 import type { PrefectureEntity } from "@/types/entites/PrefectureEntity";
-import type { UserEntity } from "@/types/entites/UserEntity";
+import type { CreateBusRequest } from "@/types/request/CreateBusRequest";
 
 const prefecture: PrefectureEntity = {
   id: "prefecture-001",
   name: "Prefeitura Municipal",
 };
 
-function createDriver(id: string, name: string, email: string): UserEntity {
-  return {
-    id,
-    name,
-    email,
-    cpf: "",
-    prefecture,
-  };
-}
-
-const availableDrivers = [
-  createDriver("driver-001", "Roberto Silva", "roberto@rotafacil.com"),
-  createDriver("driver-002", "Mariana Costa", "mariana@rotafacil.com"),
-  createDriver("driver-003", "Carlos Nunes", "carlos@rotafacil.com"),
-  createDriver("driver-004", "Ana Ferreira", "ana@rotafacil.com"),
-];
-
-const initialBuses: BusEntity[] = [
-  {
-    id: "bus-001",
-    prefectureId: prefecture.id,
-    driver: availableDrivers[0],
-    capacity: 44,
-    plate: "DEF-5K10",
-    status: "operating",
-    createdAt: new Date("2026-01-08T08:00:00"),
-  },
-  {
-    id: "bus-002",
-    prefectureId: prefecture.id,
-    driver: availableDrivers[1],
-    capacity: 36,
-    plate: "JKL-7M22",
-    status: "outOfOperation",
-    createdAt: new Date("2026-01-12T08:00:00"),
-  },
-  {
-    id: "bus-003",
-    prefectureId: prefecture.id,
-    driver: availableDrivers[2],
-    capacity: 50,
-    plate: "GHI-3N09",
-    status: "operating",
-    createdAt: new Date("2026-01-20T08:00:00"),
-  },
-  {
-    id: "bus-004",
-    prefectureId: prefecture.id,
-    driver: availableDrivers[3],
-    capacity: 42,
-    plate: "ABC-1D23",
-    status: "outOfOperation",
-    createdAt: new Date("2026-02-03T08:00:00"),
-  },
-];
-
 function createEmptyBus(): BusEntity {
   return {
     id: crypto.randomUUID(),
     prefectureId: prefecture.id,
-    driver: availableDrivers[0],
+    driver: null,
     capacity: 1,
     plate: "",
-    status: "operating",
+    status: "OPERATION",
     createdAt: new Date(),
   };
 }
 
 export default function Bus() {
-  const [buses, setBuses] = useState<BusEntity[]>(initialBuses);
+  const [availableDrivers, setAvailableDrivers] = useState<DriverEntity[]>([]);
+  const [buses, setBuses] = useState<BusEntity[]>([]);
   const [selectedBus, setSelectedBus] = useState<BusEntity>();
   const [modalMode, setModalMode] = useState<"details" | "create" | "edit">(
     "details",
@@ -100,22 +48,47 @@ export default function Bus() {
     setSelectedBus(createEmptyBus());
   }
 
-  function saveBus(updatedBus: BusEntity) {
-    setBuses((currentBuses) => {
-      const busExists = currentBuses.some((bus) => bus.id === updatedBus.id);
-
-      if (!busExists) {
-        return [updatedBus, ...currentBuses];
-      }
-
-      return currentBuses.map((bus) =>
-        bus.id === updatedBus.id ? updatedBus : bus,
-      );
-    });
+  async function createBusFromService(request: CreateBusRequest) {
+    const busCreated = await createBus(request);
+    setSelectedBus(busCreated);
     setModalMode("details");
-    setSelectedBus(updatedBus);
+    setBuses(await listBus());
   }
 
+  async function saveBus(updatedBus: BusEntity) {
+    const savedBus = await updateBus(updatedBus.id, {
+      plate: updatedBus.plate,
+      capacity: updatedBus.capacity,
+      status: updatedBus.status ?? "OUT_OF_OPERATION",
+      driverId: updatedBus.driver?.id ? String(updatedBus.driver.id) : null,
+    });
+
+    const updatedBuses = await listBus();
+    setBuses(updatedBuses);
+    setAvailableDrivers(await listDrivers());
+    setModalMode("details");
+    setSelectedBus(
+      updatedBuses.find((bus) => bus.id === savedBus.id) ?? savedBus,
+    );
+  }
+
+  async function deleteBusFromService(bus: BusEntity) {
+    await deleteBus(bus.id);
+    setBusPendingDelete(undefined);
+    setBuses(await listBus());
+    setAvailableDrivers(await listDrivers());
+    if (selectedBus?.id === bus.id) {
+      setSelectedBus(undefined);
+    }
+  }
+
+  useEffect(() => {
+    async function fetchResources() {
+      setBuses(await listBus());
+      setAvailableDrivers(await listDrivers());
+    }
+    fetchResources();
+  }, []);
   return (
     <div className="-m-5 flex min-h-[calc(100vh-4rem)] flex-col gap-6 bg-slate-50 px-6 py-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -161,6 +134,7 @@ export default function Bus() {
           mode={modalMode}
           onClose={() => setSelectedBus(undefined)}
           onSave={saveBus}
+          onCreate={createBusFromService}
           availableDrivers={availableDrivers}
         />
       )}
@@ -177,8 +151,8 @@ export default function Bus() {
                   Excluir ônibus
                 </p>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Deseja excluir o ônibus {busPendingDelete.plate}? Esta ação
-                  remove o item da listagem local desta tela.
+                  Deseja excluir o ônibus {busPendingDelete.plate}? Ele será
+                  desativado e removido das rotas recorrentes.
                 </p>
               </div>
             </div>
@@ -198,14 +172,7 @@ export default function Bus() {
                 variant="destructive"
                 size="xs"
                 className="h-9 cursor-pointer rounded-xl bg-[#DC2626] px-4 text-xs font-semibold text-white shadow-[0_16px_36px_-20px_rgba(220,38,38,0.9)] hover:bg-red-700"
-                onClick={() => {
-                  setBuses((currentBuses) =>
-                    currentBuses.filter(
-                      (bus) => bus.id !== busPendingDelete.id,
-                    ),
-                  );
-                  setBusPendingDelete(undefined);
-                }}
+                onClick={() => deleteBusFromService(busPendingDelete)}
               >
                 Excluir ônibus
               </Button>

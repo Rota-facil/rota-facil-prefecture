@@ -1,5 +1,6 @@
 import { env } from "@/config/env";
 import { getToken } from "@/service/auth/TokenService";
+import { handleHttpError } from "@/service/HttpErrorService";
 import type { DriverEntity } from "@/types/entites/DriverEntity";
 import type { UserEntity } from "@/types/entites/UserEntity";
 import type { CreateDriverRequest } from "@/types/request/CreateDriverRequest";
@@ -15,7 +16,7 @@ export async function getCurrentUser(): Promise<UserEntity> {
   });
 
   if (!response.ok) {
-    throw new Error("Erro ao buscar usuário");
+    await handleHttpError(response, "Erro ao buscar usuário");
   }
 
   return response.json();
@@ -31,7 +32,7 @@ export async function listDrivers(): Promise<DriverEntity[]> {
   });
 
   if (!response.ok) {
-    throw new Error("Erro ao listar motoristas");
+    await handleHttpError(response, "Erro ao listar motoristas");
   }
 
   return response.json();
@@ -50,7 +51,7 @@ export async function createNewDriver(
   });
 
   if (!response.ok) {
-    throw new Error("Erro ao criar motorista");
+    await handleHttpError(response, "Erro ao criar motorista");
   }
 
   return response.json();
@@ -60,22 +61,36 @@ export async function updateDriverInfo(
   driverId: string,
   updateDriver: UpdateDriverInfoRequest,
 ): Promise<void> {
-  await fetch(`${env.WEB_BASE_URL}/auth/driver/${driverId}/update`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getToken()}`,
+  const response = await fetch(
+    `${env.WEB_BASE_URL}/auth/driver/${driverId}/update`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify(updateDriver),
     },
-    body: JSON.stringify(updateDriver),
-  });
+  );
+
+  if (!response.ok) {
+    await handleHttpError(response, "Erro ao atualizar motorista");
+  }
 }
 
 export async function deactivateDriver(driverId: string) {
-  await fetch(`${env.WEB_BASE_URL}/auth/driver/${driverId}/delete`, {
-    method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getToken()}`,
+  const response = await fetch(
+    `${env.WEB_BASE_URL}/auth/driver/${driverId}/delete`,
+    {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
     },
-  });
+  );
+
+  if (!response.ok) {
+    await handleHttpError(response, "Erro ao desativar motorista");
+  }
 }

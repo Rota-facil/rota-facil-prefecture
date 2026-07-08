@@ -1,7 +1,7 @@
 import { env } from "@/config/env";
 import { getToken } from "@/service/auth/TokenService";
+import { handleHttpError } from "@/service/HttpErrorService";
 import type { BoardPointEntity } from "@/types/entites/BoardPointEntity";
-import { InstitutionEntity } from "@/types/entites/InstitutionEntity";
 
 export async function listBoardPoints(): Promise<BoardPointEntity[]> {
   const response = await fetch(`${env.WEB_BASE_URL}/places/board-points`, {
@@ -13,7 +13,7 @@ export async function listBoardPoints(): Promise<BoardPointEntity[]> {
   });
 
   if (!response.ok) {
-    throw Error("Erro ao listar pontos de embaruqe");
+    await handleHttpError(response, "Erro ao listar pontos de embarque");
   }
 
   return response.json();

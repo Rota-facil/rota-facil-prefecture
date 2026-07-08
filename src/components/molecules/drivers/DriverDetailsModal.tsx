@@ -69,7 +69,7 @@ export default function DriverDetailsModal({
       name: driver.name,
       cpf: driver.cpf,
       email: driver.email,
-      busId: driver.bus?.id ? String(driver.bus.id) : undefined,
+      busId: driver.bus?.id ? String(driver.bus.id) : "",
     },
   });
 
@@ -107,7 +107,7 @@ export default function DriverDetailsModal({
         name: driver.name,
         cpf: driver.cpf,
         email: driver.email,
-        busId: driver.bus?.id ? String(driver.bus.id) : undefined,
+        busId: driver.bus?.id ? String(driver.bus.id) : "",
       });
     }
   }, [driver, isCreating, reset]);
@@ -423,7 +423,7 @@ export default function DriverDetailsModal({
                           : "border-[#E5EAF0]"
                       }`}
                     >
-                      <span>{selectedBus?.plate ?? "Selecione um ônibus"}</span>
+                      <span>{selectedBus?.plate ?? "Sem ônibus"}</span>
                       <ChevronDown
                         className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isSelectOpen ? "rotate-180" : ""}`}
                       />
@@ -431,6 +431,24 @@ export default function DriverDetailsModal({
 
                     {isSelectOpen && (
                       <div className="absolute left-0 right-0 top-[105%] z-30 mt-1 max-h-60 overflow-auto rounded-xl border border-[#E5EAF0] bg-white p-1 shadow-[0_16px_36px_-20px_rgba(15,23,42,0.35)] animate-in fade-in slide-in-from-top-1 duration-150">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setValue("busId", "", {
+                              shouldValidate: true,
+                            });
+                            setIsSelectOpen(false);
+                          }}
+                          className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors ${
+                            !selectedBusId
+                              ? "bg-[#1E3A8A] text-white"
+                              : "text-slate-700 hover:bg-[#EEF2F7]"
+                          }`}
+                        >
+                          <span>Sem ônibus</span>
+                          {!selectedBusId && <Check className="h-4 w-4" />}
+                        </button>
+
                         {busOptions.map((bus) => {
                           const isSelected = String(bus.id) === selectedBusId;
                           return (
@@ -498,7 +516,7 @@ export default function DriverDetailsModal({
                       name: driver.name,
                       cpf: driver.cpf,
                       email: driver.email,
-                      busId: driver.bus?.id ? String(driver.bus.id) : undefined,
+                      busId: driver.bus?.id ? String(driver.bus.id) : "",
                     });
                   }}
                 >
