@@ -45,7 +45,7 @@ export default function PredictiveRouteSelect({
         >
           <span className="flex min-w-0 items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-xs font-bold text-blue-700 ring-1 ring-blue-100">
-              {selectedRoute?.code ?? "R"}
+              {selectedRoute?.name[0].toUpperCase() ?? "R"}
             </span>
             <span className="min-w-0">
               <span className="block truncate text-sm font-bold text-slate-900">

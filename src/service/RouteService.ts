@@ -1,10 +1,54 @@
 import { env } from "@/config/env";
 import { getToken } from "@/service/auth/TokenService";
 import { handleHttpError } from "@/service/HttpErrorService";
+import type { PredictiveAnalysisEntity } from "@/types/entites/PredictiveAnalysisEntity";
 import type { RouteEntity } from "@/types/entites/RouteEntity";
 import type { CreateRouteRequest } from "@/types/request/RouteRequest";
 import type { PageResponse } from "@/types/response/PageResponse";
 
+interface RouteInterpretationResponse {
+  id: string;
+  routeId: string;
+  routeInterpretation: string;
+  createdAt?: string | null;
+}
+
+function formatAnalysisCreatedAt(value?: string | null): string {
+  if (!value) {
+    return "Gerada recentemente";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "Gerada recentemente";
+  }
+
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function mapPredictiveAnalysis(
+  response: RouteInterpretationResponse,
+  route: RouteEntity,
+): PredictiveAnalysisEntity {
+  const createdAt = response.createdAt
+    ? new Date(response.createdAt)
+    : undefined;
+
+  return {
+    id: response.id,
+    route,
+    interpretation: response.routeInterpretation,
+    createdAtLabel: formatAnalysisCreatedAt(response.createdAt),
+    createdAt:
+      createdAt && !Number.isNaN(createdAt.getTime()) ? createdAt : undefined,
+  };
+}
 interface RouteInstitutionResponse {
   id: string;
   name: string;
@@ -181,4 +225,47 @@ export async function deleteRoute(routeId: string): Promise<void> {
   if (!response.ok) {
     await handleHttpError(response, "Erro ao excluir rota");
   }
+}
+
+export async function listRouteAnalyses(
+  route: RouteEntity,
+): Promise<PredictiveAnalysisEntity[]> {
+  const response = await fetch(
+    `${env.WEB_BASE_URL}/transports/routes/${route.id}/interpretations`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    await handleHttpError(response, "Erro ao listar análises da rota");
+  }
+
+  const data = (await response.json()) as RouteInterpretationResponse[];
+  return data.map((analysis) => mapPredictiveAnalysis(analysis, route));
+}
+
+export async function generateRouteAnalysis(
+  route: RouteEntity,
+): Promise<PredictiveAnalysisEntity> {
+  const response = await fetch(
+    `${env.WEB_BASE_URL}/transports/routes/${route.id}/interpreter`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    await handleHttpError(response, "Erro ao gerar análise da rota");
+  }
+
+  return mapPredictiveAnalysis(await response.json(), route);
 }

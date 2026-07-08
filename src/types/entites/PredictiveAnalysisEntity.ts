@@ -5,4 +5,5 @@ export interface PredictiveAnalysisEntity {
   route: RouteEntity;
   interpretation: string;
   createdAtLabel: string;
+  createdAt?: Date;
 }
