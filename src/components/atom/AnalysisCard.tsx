@@ -1,4 +1,5 @@
 import { BrainCircuit, Flame, type LucideIcon, Sparkles } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 
@@ -8,6 +9,7 @@ const typeAnalysisCard = {
     description: "Preveja atrasos, ocupação e riscos operacionais por rota.",
     buttonText: "Gerar análise",
     badgeText: "IA",
+    href: "/predictive-analysis",
 
     icon: BrainCircuit,
 
@@ -27,6 +29,7 @@ const typeAnalysisCard = {
     description: "Visualize pontos mais movimentados por rota e horário.",
     buttonText: "Gerar mapa",
     badgeText: "IA",
+    href: "/heat-map",
 
     icon: Flame,
 
@@ -171,20 +174,21 @@ export default function AnalysisCard({
             {card.description}
           </p>
 
-          <Button
-            className={`
-              mt-5
-              w-fit
-              rounded-full
-              shadow-md
-              cursor-pointer
-              ${s.button}
-              ${card.button}
-            `}
-          >
-            <Sparkles className="mr-2 h-4 w-4" />
-            {card.buttonText}
-          </Button>
+          <Link href={card.href} className="mt-5 w-fit">
+            <Button
+              className={`
+                w-fit
+                rounded-full
+                shadow-md
+                cursor-pointer
+                ${s.button}
+                ${card.button}
+              `}
+            >
+              <Sparkles className="mr-2 h-4 w-4" />
+              {card.buttonText}
+            </Button>
+          </Link>
         </div>
       </div>
     </div>

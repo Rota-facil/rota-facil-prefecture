@@ -1,14 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import AnalysisCard from "@/components/atom/AnalysisCard";
 import MetricCard from "@/components/atom/MetricCard";
 import NotificationPanel from "@/components/molecules/home/NotificationPanel";
 import PrefectureHomeHero from "@/components/molecules/home/PrefectureHomeHero";
 import TripsInRealTime from "@/components/molecules/home/TripsInRealTime";
+import TripProgressModal from "@/components/molecules/trips/TripProgressModal";
 import { useMetrics } from "@/hooks/useMetrics";
+import type { TripEntity } from "@/types/entites/TripEntity";
 
 export default function Home() {
   const { metrics } = useMetrics();
+  const [selectedTrip, setSelectedTrip] = useState<TripEntity>();
 
   return (
     <div className={"flex flex-col gap-4"}>
@@ -56,9 +60,16 @@ export default function Home() {
       </div>
 
       <div className={"flex justify-between items-start gap-3 h-110"}>
-        <TripsInRealTime />
+        <TripsInRealTime onSelectTrip={setSelectedTrip} />
         <NotificationPanel />
       </div>
+
+      {selectedTrip && (
+        <TripProgressModal
+          trip={selectedTrip}
+          onClose={() => setSelectedTrip(undefined)}
+        />
+      )}
     </div>
   );
 }

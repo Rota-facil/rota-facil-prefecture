@@ -1,10 +1,19 @@
 import { ArrowUpRight } from "lucide-react";
+import { useRouter } from "next/navigation";
 import PhotoWithNameAndDescriptions from "@/components/atom/PhotoWithNameAndDescriptions";
 import StatusBar from "@/components/atom/statusBar";
 import { useTrips } from "@/hooks/UseTrips";
+import type { TripEntity } from "@/types/entites/TripEntity";
 import { ProgressMap } from "@/types/enums/Progress";
 
-export default function TripsInRealTime() {
+interface TripsInRealTimeProps {
+  onSelectTrip: (trip: TripEntity) => void;
+}
+
+export default function TripsInRealTime({
+  onSelectTrip,
+}: TripsInRealTimeProps) {
+  const router = useRouter();
   const tripStatus = ["inRoute", "embarking", "waiting", "cancelled"] as const;
   const trips = useTrips().tripPage?.content;
   let tripCount = 1;
@@ -23,14 +32,16 @@ export default function TripsInRealTime() {
           </p>
         </div>
 
-        <div
+        <button
+          type="button"
           className={
             "flex justify-center items-center gap-2 cursor-pointer text-blue-900 text-[0.9rem]"
           }
+          onClick={() => router.push("/trips")}
         >
           <p>Ver todas</p>
           <ArrowUpRight color={"blue"} size={20} />
-        </div>
+        </button>
       </div>
 
       <div className={"flex flex-col gap-10"}>
@@ -47,9 +58,11 @@ export default function TripsInRealTime() {
               </div>
             ))
           : trips.map((trip) => (
-              <div
+              <button
                 key={trip.id}
-                className={"flex justify-between cursor-pointer"}
+                type="button"
+                className={"flex justify-between cursor-pointer text-left"}
+                onClick={() => onSelectTrip(trip)}
               >
                 <div>
                   <PhotoWithNameAndDescriptions
@@ -66,7 +79,7 @@ export default function TripsInRealTime() {
                     size={"sm"}
                   />
                 </div>
-              </div>
+              </button>
             ))}
       </div>
     </div>

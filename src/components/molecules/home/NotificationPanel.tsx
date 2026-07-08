@@ -15,7 +15,7 @@ export default function NotificationPanel() {
   return (
     <div
       className={
-        "flex flex-col p-4 gap-6 w-fit bg-card text-card-foreground shadow rounded-2xl border-border/70 shadow-soft h-full"
+        "flex h-full w-2/7 min-w-80 flex-col gap-6 rounded-2xl border-border/70 bg-card p-4 text-card-foreground shadow shadow-soft"
       }
     >
       <div className={"flex justify-between items-center"}>
@@ -42,6 +42,10 @@ export default function NotificationPanel() {
             <NotificationCard statusBar="canceledTrip" />
             <NotificationCard statusBar="canceledTrip" />
           </>
+        ) : notifications.length === 0 ? (
+          <div className="flex min-h-52 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 text-center text-sm font-medium text-slate-500">
+            Nenhuma notificação recente.
+          </div>
         ) : (
           notifications.map((n) => (
             <NotificationCard

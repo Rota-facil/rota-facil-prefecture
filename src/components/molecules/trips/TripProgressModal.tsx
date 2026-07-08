@@ -108,6 +108,10 @@ function buildOpenStreetMapHtml(trip: TripEntity) {
 }
 
 function formatStatusTime(date: Date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) {
+    return "Horário indisponível";
+  }
+
   return new Intl.DateTimeFormat("pt-BR", {
     hour: "2-digit",
     minute: "2-digit",
