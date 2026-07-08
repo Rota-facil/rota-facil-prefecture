@@ -15,20 +15,19 @@ import RouteFilters, {
 } from "@/components/molecules/routes/RouteFilters";
 import RouteForm from "@/components/molecules/routes/RouteForm";
 import { Button } from "@/components/ui/button";
-import { useRoutes } from "@/hooks/UseRoutes";
 import { listBoardPoints } from "@/service/BoardPointService";
 import { listBus } from "@/service/BusService";
 import { listInstitutions } from "@/service/InstitutionService";
-import { addRoute, listRoutes } from "@/service/RouteService";
+import {
+  addRoute,
+  deleteRoute,
+  listRoutesSimple,
+  updateRoute,
+} from "@/service/RouteService";
 import type { BoardPointEntity } from "@/types/entites/BoardPointEntity";
 import type { BusEntity } from "@/types/entites/BusEntity";
 import type { InstitutionEntity } from "@/types/entites/InstitutionEntity";
-import type {
-  RouteBusEntity,
-  RouteEntity,
-  RouteInstitutionEntity,
-  RouteStatus,
-} from "@/types/entites/RouteEntity";
+import type { RouteEntity } from "@/types/entites/RouteEntity";
 import type { CreateRouteRequest } from "@/types/request/RouteRequest";
 
 // const institutionOptions = [
@@ -213,7 +212,7 @@ export default function Routes() {
       cell: (routeItem) => (
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-700 to-blue-500 text-xs font-bold text-white shadow-sm">
-            {routeItem.code}
+            {routeItem.name[0].toUpperCase()}
           </div>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold">{routeItem.name}</p>
@@ -294,15 +293,29 @@ export default function Routes() {
     setEditingRoute(undefined);
   }
 
+  async function refreshRoutes() {
+    setRoutes(await listRoutesSimple());
+  }
+
   async function saveRoute(request: CreateRouteRequest) {
     if (editingRoute) {
+      await updateRoute(editingRoute.id, request);
     } else {
       await addRoute(request);
-      const response = await listRoutes(0, 5);
-      setRoutes(response.content);
     }
 
+    await refreshRoutes();
     closeForm();
+  }
+
+  async function confirmDeleteRoute() {
+    if (!routePendingDelete) {
+      return;
+    }
+
+    await deleteRoute(routePendingDelete.id);
+    setRoutePendingDelete(undefined);
+    await refreshRoutes();
   }
 
   const [institutions, setInstitutions] = useState<InstitutionEntity[]>([]);
@@ -311,9 +324,18 @@ export default function Routes() {
 
   useEffect(() => {
     async function fetchResources() {
-      setInstitutions(await listInstitutions());
-      setBoardPoints((await listBoardPoints(0, 100)).content);
-      setBus(await listBus());
+      const [routesFound, institutionsFound, boardPointsFound, busFound] =
+        await Promise.all([
+          listRoutesSimple(),
+          listInstitutions(),
+          listBoardPoints(0, 100),
+          listBus(),
+        ]);
+
+      setRoutes(routesFound);
+      setInstitutions(institutionsFound);
+      setBoardPoints(boardPointsFound.content);
+      setBus(busFound);
     }
     fetchResources();
   }, []);
@@ -380,8 +402,9 @@ export default function Routes() {
               <div>
                 <p className="text-lg font-bold text-slate-950">Excluir rota</p>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Deseja excluir a rota {routePendingDelete.code}? Esta ação
-                  remove o item da listagem local desta tela.
+                  Deseja excluir a rota {routePendingDelete.code}? Ela deixará
+                  de aparecer nas listagens e novas recorrências não serão
+                  geradas.
                 </p>
               </div>
             </div>
@@ -401,14 +424,7 @@ export default function Routes() {
                 variant="destructive"
                 size="xs"
                 className="h-9 cursor-pointer rounded-xl bg-[#DC2626] px-4 text-xs font-semibold text-white shadow-[0_16px_36px_-20px_rgba(220,38,38,0.9)] hover:bg-red-700"
-                onClick={() => {
-                  setRoutes((currentRoutes) =>
-                    currentRoutes.filter((currentRoute) => {
-                      return currentRoute.id !== routePendingDelete.id;
-                    }),
-                  );
-                  setRoutePendingDelete(undefined);
-                }}
+                onClick={confirmDeleteRoute}
               >
                 Excluir rota
               </Button>
