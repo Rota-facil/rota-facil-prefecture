@@ -4,11 +4,13 @@ import type { RouteEntity } from "@/types/entites/RouteEntity";
 
 interface PredictiveAnalysisResultProps {
   selectedRoute?: RouteEntity;
+  routeLabel: string;
   interpretation: string;
 }
 
 export default function PredictiveAnalysisResult({
   selectedRoute,
+  routeLabel,
   interpretation,
 }: PredictiveAnalysisResultProps) {
   return (
@@ -31,7 +33,9 @@ export default function PredictiveAnalysisResult({
         {interpretation ? (
           <div className="min-h-72 rounded-2xl border border-slate-200 bg-slate-50 p-5">
             <div className="mb-4 flex flex-wrap items-center gap-2">
-              <PredictiveRouteCodeBadge code={selectedRoute?.code ?? "Rota"} />
+              <PredictiveRouteCodeBadge
+                label={selectedRoute ? routeLabel : "Rota"}
+              />
               <span className="inline-flex items-center gap-1.5 rounded-full bg-teal-50 px-3 py-1 text-xs font-semibold text-teal-700 ring-1 ring-teal-100">
                 <Clock3 className="h-3 w-3" />
                 Seleção atual

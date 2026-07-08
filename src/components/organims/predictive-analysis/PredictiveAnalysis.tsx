@@ -15,6 +15,14 @@ import {
 import type { PredictiveAnalysisEntity } from "@/types/entites/PredictiveAnalysisEntity";
 import type { RouteEntity } from "@/types/entites/RouteEntity";
 
+function getRouteLabel(route: RouteEntity | undefined, index: number) {
+  if (!route) {
+    return "R";
+  }
+
+  return `${route.name[0]?.toUpperCase() ?? "R"}-${index + 1}`;
+}
+
 export default function PredictiveAnalysis() {
   const [routes, setRoutes] = useState<RouteEntity[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState("");
@@ -33,6 +41,14 @@ export default function PredictiveAnalysis() {
 
   const selectedRouteHasAnalysis = recentAnalyses.some(
     (analysis) => analysis.route.id === selectedRoute?.id,
+  );
+
+  const selectedRouteIndex = routes.findIndex(
+    (route) => route.id === selectedRouteId,
+  );
+  const selectedRouteLabel = getRouteLabel(
+    selectedRoute,
+    Math.max(selectedRouteIndex, 0),
   );
 
   const fetchAnalyses = useCallback(async (route: RouteEntity) => {
@@ -158,6 +174,7 @@ export default function PredictiveAnalysis() {
 
         <PredictiveAnalysisResult
           selectedRoute={selectedRoute}
+          routeLabel={selectedRouteLabel}
           interpretation={currentResult}
         />
       </div>
@@ -184,6 +201,7 @@ export default function PredictiveAnalysis() {
               <PredictiveAnalysisRecentCard
                 key={analysis.id}
                 analysis={analysis}
+                routeLabel={selectedRouteLabel}
                 onSelect={handleSelectAnalysis}
               />
             ))}

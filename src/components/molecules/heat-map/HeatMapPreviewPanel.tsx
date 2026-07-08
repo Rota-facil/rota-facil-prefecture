@@ -5,10 +5,12 @@ import type { HeatMapEntity } from "@/types/entites/HeatMapEntity";
 
 interface HeatMapPreviewPanelProps {
   heatMap?: HeatMapEntity;
+  routeLabel: string;
 }
 
 export default function HeatMapPreviewPanel({
   heatMap,
+  routeLabel,
 }: HeatMapPreviewPanelProps) {
   return (
     <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-[0_18px_45px_-28px_rgba(15,23,42,0.45)]">
@@ -30,7 +32,7 @@ export default function HeatMapPreviewPanel({
         {heatMap ? (
           <div className="rounded-2xl border border-slate-200 bg-slate-950 p-3">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
-              <HeatMapRouteBadge code={heatMap.route.code} />
+              <HeatMapRouteBadge label={routeLabel} />
               <span className="text-xs font-medium text-slate-300">
                 {heatMap.createdAtLabel}
               </span>
@@ -38,7 +40,7 @@ export default function HeatMapPreviewPanel({
             <div className="overflow-hidden rounded-xl bg-slate-900">
               <Image
                 src={heatMap.preSignedUrlHeatMap}
-                alt={`Mapa de calor da rota ${heatMap.route.code}`}
+                alt={`Mapa de calor da rota ${heatMap.route.name}`}
                 width={960}
                 height={540}
                 unoptimized

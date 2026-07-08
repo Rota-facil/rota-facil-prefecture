@@ -10,6 +10,14 @@ interface HeatMapRouteSelectProps {
   onRouteChange: (routeId: string) => void;
 }
 
+function getRouteLabel(route: RouteEntity | undefined, index: number) {
+  if (!route) {
+    return "R";
+  }
+
+  return `${route.name[0]?.toUpperCase() ?? "R"}-${index + 1}`;
+}
+
 function routeMeta(route: RouteEntity | undefined) {
   if (!route) {
     return "Selecione uma rota para visualizar os mapas.";
@@ -26,6 +34,10 @@ export default function HeatMapRouteSelect({
   onOpenChange,
   onRouteChange,
 }: HeatMapRouteSelectProps) {
+  const selectedRouteIndex = routes.findIndex(
+    (route) => route.id === selectedRouteId,
+  );
+
   return (
     <div>
       <label
@@ -45,7 +57,7 @@ export default function HeatMapRouteSelect({
         >
           <span className="flex min-w-0 items-center gap-3">
             <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-orange-50 text-xs font-bold text-orange-700 ring-1 ring-orange-100">
-              {selectedRoute?.code ?? "R"}
+              {getRouteLabel(selectedRoute, Math.max(selectedRouteIndex, 0))}
             </span>
             <span className="min-w-0">
               <span className="block truncate text-sm font-bold text-slate-900">
@@ -70,7 +82,7 @@ export default function HeatMapRouteSelect({
             role="listbox"
             className="absolute left-0 top-[calc(100%+0.5rem)] z-50 max-h-72 w-full overflow-y-auto overscroll-contain rounded-2xl border border-slate-200 bg-white p-2 shadow-[0_24px_60px_-24px_rgba(15,23,42,0.45)] [scrollbar-color:#FDBA74_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-orange-300 [&::-webkit-scrollbar-track]:bg-transparent"
           >
-            {routes.map((route) => {
+            {routes.map((route, routeIndex) => {
               const isSelected = route.id === selectedRouteId;
 
               return (
@@ -84,7 +96,7 @@ export default function HeatMapRouteSelect({
                 >
                   <span className="flex min-w-0 items-center gap-3">
                     <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-xs font-bold text-slate-700">
-                      {route.code}
+                      {getRouteLabel(route, routeIndex)}
                     </span>
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-slate-800">
