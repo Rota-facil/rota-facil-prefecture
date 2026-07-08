@@ -8,4 +8,6 @@ export interface StudentEntity {
   frequency: number;
   score: number;
   status: StudentStatus;
+  completedTrips: number;
+  trips: number;
 }
