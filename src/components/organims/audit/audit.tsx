@@ -1,7 +1,7 @@
 "use client";
 
 import { ShieldCheck } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AuditActionBadge from "@/components/atom/AuditActionBadge";
 import AuditRoleBadge from "@/components/atom/AuditRoleBadge";
 import AuditFilters, {
@@ -12,76 +12,9 @@ import AuditFilters, {
 import DataTable, {
   type DataTableColumn,
 } from "@/components/molecules/DataTable";
+import { env } from "@/config/env";
+import { listAudits } from "@/service/AuditService";
 import type { AuditEntity } from "@/types/entites/AuditEntity";
-
-const initialAuditLogs: AuditEntity[] = [
-  {
-    id: "audit-001",
-    userId: "user-001",
-    email: "thaua@gmail.com",
-    role: "DRIVER",
-    actionTitle: "thaua@gmail.com iniciou corrida",
-    actionType: "UPDATE",
-    resourceName: "Viagem",
-    resourceId: "trip-233",
-    date: "2026-07-04 08:12",
-  },
-  {
-    id: "audit-002",
-    userId: "user-002",
-    email: "maria.silva@prefeitura.gov",
-    role: "PREFECTURE",
-    actionTitle: "maria.silva cadastrou novo ônibus",
-    actionType: "CREATE",
-    resourceName: "Ônibus",
-    resourceId: "bus-045",
-    date: "2026-07-04 08:32",
-  },
-  {
-    id: "audit-003",
-    userId: "user-003",
-    email: "joao.aluno@escola.edu",
-    role: "STUDENT",
-    actionTitle: "joao.aluno enviou feedback da rota Centro-Norte",
-    actionType: "FEEDBACK",
-    resourceName: "Rota",
-    resourceId: "route-012",
-    date: "2026-07-04 09:04",
-  },
-  {
-    id: "audit-004",
-    userId: "user-004",
-    email: "admin@rotafacil.gov",
-    role: "ADMIN",
-    actionTitle: "admin removeu usuário inativo",
-    actionType: "DELETE",
-    resourceName: "Usuário",
-    resourceId: "user-098",
-    date: "2026-07-04 09:41",
-  },
-  {
-    id: "audit-005",
-    userId: "user-005",
-    email: "carlos.motorista@rotafacil.gov",
-    role: "DRIVER",
-    actionTitle: "carlos finalizou viagem #V-233",
-    actionType: "UPDATE",
-    resourceName: "Viagem",
-    resourceId: "trip-233",
-    date: "2026-07-04 10:15",
-  },
-  {
-    id: "audit-006",
-    userId: "user-006",
-    email: "ana.estudante@escola.edu",
-    role: "STUDENT",
-    actionTitle: "ana.estudante confirmou embarque no ponto Praça Central",
-    actionType: "CREATE",
-    resourceName: "Ponto",
-    resourceId: "point-018",
-    date: "2026-07-04 10:52",
-  },
-];
 
 function matchesRoleFilter(auditLog: AuditEntity, filter: AuditRoleFilter) {
   if (filter === "ALL") {
@@ -114,27 +47,64 @@ function matchesResourceFilter(
 }
 
 export default function Audit() {
+  const [auditLogs, setAuditLogs] = useState<AuditEntity[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [roleFilter, setRoleFilter] = useState<AuditRoleFilter>("ALL");
   const [actionTypeFilter, setActionTypeFilter] =
     useState<AuditActionFilter>("ALL");
   const [resourceFilter, setResourceFilter] =
     useState<AuditResourceFilter>("ALL");
 
-  const resourceOptions = useMemo(() => {
-    const uniqueResources = new Set(
-      initialAuditLogs.map((auditLog) => auditLog.resourceName),
-    );
-    return Array.from(uniqueResources);
+  useEffect(() => {
+    let active = true;
+
+    async function loadAudits() {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await listAudits();
+
+        if (active) {
+          setAuditLogs(data);
+        }
+      } catch (error) {
+        if (active) {
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Erro ao carregar registros de auditoria",
+          );
+        }
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    loadAudits();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
+  const resourceOptions = useMemo(() => {
+    const uniqueResources = new Set(
+      auditLogs.map((auditLog) => auditLog.resourceName),
+    );
+    return Array.from(uniqueResources);
+  }, [auditLogs]);
+
   const filteredAuditLogs = useMemo(() => {
-    return initialAuditLogs.filter(
+    return auditLogs.filter(
       (auditLog) =>
         matchesRoleFilter(auditLog, roleFilter) &&
         matchesActionTypeFilter(auditLog, actionTypeFilter) &&
         matchesResourceFilter(auditLog, resourceFilter),
     );
-  }, [roleFilter, actionTypeFilter, resourceFilter]);
+  }, [auditLogs, roleFilter, actionTypeFilter, resourceFilter]);
 
   const columns: DataTableColumn<AuditEntity>[] = [
     {
@@ -187,6 +157,12 @@ export default function Audit() {
     },
   ];
 
+  const tableEmptyMessage = error
+    ? error
+    : isLoading
+      ? "Carregando registros de auditoria..."
+      : "Nenhum registro encontrado para os filtros selecionados.";
+
   return (
     <div className="-m-5 flex min-h-[calc(100vh-4rem)] flex-col gap-6 bg-slate-50 px-6 py-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -222,9 +198,9 @@ export default function Audit() {
 
       <DataTable
         columns={columns}
-        data={filteredAuditLogs}
+        data={isLoading || error ? [] : filteredAuditLogs}
         getRowId={(auditLog) => auditLog.id}
-        emptyMessage="Nenhum registro encontrado para os filtros selecionados."
+        emptyMessage={tableEmptyMessage}
         pageSize={6}
       />
     </div>

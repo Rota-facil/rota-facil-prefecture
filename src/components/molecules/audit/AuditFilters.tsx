@@ -36,6 +36,7 @@ const roleOptions: SelectOption<AuditRoleFilter>[] = [
   { label: "Motorista", value: "DRIVER" },
   { label: "Admin", value: "ADMIN" },
   { label: "Prefeitura", value: "PREFECTURE" },
+  { label: "Superuser", value: "SUPERUSER" },
 ];
 
 const actionTypeOptions: SelectOption<AuditActionFilter>[] = [
@@ -44,6 +45,7 @@ const actionTypeOptions: SelectOption<AuditActionFilter>[] = [
   { label: "UPDATE", value: "UPDATE" },
   { label: "DELETE", value: "DELETE" },
   { label: "FEEDBACK", value: "FEEDBACK" },
+  { label: "LOGOUT", value: "LOGOUT" },
 ];
 
 function AuditFilterSelect<TValue extends string>({
