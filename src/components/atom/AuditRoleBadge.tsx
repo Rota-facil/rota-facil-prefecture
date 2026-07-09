@@ -4,7 +4,7 @@ interface AuditRoleBadgeProps {
   role: AuditRole;
 }
 
-const roleConfig: Record<AuditRole, { label: string; className: string }> = {
+const roleConfig: Record<string, { label: string; className: string }> = {
   STUDENT: {
     label: "estudante",
     className: "bg-blue-50 text-blue-600",
@@ -17,6 +17,10 @@ const roleConfig: Record<AuditRole, { label: string; className: string }> = {
     label: "admin",
     className: "bg-slate-100 text-slate-600",
   },
+  SUPERUSER: {
+    label: "superuser",
+    className: "bg-violet-50 text-violet-600",
+  },
   PREFECTURE: {
     label: "prefeitura",
     className: "bg-red-50 text-[#DC2626]",
@@ -24,7 +28,10 @@ const roleConfig: Record<AuditRole, { label: string; className: string }> = {
 };
 
 export default function AuditRoleBadge({ role }: AuditRoleBadgeProps) {
-  const config = roleConfig[role];
+  const config = roleConfig[role] ?? {
+    label: role.toLowerCase(),
+    className: "bg-slate-100 text-slate-600",
+  };
 
   return (
     <span
