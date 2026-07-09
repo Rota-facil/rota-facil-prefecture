@@ -269,3 +269,23 @@ export async function generateRouteAnalysis(
 
   return mapPredictiveAnalysis(await response.json(), route);
 }
+
+export async function deleteRouteAnalysis(
+  routeId: string,
+  analysisId: string,
+): Promise<void> {
+  const response = await fetch(
+    `${env.WEB_BASE_URL}/transports/routes/${routeId}/interpretations/${analysisId}`,
+    {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    await handleHttpError(response, "Erro ao excluir análise da rota");
+  }
+}

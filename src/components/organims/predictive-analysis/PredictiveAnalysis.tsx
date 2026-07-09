@@ -8,6 +8,7 @@ import PredictiveAnalysisRecentCard from "@/components/molecules/predictive-anal
 import PredictiveAnalysisResult from "@/components/molecules/predictive-analysis/PredictiveAnalysisResult";
 import PredictiveGeneratePanel from "@/components/molecules/predictive-analysis/PredictiveGeneratePanel";
 import {
+  deleteRouteAnalysis,
   generateRouteAnalysis,
   listRouteAnalyses,
   listRoutesSimple,
@@ -27,6 +28,7 @@ export default function PredictiveAnalysis() {
   const [routes, setRoutes] = useState<RouteEntity[]>([]);
   const [selectedRouteId, setSelectedRouteId] = useState("");
   const [currentResult, setCurrentResult] = useState("");
+  const [selectedAnalysisId, setSelectedAnalysisId] = useState("");
   const [recentAnalyses, setRecentAnalyses] = useState<
     PredictiveAnalysisEntity[]
   >([]);
@@ -55,6 +57,7 @@ export default function PredictiveAnalysis() {
     const analyses = await listRouteAnalyses(route);
     setRecentAnalyses(analyses);
     setCurrentResult(analyses[0]?.interpretation ?? "");
+    setSelectedAnalysisId(analyses[0]?.id ?? "");
   }, []);
 
   useEffect(() => {
@@ -82,6 +85,7 @@ export default function PredictiveAnalysis() {
 
     setSelectedRouteId(routeId);
     setCurrentResult("");
+    setSelectedAnalysisId("");
     setError("");
     setRouteSelectOpen(false);
 
@@ -108,6 +112,7 @@ export default function PredictiveAnalysis() {
     try {
       const nextAnalysis = await generateRouteAnalysis(selectedRoute);
       setCurrentResult(nextAnalysis.interpretation);
+      setSelectedAnalysisId(nextAnalysis.id);
       setRecentAnalyses((currentAnalyses) => [
         nextAnalysis,
         ...currentAnalyses.filter(
@@ -124,6 +129,29 @@ export default function PredictiveAnalysis() {
   function handleSelectAnalysis(analysis: PredictiveAnalysisEntity) {
     setSelectedRouteId(analysis.route.id);
     setCurrentResult(analysis.interpretation);
+    setSelectedAnalysisId(analysis.id);
+  }
+
+  async function handleDeleteAnalysis(analysis: PredictiveAnalysisEntity) {
+    try {
+      setError("");
+      await deleteRouteAnalysis(analysis.route.id, analysis.id);
+
+      setRecentAnalyses((currentAnalyses) => {
+        const nextAnalyses = currentAnalyses.filter(
+          (currentAnalysis) => currentAnalysis.id !== analysis.id,
+        );
+
+        if (selectedAnalysisId === analysis.id) {
+          setCurrentResult(nextAnalyses[0]?.interpretation ?? "");
+          setSelectedAnalysisId(nextAnalyses[0]?.id ?? "");
+        }
+
+        return nextAnalyses;
+      });
+    } catch (e) {
+      setError((e as Error).message);
+    }
   }
 
   return (
@@ -203,6 +231,7 @@ export default function PredictiveAnalysis() {
                 analysis={analysis}
                 routeLabel={selectedRouteLabel}
                 onSelect={handleSelectAnalysis}
+                onDelete={handleDeleteAnalysis}
               />
             ))}
           </div>

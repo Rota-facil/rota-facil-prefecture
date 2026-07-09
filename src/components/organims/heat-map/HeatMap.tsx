@@ -8,6 +8,7 @@ import HeatMapGeneratePanel from "@/components/molecules/heat-map/HeatMapGenerat
 import HeatMapHistoryCard from "@/components/molecules/heat-map/HeatMapHistoryCard";
 import HeatMapPreviewPanel from "@/components/molecules/heat-map/HeatMapPreviewPanel";
 import {
+  deleteRouteHeatMap,
   generateRouteHeatMap,
   listRouteHeatMaps,
 } from "@/service/HeatMapService";
@@ -128,6 +129,27 @@ export default function HeatMap() {
     setSelectedHeatMapId(heatMap.id);
   }
 
+  async function handleDeleteHeatMap(heatMap: HeatMapEntity) {
+    try {
+      setError("");
+      await deleteRouteHeatMap(heatMap.id);
+
+      setHeatMaps((currentHeatMaps) => {
+        const nextHeatMaps = currentHeatMaps.filter(
+          (currentHeatMap) => currentHeatMap.id !== heatMap.id,
+        );
+
+        if (selectedHeatMapId === heatMap.id) {
+          setSelectedHeatMapId(nextHeatMaps[0]?.id ?? "");
+        }
+
+        return nextHeatMaps;
+      });
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+
   return (
     <div className="-m-5 flex min-h-[calc(100vh-4rem)] flex-col gap-6 bg-slate-50 px-6 py-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -198,6 +220,7 @@ export default function HeatMap() {
                 routeLabel={selectedRouteLabel}
                 selected={heatMap.id === selectedHeatMap?.id}
                 onSelect={handleSelectHeatMap}
+                onDelete={handleDeleteHeatMap}
               />
             ))}
           </div>

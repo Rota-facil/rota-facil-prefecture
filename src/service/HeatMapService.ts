@@ -106,3 +106,20 @@ export async function generateRouteHeatMap(
     pointsCount: route.boardPoints.length,
   };
 }
+
+export async function deleteRouteHeatMap(heatMapId: string): Promise<void> {
+  const response = await fetch(
+    `${env.WEB_BASE_URL}/files/heat-map/${heatMapId}`,
+    {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+    },
+  );
+
+  if (!response.ok) {
+    await handleHttpError(response, "Erro ao excluir mapa de calor");
+  }
+}
