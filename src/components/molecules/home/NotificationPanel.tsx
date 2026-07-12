@@ -50,7 +50,9 @@ export default function NotificationPanel() {
           notifications.map((n) => (
             <NotificationCard
               key={n.id}
-              statusBar={NotificationMap[n.notificationType].value}
+              statusBar={
+                NotificationMap[n.notificationType]?.value ?? "delayReported"
+              }
               description={n.message}
               time={formatDistanceToNow(new Date(n.createdAt), {
                 addSuffix: true,

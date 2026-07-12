@@ -1,6 +1,9 @@
 import StatusBar, { type TypeStatusBar } from "@/components/atom/statusBar";
 
-export type NotificationStatus = Extract<TypeStatusBar, "canceledTrip">;
+export type NotificationStatus = Extract<
+  TypeStatusBar,
+  "available" | "canceledTrip" | "delayReported" | "embarking" | "onRoute"
+>;
 
 type NotificationCardProps = {
   statusBar?: NotificationStatus;

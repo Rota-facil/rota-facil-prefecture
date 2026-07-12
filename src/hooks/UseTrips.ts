@@ -3,7 +3,11 @@ import { listTrips } from "@/service/TripService";
 import type { TripEntity } from "@/types/entites/TripEntity";
 import type { PageResponse } from "@/types/response/PageResponse";
 
-export function useTrips(page: number = 0, size: number = 4) {
+export function useTrips(
+  page: number = 0,
+  size: number = 4,
+  refreshInterval?: number,
+) {
   const [tripPage, setTripPage] = useState<PageResponse<TripEntity> | null>(
     null,
   );
@@ -11,21 +15,36 @@ export function useTrips(page: number = 0, size: number = 4) {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    async function listTripsFromService() {
+    let active = true;
+
+    async function listTripsFromService(showLoading: boolean) {
       try {
-        setLoading(true);
+        if (showLoading) setLoading(true);
 
         const data = await listTrips(page, size);
+        if (!active) return;
         setTripPage(data);
         setError(null);
       } catch (e) {
-        setError(e as Error);
+        if (active) setError(e as Error);
       } finally {
-        setLoading(false);
+        if (active && showLoading) setLoading(false);
       }
     }
-    listTripsFromService();
-  }, [page, size]);
+
+    void listTripsFromService(true);
+    const interval = refreshInterval
+      ? window.setInterval(
+          () => void listTripsFromService(false),
+          refreshInterval,
+        )
+      : undefined;
+
+    return () => {
+      active = false;
+      if (interval !== undefined) window.clearInterval(interval);
+    };
+  }, [page, refreshInterval, size]);
 
   return {
     tripPage,

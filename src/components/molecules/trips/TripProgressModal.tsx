@@ -14,11 +14,11 @@ interface TripProgressModalProps {
   onClose: () => void;
 }
 
-function hasValidCoordinates(latitude: number, longitude: number) {
+export function hasValidCoordinates(latitude: number, longitude: number) {
   return latitude !== 0 || longitude !== 0;
 }
 
-function buildOpenStreetMapHtml(trip: TripEntity) {
+export function buildOpenStreetMapHtml(trip: TripEntity) {
   const shouldShowBus = hasValidCoordinates(trip.latitude, trip.longitude);
   const busMarker = shouldShowBus
     ? [
@@ -163,7 +163,7 @@ function LegendIcon({
   );
 }
 
-function MapLegend({ showBus }: { showBus: boolean }) {
+export function MapLegend({ showBus }: { showBus: boolean }) {
   return (
     <div className="flex flex-wrap gap-3 border-t border-[#E5EAF0] bg-white px-4 py-3 text-xs font-medium text-slate-600">
       <div className="flex items-center gap-2">

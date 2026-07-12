@@ -1,13 +1,10 @@
 import type { NotificationStatus } from "@/components/atom/NotificationCard";
 
 export enum NotificationType {
-  // TRIP_STARTED = "TRIP_STARTED",
-
-  // TRIP_FINISHED = "TRIP_FINISHED",
-
+  TRIP_STARTED = "TRIP_STARTED",
+  TRIP_FINISHED = "TRIP_FINISHED",
   TRIP_CANCELLED = "TRIP_CANCELLED",
-
-  // STUDENT_CHECKIN = "STUDENT_CHECKIN"
+  STUDENT_CHECKIN = "STUDENT_CHECKIN",
 }
 
 export const NotificationMap: Record<
@@ -16,7 +13,16 @@ export const NotificationMap: Record<
     value: NotificationStatus;
   }
 > = {
+  [NotificationType.TRIP_STARTED]: {
+    value: "onRoute",
+  },
+  [NotificationType.TRIP_FINISHED]: {
+    value: "available",
+  },
   [NotificationType.TRIP_CANCELLED]: {
     value: "canceledTrip",
+  },
+  [NotificationType.STUDENT_CHECKIN]: {
+    value: "embarking",
   },
 };

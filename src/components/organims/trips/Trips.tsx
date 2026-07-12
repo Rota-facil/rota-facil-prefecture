@@ -1,5 +1,6 @@
 "use client";
 
+import { MapPinned } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import MetricCard from "@/components/atom/MetricCard";
 import DataTable, {
@@ -151,7 +152,8 @@ export default function Trips() {
           className="h-8 cursor-pointer rounded-xl border-[#E5EAF0] px-3 text-xs font-semibold hover:bg-[#EEF2F7]"
           onClick={() => setSelectedTrip(trip)}
         >
-          Ver progresso
+          <MapPinned className="h-3.5 w-3.5" />
+          Acompanhar no mapa
         </Button>
       ),
       className: "text-right",
