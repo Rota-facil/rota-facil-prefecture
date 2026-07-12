@@ -45,7 +45,7 @@ export default function TripsInRealTime({
     activeTrips.find((trip) => trip.id === selectedTripId) ?? activeTrips[0];
 
   return (
-    <section className="flex h-full w-5/7 flex-col overflow-hidden rounded-2xl border border-border/70 bg-card text-card-foreground shadow shadow-soft">
+    <section className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border/70 bg-card text-card-foreground shadow shadow-soft">
       <header className="flex items-start justify-between gap-4 border-b border-border/60 px-6 py-5">
         <div>
           <div className="flex items-center gap-2">

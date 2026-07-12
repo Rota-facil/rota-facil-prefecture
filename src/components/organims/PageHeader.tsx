@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import NotificationPanel from "@/components/molecules/home/NotificationPanel";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function PageHeader() {
@@ -15,6 +16,8 @@ export default function PageHeader() {
     "/students": "Alunos",
     "/predictive-analysis": "Análise preditiva",
     "/heat-map": "Mapa de calor",
+    "/audit": "Auditoria",
+    "/report": "Relatórios",
   };
 
   const usePathName = usePathname();
@@ -23,7 +26,7 @@ export default function PageHeader() {
     panelTitles[usePathName as keyof typeof panelTitles] ?? "Rota Fácil";
 
   return (
-    <header className="fixed z-[70] flex h-16 w-full items-center gap-3 border-b bg-white px-4">
+    <header className="sticky top-0 z-[70] flex h-16 w-full items-center gap-3 border-b bg-white px-4">
       <SidebarTrigger
         variant={"outline"}
         className={"h-8 w-8 cursor-pointer"}
@@ -41,6 +44,8 @@ export default function PageHeader() {
         </p>
         <p className={"text-[14px] font-bold"}>{currentTitle}</p>
       </div>
+
+      <NotificationPanel />
     </header>
   );
 }

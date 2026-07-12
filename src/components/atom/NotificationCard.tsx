@@ -15,7 +15,7 @@ export default function NotificationCard(props: NotificationCardProps) {
   return (
     <div
       className={
-        "flex flex-col w-fit gap-2 wrap-break-word rounded-xl border border-border/60 bg-slate-50 p-4"
+        "flex w-full flex-col gap-2 wrap-break-word rounded-xl border border-border/60 bg-slate-50 p-4"
       }
     >
       <div className={"flex justify-between"}>

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import AnalysisCard from "@/components/atom/AnalysisCard";
 import MetricCard from "@/components/atom/MetricCard";
-import NotificationPanel from "@/components/molecules/home/NotificationPanel";
 import PrefectureHomeHero from "@/components/molecules/home/PrefectureHomeHero";
 import TripsInRealTime from "@/components/molecules/home/TripsInRealTime";
 import TripProgressModal from "@/components/molecules/trips/TripProgressModal";
@@ -59,9 +58,8 @@ export default function Home() {
         <MetricCard value={metrics?.bus ?? 30} variants={"bus"} size={"sm"} />
       </div>
 
-      <div className={"flex justify-between items-start gap-3 h-110"}>
+      <div className={"h-110"}>
         <TripsInRealTime onSelectTrip={setSelectedTrip} />
-        <NotificationPanel />
       </div>
 
       {selectedTrip && (
