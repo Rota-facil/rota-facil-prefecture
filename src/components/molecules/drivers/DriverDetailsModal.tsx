@@ -21,6 +21,7 @@ import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import DriverInfoItem from "@/components/atom/DriverInfoItem";
 import DriverHeader from "@/components/molecules/drivers/DriverHeader";
+import UserFeedbackPanel from "@/components/molecules/feedbacks/UserFeedbackPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -571,6 +572,8 @@ export default function DriverDetailsModal({
                   value={driver.documentationStatus}
                 />
               </div>
+
+              <UserFeedbackPanel userId={driver.id} />
 
               <div className="flex items-center justify-end gap-2 border-t border-[#E5EAF0] bg-white px-6 py-4">
                 <Button

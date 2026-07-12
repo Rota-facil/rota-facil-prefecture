@@ -1,11 +1,12 @@
 "use client";
 
-import { Star } from "lucide-react";
+import { MessageSquareText, Star } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import StudentStatusBadge from "@/components/atom/StudentStatusBadge";
 import DataTable, {
   type DataTableColumn,
 } from "@/components/molecules/DataTable";
+import UserFeedbackModal from "@/components/molecules/feedbacks/UserFeedbackModal";
 import StudentFilters, {
   type StudentFrequencyFilter,
   type StudentScoreFilter,
@@ -80,6 +81,7 @@ export default function Students() {
     useState<StudentFrequencyFilter>("ALL");
   const [students, setStudents] = useState<StudentEntity[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedStudent, setSelectedStudent] = useState<StudentEntity>();
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -174,6 +176,22 @@ export default function Students() {
       headerClassName: "text-center",
     },
     {
+      id: "feedbacks",
+      header: "Feedbacks",
+      cell: (student) => (
+        <button
+          type="button"
+          className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-[#1E3A8A] transition-colors hover:bg-blue-50"
+          onClick={() => setSelectedStudent(student)}
+        >
+          <MessageSquareText className="h-3.5 w-3.5" />
+          Ver feedbacks
+        </button>
+      ),
+      className: "text-center",
+      headerClassName: "text-center",
+    },
+    {
       id: "status",
       header: "Status",
       cell: (student) => <StudentStatusBadge status={student.status} />,
@@ -217,6 +235,14 @@ export default function Students() {
         totalPages={totalPages}
         onPageChange={setCurrentPage}
       />
+
+      {selectedStudent && (
+        <UserFeedbackModal
+          userId={selectedStudent.id}
+          userName={selectedStudent.name}
+          onClose={() => setSelectedStudent(undefined)}
+        />
+      )}
     </div>
   );
 }
