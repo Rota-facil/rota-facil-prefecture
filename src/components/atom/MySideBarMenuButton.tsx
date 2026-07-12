@@ -7,12 +7,22 @@ import { SidebarMenuButton } from "@/components/ui/sidebar";
 type MySideBarMenuButtonProps = {
   children: React.ReactNode;
   href: string;
+  external?: boolean;
 };
 
 export default function MySideBarMenuButton(props: MySideBarMenuButtonProps) {
   const router = useRouter();
   const usePathName = usePathname();
-  const isActive = usePathName === props.href;
+  const isActive = !props.external && usePathName === props.href;
+
+  function handleClick() {
+    if (props.external) {
+      window.location.href = props.href;
+      return;
+    }
+
+    router.push(props.href);
+  }
 
   return (
     <SidebarMenuButton
@@ -28,7 +38,7 @@ export default function MySideBarMenuButton(props: MySideBarMenuButtonProps) {
 
         ${isActive ? "bg-blue-50 text-blue-700" : "text-muted-foreground"}
     `}
-      onClick={() => router.push(props.href)}
+      onClick={handleClick}
     >
       {props.children}
     </SidebarMenuButton>

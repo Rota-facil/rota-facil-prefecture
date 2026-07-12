@@ -1,10 +1,10 @@
 "use client";
 
 import {
+  Activity,
   BrainCircuit,
   Building2,
   BusIcon,
-  FileText,
   Flame,
   GraduationCap,
   LayoutDashboard,
@@ -16,7 +16,6 @@ import {
   UsersRound,
 } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
 import MySideBarMenuButton from "@/components/atom/MySideBarMenuButton";
 import {
   Sidebar,
@@ -29,14 +28,13 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { getGrafanaUrl } from "@/config/env";
 import { useCurrentUser } from "@/hooks/UseCurrentUser";
 import { removeToken } from "@/service/auth/TokenService";
 
 export function AppSidebar() {
   const { state } = useSidebar();
   const { user } = useCurrentUser();
-  const router = useRouter();
-
   return (
     <Sidebar
       collapsible={"icon"}
@@ -154,9 +152,9 @@ export function AppSidebar() {
             </SidebarGroupLabel>
 
             <SidebarMenuItem>
-              <MySideBarMenuButton href={"/report"}>
-                <FileText />
-                <span>Relatórios</span>
+              <MySideBarMenuButton href={getGrafanaUrl()} external>
+                <Activity />
+                <span>Observabilidade</span>
               </MySideBarMenuButton>
             </SidebarMenuItem>
 
