@@ -5,6 +5,7 @@ import {
   BrainCircuit,
   Building2,
   BusIcon,
+  FileDown,
   Flame,
   GraduationCap,
   LayoutDashboard,
@@ -162,6 +163,13 @@ export function AppSidebar() {
               <MySideBarMenuButton href={"/audit"}>
                 <ShieldCheck />
                 <span>Auditoria</span>
+              </MySideBarMenuButton>
+            </SidebarMenuItem>
+
+            <SidebarMenuItem>
+              <MySideBarMenuButton href={"/report"}>
+                <FileDown />
+                <span>Relatórios</span>
               </MySideBarMenuButton>
             </SidebarMenuItem>
           </SidebarGroup>

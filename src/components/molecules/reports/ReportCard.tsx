@@ -45,9 +45,9 @@ const reportVariants = {
       "bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-800 hover:to-blue-600 text-white",
   },
 
-  routeUsage: {
-    title: "Utilização de rotas",
-    description: "Ocupação média e desempenho por rota.",
+  driverPerformance: {
+    title: "Desempenho de motoristas",
+    description: "Conclusão, pontualidade, cancelamentos e avaliações.",
     icon: Route,
 
     iconBackground: "bg-amber-100",
@@ -84,9 +84,18 @@ type ReportSize = keyof typeof sizes;
 interface ReportCardProps {
   variant: ReportVariant;
   size?: ReportSize;
+  disabled?: boolean;
+  loading?: boolean;
+  onExport?: () => void;
 }
 
-export default function ReportCard({ variant, size = "sm" }: ReportCardProps) {
+export default function ReportCard({
+  variant,
+  size = "sm",
+  disabled = false,
+  loading = false,
+  onExport,
+}: ReportCardProps) {
   const report = reportVariants[variant];
   const s = sizes[size];
 
@@ -157,6 +166,9 @@ export default function ReportCard({ variant, size = "sm" }: ReportCardProps) {
         </div>
 
         <Button
+          type="button"
+          disabled={disabled || loading}
+          onClick={onExport}
           className={`
           h-full
           w-full
@@ -180,7 +192,7 @@ export default function ReportCard({ variant, size = "sm" }: ReportCardProps) {
       `}
         >
           <Download className="mr-2 h-4 w-4" />
-          Exportar
+          {loading ? "Gerando PDF..." : disabled ? "Em breve" : "Baixar PDF"}
         </Button>
       </div>
     </div>
