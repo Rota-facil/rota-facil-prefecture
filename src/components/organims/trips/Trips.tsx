@@ -104,11 +104,16 @@ export default function Trips() {
   const columns: DataTableColumn<TripEntity>[] = [
     {
       id: "route",
-      header: "Rota",
+      header: "Viagem / rota",
       cell: (trip) => (
-        <span className="text-sm font-semibold text-slate-800">
-          {trip.route.name}
-        </span>
+        <div>
+          <p className="text-sm font-semibold text-slate-800">
+            {trip.name || trip.route.name}
+          </p>
+          {trip.name !== trip.route.name && (
+            <p className="mt-0.5 text-xs text-slate-500">{trip.route.name}</p>
+          )}
+        </div>
       ),
       className: "min-w-72",
     },

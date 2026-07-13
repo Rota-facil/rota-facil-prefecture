@@ -8,7 +8,7 @@ import {
   MapLegend,
 } from "@/components/molecules/trips/TripProgressModal";
 import { Button } from "@/components/ui/button";
-import { useTrips } from "@/hooks/UseTrips";
+import { useActiveTrips } from "@/hooks/UseTrips";
 import type { TripEntity } from "@/types/entites/TripEntity";
 import { Progress, ProgressMap } from "@/types/enums/Progress";
 
@@ -28,7 +28,7 @@ export default function TripsInRealTime({
   onSelectTrip,
 }: TripsInRealTimeProps) {
   const router = useRouter();
-  const trips = useTrips(0, 8, 15_000).tripPage?.content;
+  const trips = useActiveTrips(15_000).trips;
   const activeTrips = useMemo(
     () => trips?.filter((trip) => ACTIVE_PROGRESS.has(trip.actualStatus)) ?? [],
     [trips],
@@ -113,9 +113,10 @@ export default function TripsInRealTime({
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-bold text-slate-900">
-                        {trip.route.name}
+                        {trip.name || trip.route.name}
                       </p>
                       <p className="mt-1 truncate text-xs text-slate-500">
+                        {trip.route.name} •{" "}
                         {trip.bus.driver?.name ?? "Sem motorista"} •{" "}
                         {trip.bus.plate}
                       </p>

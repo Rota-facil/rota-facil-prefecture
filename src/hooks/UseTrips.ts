@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { listTrips } from "@/service/TripService";
+import { listActiveTrips, listTrips } from "@/service/TripService";
 import type { TripEntity } from "@/types/entites/TripEntity";
 import type { PageResponse } from "@/types/response/PageResponse";
 
@@ -48,6 +48,48 @@ export function useTrips(
 
   return {
     tripPage,
+    loading,
+    error,
+  };
+}
+
+export function useActiveTrips(refreshInterval: number = 15_000) {
+  const [trips, setTrips] = useState<TripEntity[]>();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    async function fetchActiveTrips(showLoading: boolean) {
+      try {
+        if (showLoading) setLoading(true);
+
+        const data = await listActiveTrips();
+        if (!active) return;
+        setTrips(data);
+        setError(null);
+      } catch (e) {
+        if (active) setError(e as Error);
+      } finally {
+        if (active && showLoading) setLoading(false);
+      }
+    }
+
+    void fetchActiveTrips(true);
+    const interval = window.setInterval(
+      () => void fetchActiveTrips(false),
+      refreshInterval,
+    );
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+    };
+  }, [refreshInterval]);
+
+  return {
+    trips,
     loading,
     error,
   };

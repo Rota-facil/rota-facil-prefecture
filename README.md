@@ -1,19 +1,64 @@
-# Rota Fácil Prefectures- Plataforma de gerenciamento inteligente para transporte escolar municipal
+# Rota Fácil Prefeitura
 
-![cover](./public/docs/Cover.jpg)
+Painel administrativo do Rota Fácil para gestão e acompanhamento do transporte escolar municipal.
 
-<br/>
+![Capa do Rota Fácil](./public/docs/Cover.jpg)
 
-O Rota Fácil Prefeitura é o módulo administrativo da plataforma Rota Fácil, desenvolvido para centralizar e otimizar o gerenciamento do transporte escolar municipal. A aplicação oferece aos gestores públicos uma visão completa das operações relacionadas ao transporte de estudantes, permitindo o acompanhamento e a administração dos principais recursos envolvidos no serviço.
+## Funcionalidades
 
-Através da plataforma, é possível realizar o gerenciamento de alunos, motoristas, veículos, frotas, rotas e viagens, além de acompanhar informações operacionais que auxiliam na tomada de decisões e no planejamento das atividades diárias. O sistema foi concebido para reduzir processos manuais, aumentar a rastreabilidade das operações e melhorar a comunicação entre os diferentes setores envolvidos no transporte escolar.
+- Home com métricas operacionais, mapa de viagens ativas e notificações no sino do header.
+- Gestão de estudantes, motoristas, ônibus, instituições, pontos de embarque, rotas e viagens.
+- Visualização do progresso da viagem em mapa e modal detalhado.
+- Consulta dos feedbacks e notas recebidos por estudantes e motoristas.
+- Auditoria com filtros.
+- Análise preditiva de rotas e mapa de calor.
+- Relatórios PDF de faltas e viagens canceladas.
+- Link para observabilidade/Grafana no menu de sistemas.
 
-Desenvolvida com Next.js e TypeScript, a aplicação utiliza uma arquitetura moderna baseada em componentes reutilizáveis, organização modular e boas práticas de desenvolvimento front-end. O projeto integra um ecossistema maior composto por aplicações web, aplicações móveis e serviços independentes responsáveis pela gestão completa do transporte escolar municipal.
+## Stack
 
-A documentação do projeto foi organizada em arquivos independentes para facilitar a manutenção, consulta e evolução da aplicação ao longo do desenvolvimento.
+Next.js `16.2.7`, React `19.2.4`, TypeScript, Tailwind CSS v4, Biome, Base UI/shadcn, React Hook Form, Zod, Sonner, date-fns e bibliotecas de ícones.
 
-A documentação do projeto foi organizada em arquivos separados para facilitar manutenção, leitura e evolução da aplicação ao longo do desenvolvimento.
+## Rotas
 
-📌 [Como contribuir](./docs/CONTRIBUTING.md)
-📌 [Estrutura do projeto](./docs/PROJECT_STRUCTURE.md)
-📌 [Como executar o projeto](./docs/RUNNING.md)
+Rotas autenticadas: `/home`, `/students`, `/drivers`, `/institutions`, `/board-points`, `/bus`, `/routes`, `/trips`, `/predictive-analysis`, `/heat-map`, `/audit` e `/report`.
+
+A rota `/` redireciona para `/home`. Login fica em `/login` e o callback Google em `/oauth2/callback`.
+
+## Integração
+
+As chamadas HTTP ficam em `src/service` e usam o gateway configurado em `NEXT_PUBLIC_WEB_BASE_URL`, normalmente `http://localhost:8080`. O token é enviado como `Authorization: Bearer ...`.
+
+Variáveis públicas:
+
+- `NEXT_PUBLIC_WEB_BASE_URL`
+- `NEXT_PUBLIC_GOOGLE_LOGIN_PREFECTURE_URL`
+- `NEXT_PUBLIC_GRAFANA_URL`
+
+Não coloque segredos em variáveis `NEXT_PUBLIC_*`.
+
+## Como rodar
+
+```bash
+cd rota-facil-prefecture
+npm install
+npm run dev
+```
+
+O servidor de desenvolvimento usa `http://localhost:3001`.
+
+## Validação
+
+```bash
+npm run lint
+npm run typecheck
+npm run build
+```
+
+O atalho `npm run check` executa lint e typecheck; `npm run check:ci` também executa o build.
+
+## Estrutura e contribuição
+
+- [Como contribuir](./docs/CONTRIBUTING.md)
+- [Estrutura do projeto](./docs/PROJECT_STRUCTURE.md)
+- [Como executar](./docs/RUNNING.md)

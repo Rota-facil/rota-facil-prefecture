@@ -137,6 +137,22 @@ function mapTrip(response: TripResponse): TripEntity {
   };
 }
 
+export async function listActiveTrips(): Promise<TripEntity[]> {
+  const response = await fetch(`${env.WEB_BASE_URL}/transports/trips/active`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+
+  if (!response.ok) {
+    await handleHttpError(response, "Erro ao listar viagens em andamento");
+  }
+
+  const data = (await response.json()) as TripResponse[];
+  return data.map(mapTrip);
+}
+
 export async function listTrips(
   page: number,
   size: number,
