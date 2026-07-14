@@ -63,6 +63,11 @@ interface TripResponse {
   }>;
 }
 
+export interface CreateTripRequest {
+  routeId: string;
+  busId: string;
+}
+
 function mapPoint(point: TripPointResponse): TripRoutePointEntity {
   return {
     id: point.id,
@@ -182,4 +187,26 @@ export async function listTrips(
       totalPages: data.totalPages,
     },
   };
+}
+
+export async function createTrip(
+  request: CreateTripRequest,
+): Promise<TripEntity> {
+  const response = await fetch(
+    `${env.WEB_BASE_URL}/transports/trips/register`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getToken()}`,
+      },
+      body: JSON.stringify(request),
+    },
+  );
+
+  if (!response.ok) {
+    await handleHttpError(response, "Erro ao criar viagem");
+  }
+
+  return mapTrip((await response.json()) as TripResponse);
 }

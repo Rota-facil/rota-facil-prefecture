@@ -8,6 +8,7 @@ Painel administrativo do Rota Fácil para gestão e acompanhamento do transporte
 
 - Home com métricas operacionais, mapa de viagens ativas e notificações no sino do header.
 - Gestão de estudantes, motoristas, ônibus, instituições, pontos de embarque, rotas e viagens.
+- Criação manual de viagens de hoje a partir de uma rota e de um ônibus já associado.
 - Visualização do progresso da viagem em mapa e modal detalhado.
 - Consulta dos feedbacks e notas recebidos por estudantes e motoristas.
 - Auditoria com filtros.
