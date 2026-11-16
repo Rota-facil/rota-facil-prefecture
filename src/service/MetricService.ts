@@ -4,7 +4,7 @@ import { handleHttpError } from "@/service/HttpErrorService";
 import type { MetricResponse } from "@/types/response/MetricResponse";
 
 export async function getMetrics(): Promise<MetricResponse> {
-  const response = await fetch(`${env.WEB_BASE_URL}/transports/metrics`, {
+  const response = await fetch(`${env.WEB_BASE_URL}/journey/metrics`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

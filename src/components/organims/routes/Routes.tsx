@@ -16,7 +16,7 @@ import RouteFilters, {
 import RouteForm from "@/components/molecules/routes/RouteForm";
 import { Button } from "@/components/ui/button";
 import { listBoardPoints } from "@/service/BoardPointService";
-import { listBus } from "@/service/BusService";
+import { listBus as listVehicles } from "@/service/BusService";
 import { listInstitutions } from "@/service/InstitutionService";
 import {
   addRoute,
@@ -242,9 +242,9 @@ export default function Routes() {
       cell: (routeItem) => `${routeItem.institutions.length} vinculada(s)`,
     },
     {
-      id: "bus",
-      header: "Ônibus",
-      cell: (routeItem) => routeItem.bus.length,
+      id: "vehicles",
+      header: "Veículos",
+      cell: (routeItem) => routeItem.vehicles.length,
       className: "text-center font-medium",
       headerClassName: "text-center",
     },
@@ -320,22 +320,22 @@ export default function Routes() {
 
   const [institutions, setInstitutions] = useState<InstitutionEntity[]>([]);
   const [boardPoints, setBoardPoints] = useState<BoardPointEntity[]>([]);
-  const [bus, setBus] = useState<BusEntity[]>([]);
+  const [vehicles, setVehicles] = useState<BusEntity[]>([]);
 
   useEffect(() => {
     async function fetchResources() {
-      const [routesFound, institutionsFound, boardPointsFound, busFound] =
+      const [routesFound, institutionsFound, boardPointsFound, vehiclesFound] =
         await Promise.all([
           listRoutesSimple(),
           listInstitutions(),
           listBoardPoints(0, 100),
-          listBus(),
+          listVehicles(),
         ]);
 
       setRoutes(routesFound);
       setInstitutions(institutionsFound);
       setBoardPoints(boardPointsFound.content);
-      setBus(busFound);
+      setVehicles(vehiclesFound);
     }
     fetchResources();
   }, []);
@@ -478,8 +478,8 @@ export default function Routes() {
                 institutions={institutions.map((i) => {
                   return { id: i.id as string, label: i.name };
                 })}
-                bus={bus.map((b) => {
-                  return { id: b.id as string, label: b.plate };
+                vehicles={vehicles.map((vehicle) => {
+                  return { id: vehicle.id as string, label: vehicle.plate };
                 })}
                 boardPoints={boardPoints.map((b) => {
                   return { id: b.id as string, label: b.name };

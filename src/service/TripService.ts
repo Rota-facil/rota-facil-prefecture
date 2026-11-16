@@ -143,7 +143,7 @@ function mapTrip(response: TripResponse): TripEntity {
 }
 
 export async function listActiveTrips(): Promise<TripEntity[]> {
-  const response = await fetch(`${env.WEB_BASE_URL}/transports/trips/active`, {
+  const response = await fetch(`${env.WEB_BASE_URL}/trips/today`, {
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${getToken()}`,
@@ -162,15 +162,12 @@ export async function listTrips(
   page: number,
   size: number,
 ): Promise<PageResponse<TripEntity>> {
-  const response = await fetch(
-    `${env.WEB_BASE_URL}/transports/trips?page=${page}&size=${size}`,
-    {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
+  const response = await fetch(`${env.WEB_BASE_URL}/trips/today`, {
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
     },
-  );
+  });
 
   if (!response.ok) {
     await handleHttpError(response, "Erro ao listar viagens");
@@ -192,17 +189,14 @@ export async function listTrips(
 export async function createTrip(
   request: CreateTripRequest,
 ): Promise<TripEntity> {
-  const response = await fetch(
-    `${env.WEB_BASE_URL}/transports/trips/register`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
-      body: JSON.stringify(request),
+  const response = await fetch(`${env.WEB_BASE_URL}/trips`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
     },
-  );
+    body: JSON.stringify(request),
+  });
 
   if (!response.ok) {
     await handleHttpError(response, "Erro ao criar viagem");

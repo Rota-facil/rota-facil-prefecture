@@ -7,7 +7,7 @@ import type { UpdateBusOfDriverRequest } from "@/types/request/UpdateBusOfDriver
 import type { UpdateBusRequest } from "@/types/request/UpdateBusRequest";
 
 export async function listBus(): Promise<BusEntity[]> {
-  const response = await fetch(`${env.WEB_BASE_URL}/transports/bus`, {
+  const response = await fetch(`${env.WEB_BASE_URL}/vehicles`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -23,7 +23,7 @@ export async function listBus(): Promise<BusEntity[]> {
 }
 
 export async function createBus(request: CreateBusRequest): Promise<BusEntity> {
-  const response = await fetch(`${env.WEB_BASE_URL}/transports/bus/register`, {
+  const response = await fetch(`${env.WEB_BASE_URL}/vehicles`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -42,7 +42,7 @@ export async function updateBus(
   busId: string | number,
   request: UpdateBusRequest,
 ): Promise<BusEntity> {
-  const response = await fetch(`${env.WEB_BASE_URL}/transports/bus/${busId}`, {
+  const response = await fetch(`${env.WEB_BASE_URL}/vehicles/${busId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -59,7 +59,7 @@ export async function updateBus(
 }
 
 export async function deleteBus(busId: string | number): Promise<void> {
-  const response = await fetch(`${env.WEB_BASE_URL}/transports/bus/${busId}`, {
+  const response = await fetch(`${env.WEB_BASE_URL}/vehicles/${busId}`, {
     method: "DELETE",
     headers: {
       "Content-Type": "application/json",

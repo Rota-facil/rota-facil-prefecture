@@ -13,43 +13,15 @@ interface InstitutionResponse {
   createdAt?: string;
 }
 
-interface InstitutionRouteCountResponse {
-  institutionId: string;
-  routeCount: number;
-}
-
-function mapInstitution(
-  response: InstitutionResponse,
-  routeCountByInstitutionId: Map<string, number> = new Map(),
-): InstitutionEntity {
+function mapInstitution(response: InstitutionResponse): InstitutionEntity {
   return {
     id: response.id,
     name: response.name,
     latitude: response.latitude,
     longitude: response.longitude,
-    routeCount: routeCountByInstitutionId.get(response.id) ?? 0,
+    routeCount: 0,
     routes: [],
   };
-}
-
-async function listInstitutionRouteCounts(): Promise<Map<string, number>> {
-  const response = await fetch(
-    `${env.WEB_BASE_URL}/transports/institutions/route-counts`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
-    },
-  );
-
-  if (!response.ok) {
-    await handleHttpError(response, "Erro ao listar rotas das instituições");
-  }
-
-  const data = (await response.json()) as InstitutionRouteCountResponse[];
-  return new Map(data.map((item) => [item.institutionId, item.routeCount]));
 }
 
 export async function listInstitutionsPage(
@@ -71,16 +43,11 @@ export async function listInstitutionsPage(
     await handleHttpError(response, "Erro ao listar instituições");
   }
 
-  const [data, routeCountByInstitutionId] = await Promise.all([
-    response.json() as Promise<PageResponse<InstitutionResponse>>,
-    listInstitutionRouteCounts(),
-  ]);
+  const data = (await response.json()) as PageResponse<InstitutionResponse>;
 
   return {
     ...data,
-    content: data.content.map((institution) =>
-      mapInstitution(institution, routeCountByInstitutionId),
-    ),
+    content: data.content.map(mapInstitution),
   };
 }
 

@@ -23,7 +23,7 @@ function routeMeta(route: RouteEntity | undefined) {
     return "Selecione uma rota para visualizar os mapas.";
   }
 
-  return `${route.boardPoints.length} ponto(s) • ${route.bus[0]?.label ?? "sem ônibus"}`;
+  return `${route.boardPoints.length} ponto(s) • ${route.vehicles[0]?.label ?? "sem veículo"}`;
 }
 
 export default function HeatMapRouteSelect({

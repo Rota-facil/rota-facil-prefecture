@@ -41,7 +41,7 @@ function mapStudent(response: StudentResponse): StudentEntity {
 }
 
 export async function getCurrentUser(): Promise<UserEntity> {
-  const response = await fetch(`${env.WEB_BASE_URL}/auth/me`, {
+  const response = await fetch(`${env.WEB_BASE_URL}/users/me`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",

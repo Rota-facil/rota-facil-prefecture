@@ -84,7 +84,15 @@ interface RouteResponse {
   daysOfWeek: RouteEntity["daysOfWeek"];
   institutions: RouteInstitutionResponse[];
   boardPoints: RouteBoardPointResponse[];
-  bus: RouteBusResponse[];
+  vehicles?: RouteBusResponse[];
+}
+
+interface SpringPageResponse<T> {
+  content: T[];
+  number: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 function formatTime(value: string): string {
@@ -106,7 +114,7 @@ function mapRoute(response: RouteResponse): RouteEntity {
       id: institution.id,
       name: institution.name,
     })),
-    bus: response.bus.map((busItem) => ({
+    vehicles: (response.vehicles ?? []).map((busItem) => ({
       id: busItem.id,
       label: busItem.plate,
     })),
@@ -125,31 +133,7 @@ export async function listRoutes(
   page: number,
   size: number,
 ): Promise<PageResponse<RouteEntity>> {
-  const response = await fetch(
-    `${env.WEB_BASE_URL}/transports/routes?page=${page}&size=${size}`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
-    },
-  );
-
-  if (!response.ok) {
-    await handleHttpError(response, "Erro ao listar rotas");
-  }
-
-  const data = (await response.json()) as PageResponse<RouteResponse>;
-
-  return {
-    ...data,
-    content: data.content.map(mapRoute),
-  };
-}
-
-export async function listRoutesSimple(): Promise<RouteEntity[]> {
-  const response = await fetch(`${env.WEB_BASE_URL}/transports/routes/simple`, {
+  const response = await fetch(`${env.WEB_BASE_URL}/routes`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -161,24 +145,48 @@ export async function listRoutesSimple(): Promise<RouteEntity[]> {
     await handleHttpError(response, "Erro ao listar rotas");
   }
 
-  const data = (await response.json()) as RouteResponse[];
-  return data.map(mapRoute);
+  const data = (await response.json()) as SpringPageResponse<RouteResponse>;
+  const content = data.content.map(mapRoute);
+
+  return {
+    content,
+    page: {
+      size: data.size,
+      number: data.number,
+      totalElements: data.totalElements,
+      totalPages: data.totalPages,
+    },
+  };
+}
+
+export async function listRoutesSimple(): Promise<RouteEntity[]> {
+  const response = await fetch(`${env.WEB_BASE_URL}/routes`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+
+  if (!response.ok) {
+    await handleHttpError(response, "Erro ao listar rotas");
+  }
+
+  const data = (await response.json()) as SpringPageResponse<RouteResponse>;
+  return data.content.map(mapRoute);
 }
 
 export async function addRoute(
   request: CreateRouteRequest,
 ): Promise<RouteEntity> {
-  const response = await fetch(
-    `${env.WEB_BASE_URL}/transports/routes/register`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
-      body: JSON.stringify(request),
+  const response = await fetch(`${env.WEB_BASE_URL}/routes`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
     },
-  );
+    body: JSON.stringify(request),
+  });
 
   if (!response.ok) {
     await handleHttpError(response, "Erro ao cadastrar rota");
@@ -191,17 +199,14 @@ export async function updateRoute(
   routeId: string,
   request: CreateRouteRequest,
 ): Promise<RouteEntity> {
-  const response = await fetch(
-    `${env.WEB_BASE_URL}/transports/routes/${routeId}`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
-      body: JSON.stringify(request),
+  const response = await fetch(`${env.WEB_BASE_URL}/routes/${routeId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
     },
-  );
+    body: JSON.stringify(request),
+  });
 
   if (!response.ok) {
     await handleHttpError(response, "Erro ao atualizar rota");
@@ -211,16 +216,13 @@ export async function updateRoute(
 }
 
 export async function deleteRoute(routeId: string): Promise<void> {
-  const response = await fetch(
-    `${env.WEB_BASE_URL}/transports/routes/${routeId}`,
-    {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getToken()}`,
-      },
+  const response = await fetch(`${env.WEB_BASE_URL}/routes/${routeId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
     },
-  );
+  });
 
   if (!response.ok) {
     await handleHttpError(response, "Erro ao excluir rota");

@@ -11,7 +11,7 @@ export interface RouteInstitutionEntity {
   name: string;
 }
 
-export interface RouteBusEntity {
+export interface RouteVehicleEntity {
   id: string;
   label: string;
 }
@@ -31,7 +31,7 @@ export interface RouteEntity {
   returnFinish: string;
   daysOfWeek: RouteDayOfWeek[];
   institutions: RouteInstitutionEntity[];
-  bus: RouteBusEntity[];
+  vehicles: RouteVehicleEntity[];
   boardPoints: RouteBoardPointEntity[];
   status: RouteStatus;
   updatedAtLabel: string;

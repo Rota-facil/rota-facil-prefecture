@@ -23,8 +23,12 @@ export interface CreateRouteRequest {
   goingFinish: string;
   returnFinish: string;
   daysOfWeek: RouteDayOfWeek[];
-  institutionsIds: string[];
-  busIds: string[];
+  vehicles: string[];
+  institutions: {
+    institutionId: string;
+    institutionGoing: string;
+    institutionFinish: string;
+  }[];
   boardPoints: CreateBoardPointRouteRequest[];
 }
 

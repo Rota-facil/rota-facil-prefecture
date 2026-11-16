@@ -81,7 +81,7 @@ export async function generateRouteHeatMap(
   route: RouteEntity,
 ): Promise<HeatMapEntity> {
   const response = await fetch(
-    `${env.WEB_BASE_URL}/transports/routes/${route.id}/board-point/heat-map`,
+    `${env.WEB_BASE_URL}/routes/heat-map/${route.id}`,
     {
       method: "POST",
       headers: {

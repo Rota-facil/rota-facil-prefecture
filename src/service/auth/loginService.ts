@@ -6,7 +6,7 @@ import type { AuthLoginResponse } from "@/types/response/auth/AuthLoginResponse"
 export async function login(
   authLoginRequest: AuthLoginRequest,
 ): Promise<AuthLoginResponse> {
-  const response = await fetch(`${env.WEB_BASE_URL}/auth/user/login`, {
+  const response = await fetch(`${env.WEB_BASE_URL}/auth/login`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

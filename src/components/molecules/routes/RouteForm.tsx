@@ -22,7 +22,7 @@ interface RouteOption {
 interface RouteFormProps {
   initialRoute?: RouteEntity;
   institutions: RouteOption[];
-  bus: RouteOption[];
+  vehicles: RouteOption[];
   boardPoints: RouteOption[];
   onSubmit: (request: CreateRouteRequest) => void;
   onCancel: () => void;
@@ -47,8 +47,12 @@ function mapRouteToRequest(route: RouteEntity): CreateRouteRequest {
     goingFinish: route.goingFinish,
     returnFinish: route.returnFinish,
     daysOfWeek: route.daysOfWeek,
-    institutionsIds: route.institutions.map((institution) => institution.id),
-    busIds: route.bus.map((busItem) => busItem.id),
+    vehicles: route.vehicles.map((vehicle) => vehicle.id),
+    institutions: route.institutions.map((institution) => ({
+      institutionId: institution.id,
+      institutionGoing: "06:30",
+      institutionFinish: "12:00",
+    })),
     boardPoints: route.boardPoints.map((boardPoint) => ({
       boardPointId: boardPoint.boardPointId,
       boardTimeGoing: boardPoint.boardTimeGoing,
@@ -66,13 +70,13 @@ function toggleValue<TValue extends string>(values: TValue[], value: TValue) {
 export default function RouteForm({
   initialRoute,
   institutions,
-  bus,
+  vehicles,
   boardPoints,
   onSubmit,
   onCancel,
 }: RouteFormProps) {
   const firstInstitutionId = institutions[0]?.id ?? "";
-  const firstBusId = bus[0]?.id ?? "";
+  const firstVehicleId = vehicles[0]?.id ?? "";
   const firstBoardPointId = boardPoints[0]?.id ?? "";
 
   const [form, setForm] = useState<CreateRouteRequest>(
@@ -86,8 +90,16 @@ export default function RouteForm({
           goingFinish: "07:30",
           returnFinish: "13:00",
           daysOfWeek: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"],
-          institutionsIds: firstInstitutionId ? [firstInstitutionId] : [],
-          busIds: firstBusId ? [firstBusId] : [],
+          institutions: firstInstitutionId
+            ? [
+                {
+                  institutionId: firstInstitutionId,
+                  institutionGoing: "06:30",
+                  institutionFinish: "12:00",
+                },
+              ]
+            : [],
+          vehicles: firstVehicleId ? [firstVehicleId] : [],
           boardPoints: firstBoardPointId
             ? [defaultBoardPoint(firstBoardPointId)]
             : [],
@@ -243,11 +255,26 @@ export default function RouteForm({
                 <input
                   type="checkbox"
                   className="cursor-pointer"
-                  checked={form.institutionsIds.includes(institution.id)}
+                  checked={form.institutions.some(
+                    (item) => item.institutionId === institution.id,
+                  )}
                   onChange={() =>
                     updateField(
-                      "institutionsIds",
-                      toggleValue(form.institutionsIds, institution.id),
+                      "institutions",
+                      form.institutions.some(
+                        (item) => item.institutionId === institution.id,
+                      )
+                        ? form.institutions.filter(
+                            (item) => item.institutionId !== institution.id,
+                          )
+                        : [
+                            ...form.institutions,
+                            {
+                              institutionId: institution.id,
+                              institutionGoing: "06:30",
+                              institutionFinish: "12:00",
+                            },
+                          ],
                     )
                   }
                 />
@@ -257,22 +284,25 @@ export default function RouteForm({
           </div>
         </FormField>
 
-        <FormField label="Ônibus recorrentes">
+        <FormField label="Veículos recorrentes">
           <div className="grid gap-2 rounded-md border border-border p-3">
-            {bus.map((busItem) => (
+            {vehicles.map((vehicle) => (
               <label
-                key={busItem.id}
+                key={vehicle.id}
                 className="flex cursor-pointer items-center gap-2 text-xs text-slate-700"
               >
                 <input
                   type="checkbox"
                   className="cursor-pointer"
-                  checked={form.busIds.includes(busItem.id)}
+                  checked={form.vehicles.includes(vehicle.id)}
                   onChange={() =>
-                    updateField("busIds", toggleValue(form.busIds, busItem.id))
+                    updateField(
+                      "vehicles",
+                      toggleValue(form.vehicles, vehicle.id),
+                    )
                   }
                 />
-                {busItem.label}
+                {vehicle.label}
               </label>
             ))}
           </div>

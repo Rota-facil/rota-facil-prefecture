@@ -25,7 +25,7 @@ export default function CreateTripModal({
     () => routes.find((route) => route.id === routeId),
     [routeId, routes],
   );
-  const availableBus = selectedRoute?.bus ?? [];
+  const availableVehicles = selectedRoute?.vehicles ?? [];
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -99,11 +99,11 @@ export default function CreateTripModal({
           <label className="grid gap-2 text-sm font-semibold text-slate-800">
             <span className="flex items-center gap-2">
               <Bus className="h-4 w-4 text-blue-600" />
-              Ônibus associado
+              Veículo associado
             </span>
             <select
               required
-              disabled={!selectedRoute || availableBus.length === 0}
+              disabled={!selectedRoute || availableVehicles.length === 0}
               value={busId}
               className="h-11 w-full cursor-pointer rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
               onChange={(event) => setBusId(event.target.value)}
@@ -111,13 +111,13 @@ export default function CreateTripModal({
               <option value="">
                 {!selectedRoute
                   ? "Selecione primeiro uma rota"
-                  : availableBus.length === 0
-                    ? "Esta rota não possui ônibus associado"
-                    : "Selecione um ônibus"}
+                  : availableVehicles.length === 0
+                    ? "Esta rota não possui veículo associado"
+                    : "Selecione um veículo"}
               </option>
-              {availableBus.map((bus) => (
-                <option key={bus.id} value={bus.id}>
-                  {bus.label}
+              {availableVehicles.map((vehicle) => (
+                <option key={vehicle.id} value={vehicle.id}>
+                  {vehicle.label}
                 </option>
               ))}
             </select>
