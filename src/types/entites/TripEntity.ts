@@ -1,5 +1,5 @@
-import type { BusEntity } from "@/types/entites/BusEntity";
 import type { TripStatusEntity } from "@/types/entites/TripStatusEntity";
+import type { VehicleEntity } from "@/types/entites/VehicleEntity";
 import type { Progress } from "@/types/enums/Progress";
 
 export interface TripRoutePointEntity {
@@ -28,7 +28,7 @@ export interface TripEntity {
   prefectureId: string;
   name: string;
   reasonOfCancellation?: string;
-  bus: BusEntity;
+  vehicle: VehicleEntity;
   route: TripRouteEntity;
   actualStatus: Progress;
   students: number;

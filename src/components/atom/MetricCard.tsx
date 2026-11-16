@@ -1,11 +1,11 @@
 import {
-  Bus,
   CircleX,
   Clock,
   GraduationCap,
   MapPinned,
   Route,
   Send,
+  Truck,
   Users,
 } from "lucide-react";
 
@@ -80,11 +80,11 @@ const metricCardVariants = {
     title: "Motoristas",
   },
 
-  bus: {
-    icon: Bus,
+  vehicle: {
+    icon: Truck,
     iconWrapperColor: "bg-green-300/30",
     iconColor: "green",
-    title: "Frota de ônibus",
+    title: "Frota de veículo",
   },
 };
 

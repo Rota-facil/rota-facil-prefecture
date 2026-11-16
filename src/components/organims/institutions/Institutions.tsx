@@ -6,6 +6,10 @@ import InstitutionCard from "@/components/molecules/institutions/InstitutionCard
 import InstitutionDetailsModal from "@/components/molecules/institutions/InstitutionDetailsModal";
 import { Button } from "@/components/ui/button";
 import {
+  listInstitutionPhotos,
+  uploadInstitutionPhoto,
+} from "@/service/InstitutionPhotoService";
+import {
   createInstitution,
   deleteInstitution,
   listInstitutionsPage,
@@ -25,11 +29,24 @@ export default function Institutions() {
   const [currentPage, setCurrentPage] = useState(0);
   const [totalInstitutions, setTotalInstitutions] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
+  const [institutionPhotoUrls, setInstitutionPhotoUrls] = useState<
+    Record<string, string>
+  >({});
 
   const fetchInstitutions = useCallback(
     async (page = currentPage) => {
       const response = await listInstitutionsPage(page, PAGE_SIZE);
       setInstitutions(response.content);
+      const photos = await Promise.all(
+        response.content.map(async (institution) => {
+          const files = await listInstitutionPhotos(institution.id);
+          return [institution.id, files[0]?.url] as const;
+        }),
+      );
+      setInstitutionPhotoUrls((current) => ({
+        ...current,
+        ...Object.fromEntries(photos.filter(([, url]) => url)),
+      }));
       setTotalInstitutions(response.page.totalElements);
       setTotalPages(response.page.totalPages || 1);
     },
@@ -53,7 +70,10 @@ export default function Institutions() {
     });
   }
 
-  async function saveInstitution(updatedInstitution: InstitutionEntity) {
+  async function saveInstitution(
+    updatedInstitution: InstitutionEntity,
+    photo?: File,
+  ) {
     const request = {
       name: updatedInstitution.name,
       latitude: updatedInstitution.latitude,
@@ -62,6 +82,16 @@ export default function Institutions() {
 
     if (modalMode === "create") {
       const createdInstitution = await createInstitution(request);
+      if (photo) {
+        const uploadedPhoto = await uploadInstitutionPhoto(
+          createdInstitution.id,
+          photo,
+        );
+        setInstitutionPhotoUrls((current) => ({
+          ...current,
+          [createdInstitution.id]: uploadedPhoto.url,
+        }));
+      }
       setCurrentPage(0);
       await fetchInstitutions(0);
       setModalMode("details");
@@ -73,6 +103,16 @@ export default function Institutions() {
       updatedInstitution.id,
       request,
     );
+    if (photo) {
+      const uploadedPhoto = await uploadInstitutionPhoto(
+        savedInstitution.id,
+        photo,
+      );
+      setInstitutionPhotoUrls((current) => ({
+        ...current,
+        [savedInstitution.id]: uploadedPhoto.url,
+      }));
+    }
     await fetchInstitutions();
     setModalMode("details");
     setSelectedInstitution(savedInstitution);
@@ -135,6 +175,7 @@ export default function Institutions() {
           <InstitutionCard
             key={institution.id}
             institution={institution}
+            photoUrl={institutionPhotoUrls[institution.id]}
             onViewDetails={openDetails}
             onDelete={setInstitutionPendingDelete}
           />
@@ -182,6 +223,7 @@ export default function Institutions() {
       {selectedInstitution && (
         <InstitutionDetailsModal
           institution={selectedInstitution}
+          photoUrl={institutionPhotoUrls[selectedInstitution.id]}
           mode={modalMode}
           onClose={() => setSelectedInstitution(undefined)}
           onSave={saveInstitution}

@@ -55,7 +55,11 @@ export default function Home() {
           variants={"drivers"}
           size={"sm"}
         />
-        <MetricCard value={metrics?.bus ?? 30} variants={"bus"} size={"sm"} />
+        <MetricCard
+          value={metrics?.vehicle ?? 30}
+          variants={"vehicle"}
+          size={"sm"}
+        />
       </div>
 
       <div className={"h-110"}>

@@ -14,6 +14,10 @@ import {
   listBoardPoints,
   updateBoardPoint,
 } from "@/service/BoardPointService";
+import {
+  listEntityPhotos,
+  uploadEntityPhoto,
+} from "@/service/EntityPhotoService";
 import type { BoardPointEntity } from "@/types/entites/BoardPointEntity";
 import type { CreateBoardPointRequest } from "@/types/request/BoardPointRequest";
 
@@ -33,6 +37,9 @@ export default function BoardPoints() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [boardPointPendingDelete, setBoardPointPendingDelete] =
     useState<BoardPointEntity>();
+  const [boardPointPhotoUrls, setBoardPointPhotoUrls] = useState<
+    Record<string, string>
+  >({});
 
   const columns = useMemo<DataTableColumn<BoardPointEntity>[]>(
     () => [
@@ -68,6 +75,21 @@ export default function BoardPoints() {
           </div>
         ),
         className: "min-w-72",
+      },
+      {
+        id: "photo",
+        header: "Foto",
+        cell: (boardPoint) =>
+          boardPointPhotoUrls[boardPoint.id] ? (
+            <img
+              src={boardPointPhotoUrls[boardPoint.id]}
+              alt={`Foto de ${boardPoint.name}`}
+              className="h-10 w-14 rounded-lg object-cover"
+            />
+          ) : (
+            <MapPin className="h-5 w-5 text-slate-300" />
+          ),
+        className: "w-20",
       },
       {
         id: "latitude",
@@ -119,7 +141,7 @@ export default function BoardPoints() {
         headerClassName: "text-right",
       },
     ],
-    [boardPoints, currentPage],
+    [boardPoints, boardPointPhotoUrls, currentPage],
   );
 
   function closeForm() {
@@ -131,18 +153,56 @@ export default function BoardPoints() {
     async (page = currentPage) => {
       const response = await listBoardPoints(page, PAGE_SIZE);
       setBoardPoints(response.content);
+      const photos = await Promise.all(
+        response.content.map(async (boardPoint) => {
+          const files = await listEntityPhotos("board-points", boardPoint.id);
+          return [boardPoint.id, files[0]?.url] as const;
+        }),
+      );
+      setBoardPointPhotoUrls((current) => ({
+        ...current,
+        ...Object.fromEntries(photos.filter(([, url]) => url)),
+      }));
       setTotalBoardPoints(response.page.totalElements);
       setTotalPages(response.page.totalPages || 1);
     },
     [currentPage],
   );
 
-  async function saveBoardPoint(request: CreateBoardPointRequest) {
+  async function saveBoardPoint(
+    request: CreateBoardPointRequest,
+    photo?: File,
+  ) {
     if (editingBoardPoint) {
-      await updateBoardPoint(editingBoardPoint.id, request);
+      const savedBoardPoint = await updateBoardPoint(
+        editingBoardPoint.id,
+        request,
+      );
+      if (photo) {
+        const uploadedPhoto = await uploadEntityPhoto(
+          "board-points",
+          savedBoardPoint.id,
+          photo,
+        );
+        setBoardPointPhotoUrls((current) => ({
+          ...current,
+          [savedBoardPoint.id]: uploadedPhoto.url,
+        }));
+      }
       await fetchBoardPoints();
     } else {
-      await createBoardPoint(request);
+      const createdBoardPoint = await createBoardPoint(request);
+      if (photo) {
+        const uploadedPhoto = await uploadEntityPhoto(
+          "board-points",
+          createdBoardPoint.id,
+          photo,
+        );
+        setBoardPointPhotoUrls((current) => ({
+          ...current,
+          [createdBoardPoint.id]: uploadedPhoto.url,
+        }));
+      }
       setCurrentPage(0);
       await fetchBoardPoints(0);
     }
@@ -271,6 +331,11 @@ export default function BoardPoints() {
             <BoardPointForm
               key={editingBoardPoint?.id ?? "new-board-point"}
               initialBoardPoint={editingBoardPoint}
+              photoUrl={
+                editingBoardPoint
+                  ? boardPointPhotoUrls[editingBoardPoint.id]
+                  : undefined
+              }
               onSubmit={saveBoardPoint}
               onCancel={closeForm}
             />

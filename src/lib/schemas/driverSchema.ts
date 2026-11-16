@@ -6,7 +6,7 @@ export const driverSchema = z.object({
     .string()
     .regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, "CPF inválido (ex: 123.456.789-00)"),
   email: z.string().email("E-mail inválido"),
-  busId: z.string().optional(),
+  vehicleId: z.string().optional(),
 });
 
 export type DriverFormData = z.infer<typeof driverSchema>;

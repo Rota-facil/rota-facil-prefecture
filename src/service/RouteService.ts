@@ -66,7 +66,7 @@ interface RouteBoardPointResponse {
   boardTimeFinish: string;
 }
 
-interface RouteBusResponse {
+interface RouteVehicleResponse {
   id: string;
   plate: string;
 }
@@ -84,7 +84,7 @@ interface RouteResponse {
   daysOfWeek: RouteEntity["daysOfWeek"];
   institutions: RouteInstitutionResponse[];
   boardPoints: RouteBoardPointResponse[];
-  vehicles?: RouteBusResponse[];
+  vehicles?: RouteVehicleResponse[];
 }
 
 interface SpringPageResponse<T> {
@@ -114,9 +114,9 @@ function mapRoute(response: RouteResponse): RouteEntity {
       id: institution.id,
       name: institution.name,
     })),
-    vehicles: (response.vehicles ?? []).map((busItem) => ({
-      id: busItem.id,
-      label: busItem.plate,
+    vehicles: (response.vehicles ?? []).map((vehicleItem) => ({
+      id: vehicleItem.id,
+      label: vehicleItem.plate,
     })),
     boardPoints: response.boardPoints.map((boardPoint) => ({
       boardPointId: boardPoint.boardPointId,

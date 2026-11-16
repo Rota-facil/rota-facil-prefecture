@@ -1,7 +1,9 @@
 "use client";
 
+import { ImagePlus } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import FormField from "@/components/atom/FormField";
+import PhotoPreview from "@/components/atom/PhotoPreview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { BoardPointEntity } from "@/types/entites/BoardPointEntity";
@@ -9,7 +11,8 @@ import type { CreateBoardPointRequest } from "@/types/request/BoardPointRequest"
 
 interface BoardPointFormProps {
   initialBoardPoint?: BoardPointEntity;
-  onSubmit: (request: CreateBoardPointRequest) => void;
+  photoUrl?: string;
+  onSubmit: (request: CreateBoardPointRequest, photo?: File) => void;
   onCancel: () => void;
 }
 
@@ -31,12 +34,15 @@ function mapBoardPointToForm(
 
 export default function BoardPointForm({
   initialBoardPoint,
+  photoUrl,
   onSubmit,
   onCancel,
 }: BoardPointFormProps) {
   const [form, setForm] = useState<BoardPointFormState>(
     mapBoardPointToForm(initialBoardPoint),
   );
+  const [selectedPhoto, setSelectedPhoto] = useState<File>();
+  const [photoPreview, setPhotoPreview] = useState<string>();
 
   function updateField(field: keyof BoardPointFormState, value: string) {
     setForm((currentForm) => ({ ...currentForm, [field]: value }));
@@ -45,11 +51,14 @@ export default function BoardPointForm({
   function submitForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    onSubmit({
-      name: form.name.trim(),
-      latitude: Number(form.latitude),
-      longitude: Number(form.longitude),
-    });
+    onSubmit(
+      {
+        name: form.name.trim(),
+        latitude: Number(form.latitude),
+        longitude: Number(form.longitude),
+      },
+      selectedPhoto,
+    );
   }
 
   return (
@@ -92,6 +101,31 @@ export default function BoardPointForm({
             onChange={(event) => updateField("longitude", event.target.value)}
           />
         </FormField>
+      </div>
+
+      <div className="grid gap-2">
+        <p className="text-sm font-semibold text-slate-950">Foto do ponto</p>
+        {photoPreview || photoUrl ? (
+          <PhotoPreview
+            src={photoPreview ?? photoUrl ?? ""}
+            alt="Foto do ponto de embarque"
+            className="h-32 w-full rounded-xl object-cover"
+          />
+        ) : null}
+        <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-[#CBD5E1] bg-slate-50 px-4 py-3 text-sm text-slate-600 hover:bg-slate-100">
+          <ImagePlus className="h-4 w-4 text-[#1E3A8A]" />
+          <span>{selectedPhoto?.name ?? "Selecionar foto do ponto"}</span>
+          <input
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              setSelectedPhoto(file);
+              setPhotoPreview(file ? URL.createObjectURL(file) : undefined);
+            }}
+          />
+        </label>
       </div>
 
       <div className="flex justify-end gap-2">

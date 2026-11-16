@@ -16,7 +16,6 @@ import RouteFilters, {
 import RouteForm from "@/components/molecules/routes/RouteForm";
 import { Button } from "@/components/ui/button";
 import { listBoardPoints } from "@/service/BoardPointService";
-import { listBus as listVehicles } from "@/service/BusService";
 import { listInstitutions } from "@/service/InstitutionService";
 import {
   addRoute,
@@ -24,10 +23,11 @@ import {
   listRoutesSimple,
   updateRoute,
 } from "@/service/RouteService";
+import { listVehicles } from "@/service/VehicleService";
 import type { BoardPointEntity } from "@/types/entites/BoardPointEntity";
-import type { BusEntity } from "@/types/entites/BusEntity";
 import type { InstitutionEntity } from "@/types/entites/InstitutionEntity";
 import type { RouteEntity } from "@/types/entites/RouteEntity";
+import type { VehicleEntity } from "@/types/entites/VehicleEntity";
 import type { CreateRouteRequest } from "@/types/request/RouteRequest";
 
 // const institutionOptions = [
@@ -37,10 +37,10 @@ import type { CreateRouteRequest } from "@/types/request/RouteRequest";
 //   { id: "44444444-4444-4444-8444-444444444444", label: "IFMG Campus 2" },
 // ];
 //
-// const busOptions = [
-//   { id: "55555555-5555-4555-8555-555555555555", label: "Ônibus 01" },
-//   { id: "66666666-6666-4666-8666-666666666666", label: "Ônibus 02" },
-//   { id: "77777777-7777-4777-8777-777777777777", label: "Ônibus 03" },
+// const vehicleOptions = [
+//   { id: "55555555-5555-4555-8555-555555555555", label: "Veículo 01" },
+//   { id: "66666666-6666-4666-8666-666666666666", label: "Veículo 02" },
+//   { id: "77777777-7777-4777-8777-777777777777", label: "Veículo 03" },
 // ];
 //
 // const boardPointOptions = [
@@ -65,7 +65,7 @@ import type { CreateRouteRequest } from "@/types/request/RouteRequest";
 //       { id: institutionOptions[0].id, name: institutionOptions[0].label },
 //       { id: institutionOptions[1].id, name: institutionOptions[1].label },
 //     ],
-//     bus: [{ id: busOptions[0].id, label: busOptions[0].label }],
+//     vehicle: [{ id: vehicleOptions[0].id, label: vehicleOptions[0].label }],
 //     boardPoints: [
 //       {
 //         boardPointId: boardPointOptions[0].id,
@@ -96,7 +96,7 @@ import type { CreateRouteRequest } from "@/types/request/RouteRequest";
 //     institutions: [
 //       { id: institutionOptions[1].id, name: institutionOptions[1].label },
 //     ],
-//     bus: [{ id: busOptions[1].id, label: busOptions[1].label }],
+//     vehicle: [{ id: vehicleOptions[1].id, label: vehicleOptions[1].label }],
 //     boardPoints: [
 //       {
 //         boardPointId: boardPointOptions[1].id,
@@ -121,7 +121,7 @@ import type { CreateRouteRequest } from "@/types/request/RouteRequest";
 //     institutions: [
 //       { id: institutionOptions[2].id, name: institutionOptions[2].label },
 //     ],
-//     bus: [{ id: busOptions[2].id, label: busOptions[2].label }],
+//     vehicle: [{ id: vehicleOptions[2].id, label: vehicleOptions[2].label }],
 //     boardPoints: [
 //       {
 //         boardPointId: boardPointOptions[3].id,
@@ -142,10 +142,10 @@ import type { CreateRouteRequest } from "@/types/request/RouteRequest";
 //   });
 // }
 //
-// function resolveBus(ids: string[]): RouteBusEntity[] {
+// function resolveVehicle(ids: string[]): RouteVehicleEntity[] {
 //   return ids.map((id) => {
-//     const busItem = busOptions.find((option) => option.id === id);
-//     return { id, label: busItem?.label ?? id };
+//     const vehicleItem = vehicleOptions.find((option) => option.id === id);
+//     return { id, label: vehicleItem?.label ?? id };
 //   });
 // }
 //
@@ -179,7 +179,7 @@ import type { CreateRouteRequest } from "@/types/request/RouteRequest";
 //     returnFinish: request.returnFinish,
 //     daysOfWeek: request.daysOfWeek,
 //     institutions: resolveInstitutions(request.institutionsIds),
-//     bus: resolveBus(request.busIds),
+//     vehicle: resolveVehicle(request.vehicleIds),
 //     boardPoints: resolveBoardPoints(request),
 //     status,
 //     updatedAtLabel: "Atualizada agora",
@@ -320,7 +320,7 @@ export default function Routes() {
 
   const [institutions, setInstitutions] = useState<InstitutionEntity[]>([]);
   const [boardPoints, setBoardPoints] = useState<BoardPointEntity[]>([]);
-  const [vehicles, setVehicles] = useState<BusEntity[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleEntity[]>([]);
 
   useEffect(() => {
     async function fetchResources() {
@@ -347,7 +347,7 @@ export default function Routes() {
             Rotas escolares
           </p>
           <p className="mt-1 max-w-2xl text-sm text-slate-500">
-            Defina trajetos, horários de ida e volta para cada ponto, ônibus e
+            Defina trajetos, horários de ida e volta para cada ponto, veículo e
             instituições atendidas.
           </p>
         </div>
@@ -464,8 +464,8 @@ export default function Routes() {
                     {editingRoute ? "Editar rota" : "Nova rota"}
                   </p>
                   <p className="mt-1 text-sm text-white/75">
-                    Configure trajeto, recorrência, horários, ônibus e pontos de
-                    embarque da rota.
+                    Configure trajeto, recorrência, horários, veículo e pontos
+                    de embarque da rota.
                   </p>
                 </div>
               </div>

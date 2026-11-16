@@ -2,14 +2,15 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Bus,
   Calendar,
+  Car,
   Check,
   ChevronDown,
   Eye,
   EyeOff,
   FileText,
   IdCard,
+  ImagePlus,
   Lock,
   Mail,
   Send,
@@ -19,42 +20,61 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
+import DocumentPreview from "@/components/atom/DocumentPreview";
 import DriverInfoItem from "@/components/atom/DriverInfoItem";
 import DriverHeader from "@/components/molecules/drivers/DriverHeader";
 import UserFeedbackPanel from "@/components/molecules/feedbacks/UserFeedbackPanel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { formatDocumentStatus } from "@/lib/documentStatus";
 import {
   type DriverCreateFormData,
   type DriverFormData,
   driverCreateSchema,
   driverSchema,
 } from "@/lib/schemas/driverSchema";
-import { listBus } from "@/service/BusService";
-import type { BusEntity } from "@/types/entites/BusEntity";
+import { formatVehicleType } from "@/lib/vehicleType";
+import {
+  type DriverDocument,
+  evaluateDriverDocument,
+  fetchDriverCnh,
+} from "@/service/DriverDocumentService";
+import { listVehicles } from "@/service/VehicleService";
 import type { DriverEntity } from "@/types/entites/DriverEntity";
+import type { VehicleEntity } from "@/types/entites/VehicleEntity";
 
 interface DriverDetailsModalProps {
   driver: DriverEntity;
+  photoUrl?: string;
   open: boolean;
   mode?: "details" | "create";
   onClose: () => void;
-  onEdit: (data: DriverFormData) => void;
-  onCreate?: (data: DriverCreateFormData) => void;
+  onEdit: (
+    data: DriverFormData,
+    photo?: File,
+    cnh?: File,
+  ) => void | Promise<void>;
+  onDocumentChanged?: (status: DriverDocument["validationStatus"]) => void;
+  onCreate?: (data: DriverCreateFormData, photo?: File, cnh?: File) => void;
 }
 
 export default function DriverDetailsModal({
   driver,
+  photoUrl,
   open,
   mode = "details",
   onClose,
   onEdit,
   onCreate,
+  onDocumentChanged,
 }: DriverDetailsModalProps) {
   const isCreating = mode === "create";
   const [isEditing, setIsEditing] = useState(false);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [selectedPhoto, setSelectedPhoto] = useState<File>();
+  const [selectedCnh, setSelectedCnh] = useState<File>();
+  const [cnh, setCnh] = useState<DriverDocument | null>(null);
   const selectRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -70,16 +90,16 @@ export default function DriverDetailsModal({
       name: driver.name,
       cpf: driver.cpf,
       email: driver.email,
-      busId: driver.bus?.id ? String(driver.bus.id) : "",
+      vehicleId: driver.vehicle?.id ? String(driver.vehicle.id) : "",
     },
   });
 
-  const [busOptions, setBusOptions] = useState<BusEntity[]>([]);
+  const [vehicleOptions, setVehicleOptions] = useState<VehicleEntity[]>([]);
   useEffect(() => {
-    async function listBusFromService() {
-      setBusOptions(await listBus());
+    async function listVehiclesFromService() {
+      setVehicleOptions(await listVehicles());
     }
-    listBusFromService();
+    listVehiclesFromService();
   }, []);
 
   const {
@@ -97,9 +117,9 @@ export default function DriverDetailsModal({
     },
   });
 
-  const selectedBusId = useWatch({ control, name: "busId" });
-  const selectedBus = busOptions.find(
-    (bus) => String(bus.id) === selectedBusId,
+  const selectedVehicleId = useWatch({ control, name: "vehicleId" });
+  const selectedVehicle = vehicleOptions.find(
+    (vehicle) => String(vehicle.id) === selectedVehicleId,
   );
 
   useEffect(() => {
@@ -108,10 +128,20 @@ export default function DriverDetailsModal({
         name: driver.name,
         cpf: driver.cpf,
         email: driver.email,
-        busId: driver.bus?.id ? String(driver.bus.id) : "",
+        vehicleId: driver.vehicle?.id ? String(driver.vehicle.id) : "",
       });
     }
   }, [driver, isCreating, reset]);
+
+  useEffect(() => {
+    if (isCreating) {
+      setCnh(null);
+      return;
+    }
+    fetchDriverCnh(driver.id)
+      .then(setCnh)
+      .catch(() => setCnh(null));
+  }, [driver.id, isCreating]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -132,17 +162,20 @@ export default function DriverDetailsModal({
     setShowPassword(false);
     reset();
     resetCreate();
+    setSelectedPhoto(undefined);
+    setSelectedCnh(undefined);
     onClose();
   }
 
-  function handleSubmitEdit(data: DriverFormData) {
-    onEdit(data);
+  async function handleSubmitEdit(data: DriverFormData) {
+    await onEdit(data, selectedPhoto, selectedCnh);
+    setCnh(await fetchDriverCnh(driver.id));
     setIsEditing(false);
     setIsSelectOpen(false);
   }
 
   function handleSubmitCreateForm(data: DriverCreateFormData) {
-    onCreate?.(data);
+    onCreate?.(data, selectedPhoto, selectedCnh);
     resetCreate();
     setShowPassword(false);
   }
@@ -191,7 +224,11 @@ export default function DriverDetailsModal({
             </div>
           </div>
         ) : (
-          <DriverHeader driver={driver} onClose={handleClose} />
+          <DriverHeader
+            driver={driver}
+            photoUrl={photoUrl}
+            onClose={handleClose}
+          />
         )}
 
         <div className="max-h-[calc(88vh-116px)] overflow-y-auto [scrollbar-color:#CBD5E1_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-track]:bg-transparent">
@@ -227,6 +264,33 @@ export default function DriverDetailsModal({
                         {createErrors.name.message}
                       </span>
                     )}
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-[#CBD5E1] bg-slate-50 px-4 py-3 text-sm text-slate-600 hover:bg-slate-100">
+                      <ImagePlus className="h-4 w-4 text-[#1E3A8A]" />
+                      <span>{selectedPhoto?.name ?? "Foto do motorista"}</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="sr-only"
+                        onChange={(event) =>
+                          setSelectedPhoto(event.target.files?.[0])
+                        }
+                      />
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-[#CBD5E1] bg-slate-50 px-4 py-3 text-sm text-slate-600 hover:bg-slate-100">
+                      <FileText className="h-4 w-4 text-[#1E3A8A]" />
+                      <span>{selectedCnh?.name ?? "CNH em PDF"}</span>
+                      <input
+                        type="file"
+                        accept="application/pdf,.pdf"
+                        className="sr-only"
+                        onChange={(event) =>
+                          setSelectedCnh(event.target.files?.[0])
+                        }
+                      />
+                    </label>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -405,14 +469,14 @@ export default function DriverDetailsModal({
 
                 <div className="flex items-center gap-4 rounded-2xl border border-[#E5EAF0] bg-white p-4 shadow-sm">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-[#1E3A8A]">
-                    <Bus className="h-5 w-5" />
+                    <Car className="h-5 w-5" />
                   </div>
                   <div
                     className="relative flex flex-1 flex-col gap-1"
                     ref={selectRef}
                   >
                     <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                      Ônibus
+                      Veículo
                     </span>
 
                     <button
@@ -424,7 +488,7 @@ export default function DriverDetailsModal({
                           : "border-[#E5EAF0]"
                       }`}
                     >
-                      <span>{selectedBus?.plate ?? "Sem ônibus"}</span>
+                      <span>{selectedVehicle?.plate ?? "Sem veículo"}</span>
                       <ChevronDown
                         className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isSelectOpen ? "rotate-180" : ""}`}
                       />
@@ -435,29 +499,30 @@ export default function DriverDetailsModal({
                         <button
                           type="button"
                           onClick={() => {
-                            setValue("busId", "", {
+                            setValue("vehicleId", "", {
                               shouldValidate: true,
                             });
                             setIsSelectOpen(false);
                           }}
                           className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm font-semibold transition-colors ${
-                            !selectedBusId
+                            !selectedVehicleId
                               ? "bg-[#1E3A8A] text-white"
                               : "text-slate-700 hover:bg-[#EEF2F7]"
                           }`}
                         >
-                          <span>Sem ônibus</span>
-                          {!selectedBusId && <Check className="h-4 w-4" />}
+                          <span>Sem veículo</span>
+                          {!selectedVehicleId && <Check className="h-4 w-4" />}
                         </button>
 
-                        {busOptions.map((bus) => {
-                          const isSelected = String(bus.id) === selectedBusId;
+                        {vehicleOptions.map((vehicle) => {
+                          const isSelected =
+                            String(vehicle.id) === selectedVehicleId;
                           return (
                             <button
-                              key={bus.id}
+                              key={vehicle.id}
                               type="button"
                               onClick={() => {
-                                setValue("busId", String(bus.id), {
+                                setValue("vehicleId", String(vehicle.id), {
                                   shouldValidate: true,
                                 });
                                 setIsSelectOpen(false);
@@ -468,7 +533,10 @@ export default function DriverDetailsModal({
                                   : "text-slate-700 hover:bg-[#EEF2F7]"
                               }`}
                             >
-                              <span>{bus.plate}</span>
+                              <span>
+                                {vehicle.plate} (
+                                {formatVehicleType(vehicle.vehicleType)})
+                              </span>
                               {isSelected && <Check className="h-4 w-4" />}
                             </button>
                           );
@@ -476,11 +544,11 @@ export default function DriverDetailsModal({
                       </div>
                     )}
 
-                    <input type="hidden" {...register("busId")} />
+                    <input type="hidden" {...register("vehicleId")} />
 
-                    {errors.busId && (
+                    {errors.vehicleId && (
                       <span className="text-[11px] font-medium text-[#DC2626]">
-                        {errors.busId.message}
+                        {errors.vehicleId.message}
                       </span>
                     )}
                   </div>
@@ -498,11 +566,32 @@ export default function DriverDetailsModal({
                   value={driver.createdAt}
                 />
 
-                <DriverInfoItem
-                  icon={<FileText className="h-5 w-5" />}
-                  label="Documentação"
-                  value={driver.documentationStatus}
-                />
+                <div className="col-span-2 grid gap-3 sm:grid-cols-2">
+                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-[#CBD5E1] bg-white px-4 py-3 text-sm text-slate-600 hover:bg-slate-50">
+                    <ImagePlus className="h-4 w-4 text-[#1E3A8A]" />
+                    <span>{selectedPhoto?.name ?? "Alterar foto"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(event) =>
+                        setSelectedPhoto(event.target.files?.[0])
+                      }
+                    />
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-[#CBD5E1] bg-white px-4 py-3 text-sm text-slate-600 hover:bg-slate-50">
+                    <FileText className="h-4 w-4 text-[#1E3A8A]" />
+                    <span>{selectedCnh?.name ?? "Alterar CNH"}</span>
+                    <input
+                      type="file"
+                      accept="application/pdf,.pdf"
+                      className="sr-only"
+                      onChange={(event) =>
+                        setSelectedCnh(event.target.files?.[0])
+                      }
+                    />
+                  </label>
+                </div>
               </div>
 
               <div className="flex items-center justify-end gap-2 border-t border-[#E5EAF0] bg-white px-6 py-4">
@@ -517,7 +606,9 @@ export default function DriverDetailsModal({
                       name: driver.name,
                       cpf: driver.cpf,
                       email: driver.email,
-                      busId: driver.bus?.id ? String(driver.bus.id) : "",
+                      vehicleId: driver.vehicle?.id
+                        ? String(driver.vehicle.id)
+                        : "",
                     });
                   }}
                 >
@@ -552,9 +643,13 @@ export default function DriverDetailsModal({
                   value={driver.email}
                 />
                 <DriverInfoItem
-                  icon={<Bus className="h-5 w-5" />}
-                  label="Ônibus"
-                  value={driver.bus?.plate ?? "Sem ônibus"}
+                  icon={<Car className="h-5 w-5" />}
+                  label="Veículo"
+                  value={
+                    driver.vehicle
+                      ? `${driver.vehicle.plate} (${formatVehicleType(driver.vehicle.vehicleType)})`
+                      : "Sem veículo"
+                  }
                 />
                 <DriverInfoItem
                   icon={<Send className="h-5 w-5" />}
@@ -566,11 +661,67 @@ export default function DriverDetailsModal({
                   label="Admissão"
                   value={driver.createdAt}
                 />
-                <DriverInfoItem
-                  icon={<FileText className="h-5 w-5" />}
-                  label="Documentação"
-                  value={driver.documentationStatus}
-                />
+              </div>
+
+              <div className="mx-6 rounded-2xl border border-[#E5EAF0] bg-white p-4">
+                <div className="mb-3 flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950">
+                      CNH do motorista
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Documento para avaliação administrativa.
+                    </p>
+                  </div>
+                  <span
+                    className={`rounded-lg px-2 py-1 text-xs font-semibold ${formatDocumentStatus(cnh?.validationStatus).className}`}
+                  >
+                    {formatDocumentStatus(cnh?.validationStatus).label}
+                  </span>
+                </div>
+                {cnh ? (
+                  <div className="grid gap-3">
+                    <DocumentPreview
+                      src={cnh.url}
+                      name={cnh.originalFilename}
+                    />
+                    <div className="flex flex-wrap gap-2">
+                      {(["ANALYSIS", "APPROVED", "REJECTED"] as const).map(
+                        (status) => (
+                          <Button
+                            key={status}
+                            type="button"
+                            size="sm"
+                            className="h-10 rounded-xl px-4 text-sm font-semibold"
+                            variant={
+                              cnh.validationStatus === status
+                                ? "default"
+                                : "outline"
+                            }
+                            onClick={async () => {
+                              const updatedDocument =
+                                await evaluateDriverDocument(cnh.id, status);
+                              setCnh(updatedDocument);
+                              onDocumentChanged?.(
+                                updatedDocument.validationStatus,
+                              );
+                            }}
+                          >
+                            {status === "ANALYSIS"
+                              ? "Em análise"
+                              : status === "APPROVED"
+                                ? "Aceitar"
+                                : "Rejeitar"}
+                          </Button>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500">
+                    Nenhuma CNH cadastrada.
+                  </p>
+                )}
               </div>
 
               <UserFeedbackPanel userId={driver.id} />

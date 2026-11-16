@@ -1,6 +1,6 @@
 "use client";
 
-import { Bus, Route, X } from "lucide-react";
+import { Route, Truck, X } from "lucide-react";
 import { type FormEvent, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { CreateTripRequest } from "@/service/TripService";
@@ -18,7 +18,7 @@ export default function CreateTripModal({
   onCreate,
 }: CreateTripModalProps) {
   const [routeId, setRouteId] = useState("");
-  const [busId, setBusId] = useState("");
+  const [vehicleId, setVehicleId] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const selectedRoute = useMemo(
@@ -29,11 +29,11 @@ export default function CreateTripModal({
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!routeId || !busId || submitting) return;
+    if (!routeId || !vehicleId || submitting) return;
 
     setSubmitting(true);
     try {
-      if (await onCreate({ routeId, busId })) {
+      if (await onCreate({ routeId, vehicleId })) {
         onClose();
       }
     } finally {
@@ -67,7 +67,7 @@ export default function CreateTripModal({
           <div className="relative pr-10">
             <p className="text-lg font-bold">Nova viagem</p>
             <p className="mt-1 text-sm text-white/75">
-              Crie uma viagem de hoje usando um ônibus já associado à rota.
+              Crie uma viagem de hoje usando um veículo já associado à rota.
             </p>
           </div>
         </div>
@@ -84,7 +84,7 @@ export default function CreateTripModal({
               className="h-11 w-full cursor-pointer rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100"
               onChange={(event) => {
                 setRouteId(event.target.value);
-                setBusId("");
+                setVehicleId("");
               }}
             >
               <option value="">Selecione uma rota</option>
@@ -98,15 +98,15 @@ export default function CreateTripModal({
 
           <label className="grid gap-2 text-sm font-semibold text-slate-800">
             <span className="flex items-center gap-2">
-              <Bus className="h-4 w-4 text-blue-600" />
+              <Truck className="h-4 w-4 text-blue-600" />
               Veículo associado
             </span>
             <select
               required
               disabled={!selectedRoute || availableVehicles.length === 0}
-              value={busId}
+              value={vehicleId}
               className="h-11 w-full cursor-pointer rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
-              onChange={(event) => setBusId(event.target.value)}
+              onChange={(event) => setVehicleId(event.target.value)}
             >
               <option value="">
                 {!selectedRoute
@@ -125,7 +125,7 @@ export default function CreateTripModal({
 
           <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs leading-relaxed text-blue-900">
             A viagem será criada com status <strong>Aguardando</strong>. O
-            ônibus precisa estar ativo, possuir motorista e pertencer à rota
+            veículo precisa estar ativo, possuir motorista e pertencer à rota
             selecionada.
           </div>
 
@@ -140,7 +140,7 @@ export default function CreateTripModal({
             </Button>
             <Button
               type="submit"
-              disabled={!routeId || !busId || submitting}
+              disabled={!routeId || !vehicleId || submitting}
               className="h-10 cursor-pointer rounded-xl bg-[#1E3A8A] px-5 text-white hover:bg-[#183276] disabled:cursor-not-allowed"
             >
               {submitting ? "Criando..." : "Criar viagem"}

@@ -7,7 +7,7 @@ export async function listReceivedFeedbacks(
   userId: string,
 ): Promise<ReceivedFeedbackEntity[]> {
   const response = await fetch(
-    `${env.WEB_BASE_URL}/transports/feedbacks/users/${userId}`,
+    `${env.WEB_BASE_URL}/feedbacks/users/${userId}`,
     {
       headers: {
         "Content-Type": "application/json",

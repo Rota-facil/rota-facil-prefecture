@@ -34,14 +34,14 @@ const typeStatusBar = {
     text: "Disponível",
   },
 
-  busOperating: {
+  vehicleOperating: {
     ballColor: "bg-green-600",
     textColor: "text-green-500",
     background: "bg-white/95 border border-green-200",
     text: "Em operação",
   },
 
-  busOutOfOperation: {
+  vehicleOutOfOperation: {
     ballColor: "bg-slate-500",
     textColor: "text-slate-500",
     background: "bg-slate-100 border border-slate-300",

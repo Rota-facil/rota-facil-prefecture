@@ -32,7 +32,7 @@ interface TripResponse {
   longitude: number;
   createdAt: string;
   actualStatus: Progress;
-  bus: {
+  vehicle: {
     id: string;
     prefectureId: string;
     capacity: number;
@@ -65,7 +65,7 @@ interface TripResponse {
 
 export interface CreateTripRequest {
   routeId: string;
-  busId: string;
+  vehicleId: string;
 }
 
 function mapPoint(point: TripPointResponse): TripRoutePointEntity {
@@ -94,22 +94,22 @@ function mapTrip(response: TripResponse): TripEntity {
   return {
     id: response.id,
     code: `V-${response.id.slice(0, 4).toUpperCase()}`,
-    prefectureId: response.bus.prefectureId,
+    prefectureId: response.vehicle.prefectureId,
     name: response.name,
     reasonOfCancellation: response.reasonOfCancellation ?? undefined,
-    bus: {
-      id: response.bus.id,
-      prefectureId: response.bus.prefectureId,
-      capacity: response.bus.capacity,
-      plate: response.bus.plate,
+    vehicle: {
+      id: response.vehicle.id,
+      prefectureId: response.vehicle.prefectureId,
+      capacity: response.vehicle.capacity,
+      plate: response.vehicle.plate,
       createdAt: new Date(),
-      driver: response.bus.driver
+      driver: response.vehicle.driver
         ? {
-            id: response.bus.driver.id,
-            name: response.bus.driver.name,
-            email: response.bus.driver.email,
+            id: response.vehicle.driver.id,
+            name: response.vehicle.driver.name,
+            email: response.vehicle.driver.email,
             cpf: "",
-            prefecture: { id: response.bus.prefectureId, name: "" },
+            prefecture: { id: response.vehicle.prefectureId, name: "" },
           }
         : null,
     },
@@ -127,7 +127,7 @@ function mapTrip(response: TripResponse): TripEntity {
     },
     actualStatus: response.actualStatus,
     students: response.students,
-    expectedStudents: response.bus.capacity,
+    expectedStudents: response.vehicle.capacity,
     latitude: response.latitude,
     longitude: response.longitude,
     createdAt: new Date(response.createdAt),

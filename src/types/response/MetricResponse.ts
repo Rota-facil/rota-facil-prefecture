@@ -4,7 +4,7 @@ export interface MetricResponse {
   cancelledTrips: number;
   students: number;
   drivers: number;
-  bus: number;
+  vehicle: number;
   totalTripsStarted: number;
   percentPointTrips: number;
   studentsServed: number;

@@ -1,6 +1,7 @@
 import { env } from "@/config/env";
 import { getToken } from "@/service/auth/TokenService";
 import { handleHttpError } from "@/service/HttpErrorService";
+import { getVehicleByDriver } from "@/service/VehicleService";
 import type { DriverEntity } from "@/types/entites/DriverEntity";
 import type { StudentEntity } from "@/types/entites/StudentEntity";
 import type { UserEntity } from "@/types/entites/UserEntity";
@@ -84,7 +85,7 @@ export async function listStudents(
 }
 
 export async function listDrivers(): Promise<DriverEntity[]> {
-  const response = await fetch(`${env.WEB_BASE_URL}/transports/users/drivers`, {
+  const response = await fetch(`${env.WEB_BASE_URL}/users/drivers`, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
@@ -96,7 +97,13 @@ export async function listDrivers(): Promise<DriverEntity[]> {
     await handleHttpError(response, "Erro ao listar motoristas");
   }
 
-  return response.json();
+  const drivers = (await response.json()) as DriverEntity[];
+  return Promise.all(
+    drivers.map(async (driver) => ({
+      ...driver,
+      vehicle: await getVehicleByDriver(driver.id),
+    })),
+  );
 }
 
 export async function createNewDriver(

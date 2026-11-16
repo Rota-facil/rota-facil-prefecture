@@ -1,4 +1,4 @@
-import { ArrowUpRight, Bus, MapPinned, Users } from "lucide-react";
+import { ArrowUpRight, MapPinned, Truck, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import StatusBar from "@/components/atom/statusBar";
@@ -89,7 +89,7 @@ export default function TripsInRealTime({
               className="h-[250px] w-full border-0"
             />
             <MapLegend
-              showBus={hasValidCoordinates(
+              showVehicle={hasValidCoordinates(
                 selectedTrip.latitude,
                 selectedTrip.longitude,
               )}
@@ -117,8 +117,8 @@ export default function TripsInRealTime({
                       </p>
                       <p className="mt-1 truncate text-xs text-slate-500">
                         {trip.route.name} •{" "}
-                        {trip.bus.driver?.name ?? "Sem motorista"} •{" "}
-                        {trip.bus.plate}
+                        {trip.vehicle.driver?.name ?? "Sem motorista"} •{" "}
+                        {trip.vehicle.plate}
                       </p>
                     </div>
                     <StatusBar
@@ -131,7 +131,7 @@ export default function TripsInRealTime({
                       <Users className="h-3.5 w-3.5" /> {trip.students} alunos
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <Bus className="h-3.5 w-3.5" /> {trip.code}
+                      <Truck className="h-3.5 w-3.5" /> {trip.code}
                     </span>
                   </div>
                 </button>
