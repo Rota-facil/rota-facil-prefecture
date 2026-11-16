@@ -6,23 +6,35 @@ import type { InstitutionEntity } from "@/types/entites/InstitutionEntity";
 
 interface InstitutionCardProps {
   institution: InstitutionEntity;
+  photoUrl?: string;
   onViewDetails: (institution: InstitutionEntity) => void;
   onDelete: (institution: InstitutionEntity) => void;
 }
 
 export default function InstitutionCard({
   institution,
+  photoUrl,
   onViewDetails,
   onDelete,
 }: InstitutionCardProps) {
   return (
     <div className="overflow-hidden rounded-2xl border border-[#E5EAF0] bg-white shadow-[0_18px_45px_-28px_rgba(15,23,42,0.45)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_52px_-30px_rgba(15,23,42,0.5)]">
-      <div className="relative h-30 bg-gradient-to-br from-[#1E3A8A] via-[#2563EB] to-[#38BDF8]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.28),transparent_34%),radial-gradient(circle_at_85%_35%,rgba(255,255,255,0.18),transparent_30%)]" />
-        <Building2
-          className="absolute bottom-2 right-3 h-10 w-10 text-white/30"
-          strokeWidth={1.4}
-        />
+      <div className="relative h-30 overflow-hidden bg-gradient-to-br from-[#1E3A8A] via-[#2563EB] to-[#38BDF8]">
+        {photoUrl ? (
+          <img
+            src={photoUrl}
+            alt={`Foto da ${institution.name}`}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.28),transparent_34%),radial-gradient(circle_at_85%_35%,rgba(255,255,255,0.18),transparent_30%)]" />
+            <Building2
+              className="absolute bottom-2 right-3 h-10 w-10 text-white/30"
+              strokeWidth={1.4}
+            />
+          </>
+        )}
       </div>
 
       <div className="p-4">

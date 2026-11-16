@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, Bus, MapPin, Route, X } from "lucide-react";
+import { Building2, MapPin, Route, Truck, X } from "lucide-react";
 import StatusBar from "@/components/atom/statusBar";
 import { Button } from "@/components/ui/button";
 import type {
@@ -19,13 +19,13 @@ export function hasValidCoordinates(latitude: number, longitude: number) {
 }
 
 export function buildOpenStreetMapHtml(trip: TripEntity) {
-  const shouldShowBus = hasValidCoordinates(trip.latitude, trip.longitude);
-  const busMarker = shouldShowBus
+  const shouldShowVehicle = hasValidCoordinates(trip.latitude, trip.longitude);
+  const vehicleMarker = shouldShowVehicle
     ? [
         {
-          type: "bus",
-          label: "Ônibus",
-          name: trip.bus.plate,
+          type: "vehicle",
+          label: "Veículo",
+          name: trip.vehicle.plate,
           latitude: trip.latitude,
           longitude: trip.longitude,
         },
@@ -45,7 +45,11 @@ export function buildOpenStreetMapHtml(trip: TripEntity) {
     latitude: point.latitude,
     longitude: point.longitude,
   }));
-  const markers = [...busMarker, ...boardPointMarkers, ...institutionMarkers];
+  const markers = [
+    ...vehicleMarker,
+    ...boardPointMarkers,
+    ...institutionMarkers,
+  ];
   const firstMarker = markers[0] ?? { latitude: -14.235, longitude: -51.9253 };
 
   return `<!doctype html>
@@ -59,7 +63,7 @@ export function buildOpenStreetMapHtml(trip: TripEntity) {
     body { background: #EEF2F7; }
     .marker-shell { width: 44px; height: 44px; border-radius: 999px; display: grid; place-items: center; border: 4px solid #fff; box-shadow: 0 0 0 5px var(--glow), 0 14px 30px rgba(15,23,42,.34); }
     .marker-shell svg { width: 24px; height: 24px; stroke: #fff; stroke-width: 2.35; fill: none; stroke-linecap: round; stroke-linejoin: round; }
-    .bus-marker { --glow: rgba(30,58,138,.24); background: #1E3A8A; }
+    .vehicle-marker { --glow: rgba(30,58,138,.24); background: #1E3A8A; }
     .boarding-marker { --glow: rgba(5,150,105,.24); background: #059669; }
     .institution-marker { --glow: rgba(245,158,11,.28); background: #F59E0B; border-radius: 14px; }
     .leaflet-popup-content { font-family: Arial, sans-serif; font-size: 12px; }
@@ -77,13 +81,13 @@ export function buildOpenStreetMapHtml(trip: TripEntity) {
     }).addTo(map);
 
     const iconHtml = {
-      bus: '<div class="marker-shell bus-marker"><svg viewBox="0 0 24 24"><path d="M6 17h12"/><path d="M6 17v2"/><path d="M18 17v2"/><path d="M5 6c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v10H5V6Z"/><path d="M7 8h10"/><path d="M8 13h.01"/><path d="M16 13h.01"/></svg></div>',
+      vehicle: '<div class="marker-shell vehicle-marker"><svg viewBox="0 0 24 24"><path d="M6 17h12"/><path d="M6 17v2"/><path d="M18 17v2"/><path d="M5 6c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v10H5V6Z"/><path d="M7 8h10"/><path d="M8 13h.01"/><path d="M16 13h.01"/></svg></div>',
       boarding: '<div class="marker-shell boarding-marker"><svg viewBox="0 0 24 24"><path d="M12 21s7-5.1 7-11a7 7 0 1 0-14 0c0 5.9 7 11 7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg></div>',
       institution: '<div class="marker-shell institution-marker"><svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V8l7-4 7 4v13"/><path d="M9 21v-6h6v6"/><path d="M9 10h.01"/><path d="M15 10h.01"/></svg></div>'
     };
 
     const icons = {
-      bus: L.divIcon({ className: '', html: iconHtml.bus, iconSize: [52, 52], iconAnchor: [26, 26] }),
+      vehicle: L.divIcon({ className: '', html: iconHtml.vehicle, iconSize: [52, 52], iconAnchor: [26, 26] }),
       boarding: L.divIcon({ className: '', html: iconHtml.boarding, iconSize: [52, 52], iconAnchor: [26, 26] }),
       institution: L.divIcon({ className: '', html: iconHtml.institution, iconSize: [52, 52], iconAnchor: [26, 26] })
     };
@@ -144,11 +148,11 @@ function LegendIcon({
   type,
   icon,
 }: {
-  type: "bus" | "boarding" | "institution";
+  type: "vehicle" | "boarding" | "institution";
   icon: React.ReactNode;
 }) {
   const classNames = {
-    bus: "bg-[#1E3A8A] shadow-[0_0_0_4px_rgba(30,58,138,0.16)]",
+    vehicle: "bg-[#1E3A8A] shadow-[0_0_0_4px_rgba(30,58,138,0.16)]",
     boarding: "bg-emerald-600 shadow-[0_0_0_4px_rgba(5,150,105,0.16)]",
     institution:
       "rounded-lg bg-amber-500 shadow-[0_0_0_4px_rgba(245,158,11,0.18)]",
@@ -163,12 +167,12 @@ function LegendIcon({
   );
 }
 
-export function MapLegend({ showBus }: { showBus: boolean }) {
+export function MapLegend({ showVehicle }: { showVehicle: boolean }) {
   return (
     <div className="flex flex-wrap gap-3 border-t border-[#E5EAF0] bg-white px-4 py-3 text-xs font-medium text-slate-600">
       <div className="flex items-center gap-2">
-        <LegendIcon type="bus" icon={<Bus className="h-4 w-4" />} />
-        <span>{showBus ? "Ônibus" : "Ônibus sem localização"}</span>
+        <LegendIcon type="vehicle" icon={<Truck className="h-4 w-4" />} />
+        <span>{showVehicle ? "Veículo" : "Veículo sem localização"}</span>
       </div>
       <div className="flex items-center gap-2">
         <LegendIcon type="boarding" icon={<MapPin className="h-4 w-4" />} />
@@ -226,7 +230,7 @@ export default function TripProgressModal({
   const status = ProgressMap[trip.actualStatus];
   const ignoredInstitutions = trip.ignoredInstitutions ?? [];
   const ignoredBoardPoints = trip.ignoredBoardPoints ?? [];
-  const showBusOnMap = hasValidCoordinates(trip.latitude, trip.longitude);
+  const showVehicleOnMap = hasValidCoordinates(trip.latitude, trip.longitude);
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
@@ -270,13 +274,13 @@ export default function TripProgressModal({
                 className="h-[360px] w-full border-0"
                 loading="lazy"
               />
-              <MapLegend showBus={showBusOnMap} />
+              <MapLegend showVehicle={showVehicleOnMap} />
             </div>
 
             <div className="grid gap-3">
               <div className="rounded-2xl border border-[#E5EAF0] bg-white p-4">
                 <div className="mb-3 flex items-center gap-2">
-                  <Bus className="h-4 w-4 text-[#1E3A8A]" />
+                  <Truck className="h-4 w-4 text-[#1E3A8A]" />
                   <p className="text-sm font-semibold text-slate-950">
                     Operação
                   </p>
@@ -285,13 +289,13 @@ export default function TripProgressModal({
                   <div className="flex justify-between gap-3">
                     <span>Motorista</span>
                     <strong className="text-right text-slate-900">
-                      {trip.bus.driver?.name ?? "Sem motorista"}
+                      {trip.vehicle.driver?.name ?? "Sem motorista"}
                     </strong>
                   </div>
                   <div className="flex justify-between gap-3">
-                    <span>Ônibus</span>
+                    <span>Veículo</span>
                     <strong className="font-mono text-slate-900">
-                      {trip.bus.plate}
+                      {trip.vehicle.plate}
                     </strong>
                   </div>
                   <div className="flex justify-between gap-3">
@@ -303,7 +307,7 @@ export default function TripProgressModal({
                   <div className="flex justify-between gap-3">
                     <span>Coordenadas atuais</span>
                     <strong className="text-right font-mono text-xs text-slate-900">
-                      {showBusOnMap
+                      {showVehicleOnMap
                         ? `${trip.latitude.toFixed(5)}, ${trip.longitude.toFixed(5)}`
                         : "Aguardando localização"}
                     </strong>

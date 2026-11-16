@@ -6,13 +6,23 @@ import { DriverStatusMap } from "@/types/enums/DriverStatus";
 
 interface DriverHeaderProps {
   driver: DriverEntity;
+  photoUrl?: string;
   onClose: () => void;
 }
 
-export default function DriverHeader({ driver, onClose }: DriverHeaderProps) {
+export default function DriverHeader({
+  driver,
+  photoUrl,
+  onClose,
+}: DriverHeaderProps) {
   return (
     <div className="relative flex items-center gap-5 rounded-t-2xl bg-gradient-to-r from-blue-700 to-blue-500 px-7 py-6">
-      <DriverAvatar initials={driver.name[0].toUpperCase()} size="md" />
+      <DriverAvatar
+        initials={driver.name[0].toUpperCase()}
+        photoUrl={photoUrl}
+        enablePhotoPreview
+        size="md"
+      />
 
       <div className="flex flex-col gap-1">
         <h2 className="text-2xl font-bold text-white">{driver.name}</h2>

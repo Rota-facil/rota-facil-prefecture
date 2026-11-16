@@ -8,11 +8,13 @@ import { type DriverStatus, DriverStatusMap } from "@/types/enums/DriverStatus";
 
 interface DriverCardProps {
   initials: string;
+  photoUrl?: string;
   name: string;
   rating: number;
   trips: number;
   vehicle: string;
   documentsStatus?: string;
+  documentsStatusClassName?: string;
   status: DriverStatus;
   size?: "sm" | "md";
   onViewProfile?: () => void;
@@ -39,11 +41,13 @@ const sizes = {
 
 export default function DriverCard({
   initials,
+  photoUrl,
   name,
   rating,
   trips,
   vehicle,
   documentsStatus = "Docs: Em dia",
+  documentsStatusClassName = "bg-slate-100",
   status,
   size = "sm",
   onViewProfile,
@@ -71,7 +75,11 @@ export default function DriverCard({
     >
       <div className="p-4">
         <div className="flex gap-4">
-          <DriverAvatar initials={initials} size={s.avatar as "sm" | "md"} />
+          <DriverAvatar
+            initials={initials}
+            photoUrl={photoUrl}
+            size={s.avatar as "sm" | "md"}
+          />
 
           <div className="min-w-0 flex-1">
             <div className="flex items-start justify-between gap-3">
@@ -114,6 +122,7 @@ export default function DriverCard({
               <DriverChip
                 icon={FileText}
                 text={documentsStatus}
+                className={documentsStatusClassName}
                 size={s.chip as "sm" | "md"}
               />
             </div>

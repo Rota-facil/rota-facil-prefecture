@@ -5,17 +5,25 @@ import { useEffect, useState } from "react";
 import DriverCard from "@/components/molecules/drivers/DriverCard";
 import DriverDetailsModal from "@/components/molecules/drivers/DriverDetailsModal";
 import { Button } from "@/components/ui/button";
+import { formatDocumentStatus } from "@/lib/documentStatus";
 import type {
   DriverCreateFormData,
   DriverFormData,
 } from "@/lib/schemas/driverSchema";
-import { changeBusDriver } from "@/service/BusService";
+import type { DocumentValidationStatus } from "@/service/DriverDocumentService";
+import {
+  fetchDriverCnh,
+  fetchDriverPhoto,
+  uploadDriverCnh,
+  uploadDriverPhoto,
+} from "@/service/DriverDocumentService";
 import {
   createNewDriver,
   deactivateDriver,
   listDrivers,
   updateDriverInfo,
 } from "@/service/UserService";
+import { updateVehicleDriver } from "@/service/VehicleService";
 import type { DriverEntity } from "@/types/entites/DriverEntity";
 import { DriverStatus, DriverStatusMap } from "@/types/enums/DriverStatus";
 
@@ -31,7 +39,6 @@ const initialDrivers: DriverEntity[] = [
     name: "Carlos Mendes",
     score: 4.9,
     completedTrips: 312,
-    bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Em dia",
     prefecture: mockPrefecture,
     status: DriverStatus.AVAILABLE,
@@ -45,7 +52,6 @@ const initialDrivers: DriverEntity[] = [
     name: "Ana Lima",
     score: 4.8,
     completedTrips: 281,
-    bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Em dia",
     prefecture: mockPrefecture,
     status: DriverStatus.ON_ROUTE,
@@ -59,7 +65,6 @@ const initialDrivers: DriverEntity[] = [
     name: "Pedro Rocha",
     score: 4.7,
     completedTrips: 156,
-    bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Em dia",
     prefecture: mockPrefecture,
     status: DriverStatus.ON_ROUTE,
@@ -73,7 +78,6 @@ const initialDrivers: DriverEntity[] = [
     name: "Marina Costa",
     score: 4.6,
     completedTrips: 198,
-    bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Pendente",
     prefecture: mockPrefecture,
     status: DriverStatus.AVAILABLE,
@@ -87,7 +91,6 @@ const initialDrivers: DriverEntity[] = [
     name: "Roberto Silva",
     score: 4.9,
     completedTrips: 402,
-    bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Em dia",
     prefecture: mockPrefecture,
     status: DriverStatus.ON_ROUTE,
@@ -101,7 +104,6 @@ const initialDrivers: DriverEntity[] = [
     name: "Juliana Alves",
     score: 5.0,
     completedTrips: 89,
-    bus: { id: 1, prefectureId: 1, capacity: 2, plate: "123" },
     documentationStatus: "Docs: Em dia",
     prefecture: mockPrefecture,
     status: DriverStatus.ON_ROUTE,
@@ -128,10 +130,42 @@ export default function Drivers() {
   const [modalMode, setModalMode] = useState<"details" | "create">("details");
   const [driverPendingDelete, setDriverPendingDelete] =
     useState<DriverEntity>();
+  const [driverDocumentStatuses, setDriverDocumentStatuses] = useState<
+    Record<string, ReturnType<typeof formatDocumentStatus>>
+  >({});
+  const [driverPhotoUrls, setDriverPhotoUrls] = useState<
+    Record<string, string>
+  >({});
 
   useEffect(() => {
     async function listDriversFromService() {
-      setDrivers(await listDrivers());
+      const driversFound = await listDrivers();
+      setDrivers(driversFound);
+      const documents = await Promise.all(
+        driversFound.map(
+          async (driver) =>
+            [
+              driver.id,
+              formatDocumentStatus(
+                (await fetchDriverCnh(driver.id))?.validationStatus,
+              ),
+            ] as const,
+        ),
+      );
+      setDriverDocumentStatuses(Object.fromEntries(documents));
+      const photos = await Promise.all(
+        driversFound.map(
+          async (driver) =>
+            [driver.id, await fetchDriverPhoto(driver.id)] as const,
+        ),
+      );
+      setDriverPhotoUrls(
+        Object.fromEntries(
+          photos.filter((entry): entry is [string, string] =>
+            Boolean(entry[1]),
+          ),
+        ),
+      );
     }
     listDriversFromService();
   }, []);
@@ -158,7 +192,11 @@ export default function Drivers() {
     });
   }
 
-  async function editDriver(updatedFields: DriverFormData) {
+  async function editDriver(
+    updatedFields: DriverFormData,
+    photo?: File,
+    cnh?: File,
+  ) {
     if (!selectedDriver) return;
 
     const driverInfoChanged =
@@ -174,13 +212,29 @@ export default function Drivers() {
       });
     }
 
-    const nextBusId = updatedFields.busId ?? "";
+    const nextVehicleId = updatedFields.vehicleId ?? "";
 
-    if (String(selectedDriver.bus?.id ?? "") !== nextBusId) {
-      await changeBusDriver(selectedDriver.id, {
-        busId: nextBusId || null,
-      });
+    if (String(selectedDriver.vehicle?.id ?? "") !== nextVehicleId) {
+      if (selectedDriver.vehicle?.id) {
+        await updateVehicleDriver(selectedDriver.id, {
+          vehicleId: String(selectedDriver.vehicle.id),
+        });
+      }
+      if (nextVehicleId) {
+        await updateVehicleDriver(selectedDriver.id, {
+          vehicleId: nextVehicleId,
+        });
+      }
     }
+
+    if (photo) {
+      const uploadedPhoto = await uploadDriverPhoto(selectedDriver.id, photo);
+      setDriverPhotoUrls((current) => ({
+        ...current,
+        [selectedDriver.id]: uploadedPhoto.url,
+      }));
+    }
+    if (cnh) await uploadDriverCnh(selectedDriver.id, cnh);
 
     const drivers = await listDrivers();
     setDrivers(drivers);
@@ -189,18 +243,41 @@ export default function Drivers() {
     );
   }
 
-  async function createDriver(data: DriverCreateFormData) {
+  async function createDriver(
+    data: DriverCreateFormData,
+    photo?: File,
+    cnh?: File,
+  ) {
     if (!selectedDriver) return;
 
-    await createNewDriver({
+    const createdDriver = await createNewDriver({
       name: data.name,
       cpf: data.cpf,
       email: data.email,
       password: data.password,
     });
 
+    if (photo) {
+      const uploadedPhoto = await uploadDriverPhoto(createdDriver.id, photo);
+      setDriverPhotoUrls((current) => ({
+        ...current,
+        [createdDriver.id]: uploadedPhoto.url,
+      }));
+    }
+    if (cnh) await uploadDriverCnh(createdDriver.id, cnh);
+
     setDrivers(await listDrivers());
     setSelectedDriver(undefined);
+  }
+
+  function updateDriverDocumentStatus(
+    driverId: string,
+    status: DocumentValidationStatus,
+  ) {
+    setDriverDocumentStatuses((current) => ({
+      ...current,
+      [driverId]: formatDocumentStatus(status),
+    }));
   }
 
   async function deleteDriver(driver: DriverEntity) {
@@ -241,11 +318,18 @@ export default function Drivers() {
           <DriverCard
             key={driver.id}
             initials={driver.name[0].toUpperCase()}
+            photoUrl={driverPhotoUrls[driver.id]}
             name={driver.name}
             rating={driver.score}
             trips={driver.completedTrips}
-            vehicle={driver.bus?.plate ?? "-"}
-            documentsStatus={driver.documentationStatus}
+            vehicle={driver.vehicle?.plate ?? "-"}
+            documentsStatus={
+              driverDocumentStatuses[driver.id]?.label ?? "Docs: Em análise"
+            }
+            documentsStatusClassName={
+              driverDocumentStatuses[driver.id]?.className ??
+              "border border-amber-200 bg-amber-50 text-amber-700"
+            }
             status={driver.status}
             onViewProfile={() => openDetails(driver)}
             onDelete={() => setDriverPendingDelete(driver)}
@@ -256,11 +340,15 @@ export default function Drivers() {
       {selectedDriver && (
         <DriverDetailsModal
           driver={selectedDriver}
+          photoUrl={driverPhotoUrls[selectedDriver.id]}
           open={!!selectedDriver}
           mode={modalMode}
           onClose={() => setSelectedDriver(undefined)}
           onEdit={editDriver}
           onCreate={createDriver}
+          onDocumentChanged={(status) =>
+            updateDriverDocumentStatus(selectedDriver.id, status)
+          }
         />
       )}
 

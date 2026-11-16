@@ -1,65 +1,78 @@
 "use client";
 
 import {
-  Bus,
   Check,
   ChevronDown,
   IdCard,
+  ImagePlus,
   Pencil,
+  Truck,
   Users,
   X,
 } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import FormField from "@/components/atom/FormField";
+import PhotoPreview from "@/components/atom/PhotoPreview";
 import StatusBar from "@/components/atom/statusBar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { BusEntity, BusOperationStatus } from "@/types/entites/BusEntity";
+import { formatVehicleType } from "@/lib/vehicleType";
 import type { DriverEntity } from "@/types/entites/DriverEntity";
-import type { CreateBusRequest } from "@/types/request/CreateBusRequest";
+import type {
+  VehicleEntity,
+  VehicleOperationStatus,
+} from "@/types/entites/VehicleEntity";
+import type { CreateVehicleRequest } from "@/types/request/CreateVehicleRequest";
 
-interface BusDetailsModalProps {
-  bus: BusEntity;
+interface VehicleDetailsModalProps {
+  vehicle: VehicleEntity;
+  photoUrl?: string;
   mode?: "details" | "create" | "edit";
   onClose: () => void;
-  onSave: (bus: BusEntity) => void;
-  onCreate: (request: CreateBusRequest) => void | Promise<void>;
+  onSave: (vehicle: VehicleEntity, photo?: File) => void | Promise<void>;
+  onCreate: (
+    request: CreateVehicleRequest,
+    photo?: File,
+  ) => void | Promise<void>;
   availableDrivers: DriverEntity[];
 }
 
-interface BusFormState {
+interface VehicleFormState {
   plate: string;
   capacity: string;
   driverId: string;
-  status: BusOperationStatus;
+  status: VehicleOperationStatus;
 }
 
 const statusMap = {
-  OPERATION: "busOperating",
-  OUT_OF_OPERATION: "busOutOfOperation",
+  OPERATION: "vehicleOperating",
+  OUT_OF_OPERATION: "vehicleOutOfOperation",
 } as const;
 
-function mapBusToForm(bus: BusEntity): BusFormState {
+function mapVehicleToForm(vehicle: VehicleEntity): VehicleFormState {
   return {
-    plate: bus.plate,
-    capacity: String(bus.capacity),
-    driverId: bus.driver?.id ?? "",
-    status: bus.status ?? "OUT_OF_OPERATION",
+    plate: vehicle.plate,
+    capacity: String(vehicle.capacity),
+    driverId: vehicle.driver?.id ?? "",
+    status: vehicle.status ?? "OUT_OF_OPERATION",
   };
 }
 
-export default function BusDetailsModal({
-  bus,
+export default function VehicleDetailsModal({
+  vehicle,
+  photoUrl,
   mode = "details",
   onClose,
   onSave,
   onCreate,
   availableDrivers,
-}: BusDetailsModalProps) {
+}: VehicleDetailsModalProps) {
   const isCreating = mode === "create";
   const startsEditing = mode === "create" || mode === "edit";
   const [isEditing, setIsEditing] = useState(startsEditing);
-  const [form, setForm] = useState<BusFormState>(mapBusToForm(bus));
+  const [form, setForm] = useState<VehicleFormState>(mapVehicleToForm(vehicle));
+  const [selectedPhoto, setSelectedPhoto] = useState<File>();
+  const [photoPreview, setPhotoPreview] = useState<string>();
   const [isDriverSelectOpen, setIsDriverSelectOpen] = useState(false);
   const [isStatusSelectOpen, setIsStatusSelectOpen] = useState(false);
   const driverSelectRef = useRef<HTMLDivElement>(null);
@@ -71,15 +84,17 @@ export default function BusDetailsModal({
   const statusOptions = [
     { value: "OPERATION", label: "Em operação" },
     { value: "OUT_OF_OPERATION", label: "Fora de operação" },
-  ] satisfies { value: BusOperationStatus; label: string }[];
+  ] satisfies { value: VehicleOperationStatus; label: string }[];
   const selectedStatus = statusOptions.find(
     (option) => option.value === form.status,
   );
 
   useEffect(() => {
     setIsEditing(startsEditing);
-    setForm(mapBusToForm(bus));
-  }, [bus, startsEditing]);
+    setForm(mapVehicleToForm(vehicle));
+    setSelectedPhoto(undefined);
+    setPhotoPreview(undefined);
+  }, [vehicle, startsEditing]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -102,7 +117,7 @@ export default function BusDetailsModal({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  function updateField(field: keyof BusFormState, value: string) {
+  function updateField(field: keyof VehicleFormState, value: string) {
     setForm((currentForm) => ({ ...currentForm, [field]: value }));
   }
 
@@ -110,21 +125,27 @@ export default function BusDetailsModal({
     event.preventDefault();
 
     if (isCreating) {
-      await onCreate({
-        plate: form.plate.trim().toUpperCase(),
-        capacity: Number(form.capacity),
-        driverId: selectedDriver?.id ?? null,
-      });
+      await onCreate(
+        {
+          plate: form.plate.trim().toUpperCase(),
+          capacity: Number(form.capacity),
+          driverId: selectedDriver?.id ?? null,
+        },
+        selectedPhoto,
+      );
       return;
     }
 
-    onSave({
-      ...bus,
-      plate: form.plate.trim().toUpperCase(),
-      capacity: Number(form.capacity),
-      status: form.status,
-      driver: selectedDriver ?? null,
-    });
+    onSave(
+      {
+        ...vehicle,
+        plate: form.plate.trim().toUpperCase(),
+        capacity: Number(form.capacity),
+        status: form.status,
+        driver: selectedDriver ?? null,
+      },
+      selectedPhoto,
+    );
     setIsEditing(false);
   }
 
@@ -134,7 +155,9 @@ export default function BusDetailsModal({
       return;
     }
 
-    setForm(mapBusToForm(bus));
+    setForm(mapVehicleToForm(vehicle));
+    setSelectedPhoto(undefined);
+    setPhotoPreview(undefined);
     setIsDriverSelectOpen(false);
     setIsStatusSelectOpen(false);
     setIsEditing(false);
@@ -163,16 +186,26 @@ export default function BusDetailsModal({
           </Button>
 
           <div className="relative flex items-start gap-4 pr-10">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20">
-              <Bus className="h-5 w-5" />
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/20">
+              {photoPreview || photoUrl ? (
+                <PhotoPreview
+                  src={photoPreview ?? photoUrl ?? ""}
+                  alt={`Foto do veículo ${vehicle.plate || "veículo"}`}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <Truck className="h-6 w-6" />
+                </div>
+              )}
             </div>
             <div className="min-w-0">
               <p className="font-mono text-lg font-bold tracking-wider">
-                {isCreating ? "Novo ônibus" : bus.plate}
+                {isCreating ? "Novo veículo" : vehicle.plate}
               </p>
               <p className="mt-1 text-sm text-white/75">
                 {isCreating
-                  ? "Informe placa, capacidade, motorista e status do ônibus."
+                  ? "Informe placa, capacidade, motorista e status do veículo."
                   : "Veículo cadastrado para a operação de transporte municipal."}
               </p>
             </div>
@@ -184,7 +217,7 @@ export default function BusDetailsModal({
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-semibold text-slate-950">
-                  Dados do ônibus
+                  Dados do veículo
                 </p>
                 <p className="text-xs text-slate-500">
                   Placa, capacidade, motorista e situação operacional.
@@ -376,6 +409,25 @@ export default function BusDetailsModal({
                   </div>
                 </FormField>
 
+                <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-[#CBD5E1] bg-slate-50 px-4 py-3 text-sm text-slate-600 hover:bg-slate-100">
+                  <ImagePlus className="h-4 w-4 text-[#1E3A8A]" />
+                  <span>
+                    {selectedPhoto?.name ?? "Selecionar foto do veículo"}
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      setSelectedPhoto(file);
+                      setPhotoPreview(
+                        file ? URL.createObjectURL(file) : undefined,
+                      );
+                    }}
+                  />
+                </label>
+
                 <div className="flex justify-end gap-2">
                   <Button
                     type="button"
@@ -391,7 +443,7 @@ export default function BusDetailsModal({
                     size="xs"
                     className="h-9 cursor-pointer rounded-xl bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] px-4 text-xs font-semibold text-white shadow-[0_12px_30px_-18px_rgba(59,130,246,0.9)] hover:from-[#183276] hover:to-[#2563EB]"
                   >
-                    {isCreating ? "Cadastrar ônibus" : "Salvar alterações"}
+                    {isCreating ? "Cadastrar veículo" : "Salvar alterações"}
                   </Button>
                 </div>
               </form>
@@ -402,7 +454,7 @@ export default function BusDetailsModal({
                     Placa
                   </p>
                   <p className="mt-2 font-mono text-sm font-bold tracking-wider text-slate-950">
-                    {bus.plate}
+                    {vehicle.plate}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-[#E5EAF0] bg-slate-50 p-4">
@@ -410,7 +462,15 @@ export default function BusDetailsModal({
                     Capacidade
                   </p>
                   <p className="mt-2 text-2xl font-bold text-slate-950">
-                    {bus.capacity}
+                    {vehicle.capacity}
+                  </p>
+                </div>
+                <div className="rounded-2xl border border-[#E5EAF0] bg-slate-50 p-4">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    Tipo
+                  </p>
+                  <p className="mt-2 text-sm font-bold text-slate-950">
+                    {formatVehicleType(vehicle.vehicleType)}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-[#E5EAF0] bg-slate-50 p-4">
@@ -419,7 +479,7 @@ export default function BusDetailsModal({
                   </p>
                   <div className="mt-2">
                     <StatusBar
-                      variant={statusMap[bus.status ?? "OUT_OF_OPERATION"]}
+                      variant={statusMap[vehicle.status ?? "OUT_OF_OPERATION"]}
                       size="sm"
                     />
                   </div>
@@ -436,11 +496,11 @@ export default function BusDetailsModal({
                   </p>
                 </div>
                 <p className="text-sm font-semibold text-slate-800">
-                  {bus.driver?.name ?? "Sem motorista"}
+                  {vehicle.driver?.name ?? "Sem motorista"}
                 </p>
                 <p className="text-xs text-slate-500">
-                  {bus.driver?.email ??
-                    "Vincule um motorista para operar este ônibus"}
+                  {vehicle.driver?.email ??
+                    "Vincule um motorista para operar este veículo"}
                 </p>
               </div>
             )}

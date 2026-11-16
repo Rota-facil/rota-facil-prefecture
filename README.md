@@ -7,8 +7,8 @@ Painel administrativo do Rota Fácil para gestão e acompanhamento do transporte
 ## Funcionalidades
 
 - Home com métricas operacionais, mapa de viagens ativas e notificações no sino do header.
-- Gestão de estudantes, motoristas, ônibus, instituições, pontos de embarque, rotas e viagens.
-- Criação manual de viagens de hoje a partir de uma rota e de um ônibus já associado.
+- Gestão de estudantes, motoristas, veículos, instituições, pontos de embarque, rotas e viagens.
+- Criação manual de viagens de hoje a partir de uma rota e de um veículos já associado.
 - Visualização do progresso da viagem em mapa e modal detalhado.
 - Consulta dos feedbacks e notas recebidos por estudantes e motoristas.
 - Auditoria com filtros.
@@ -22,7 +22,7 @@ Next.js `16.2.7`, React `19.2.4`, TypeScript, Tailwind CSS v4, Biome, Base UI/sh
 
 ## Rotas
 
-Rotas autenticadas: `/home`, `/students`, `/drivers`, `/institutions`, `/board-points`, `/bus`, `/routes`, `/trips`, `/predictive-analysis`, `/heat-map`, `/audit` e `/report`.
+Rotas autenticadas: `/home`, `/students`, `/drivers`, `/institutions`, `/board-points`, `/vehicles`, `/routes`, `/trips`, `/predictive-analysis`, `/heat-map`, `/audit` e `/report`.
 
 A rota `/` redireciona para `/home`. Login fica em `/login` e o callback Google em `/oauth2/callback`.
 

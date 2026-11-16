@@ -1,5 +1,9 @@
+import PhotoPreview from "@/components/atom/PhotoPreview";
+
 interface DriverAvatarProps {
   initials: string;
+  photoUrl?: string;
+  enablePhotoPreview?: boolean;
   size?: "sm" | "md";
 }
 
@@ -10,6 +14,8 @@ const sizes = {
 
 export default function DriverAvatar({
   initials,
+  photoUrl,
+  enablePhotoPreview = false,
   size = "sm",
 }: DriverAvatarProps) {
   return (
@@ -42,7 +48,21 @@ export default function DriverAvatar({
           ${sizes[size].inner}
         `}
       >
-        {initials}
+        {photoUrl && enablePhotoPreview ? (
+          <PhotoPreview
+            src={photoUrl}
+            alt="Foto do motorista"
+            className="h-full w-full rounded-full object-cover"
+          />
+        ) : photoUrl ? (
+          <img
+            src={photoUrl}
+            alt="Foto do motorista"
+            className="h-full w-full rounded-full object-cover"
+          />
+        ) : (
+          initials
+        )}
       </div>
     </div>
   );

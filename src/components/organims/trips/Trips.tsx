@@ -106,7 +106,7 @@ export default function Trips() {
 
   async function handleCreateTrip(request: {
     routeId: string;
-    busId: string;
+    vehicleId: string;
   }): Promise<boolean> {
     try {
       await createTrip(request);
@@ -150,13 +150,13 @@ export default function Trips() {
     {
       id: "driver",
       header: "Motorista",
-      cell: (trip) => trip.bus.driver?.name ?? "Sem motorista",
+      cell: (trip) => trip.vehicle.driver?.email ?? "Sem motorista",
     },
     {
-      id: "bus",
-      header: "Ônibus",
+      id: "vehicle",
+      header: "Veículo",
       cell: (trip) => (
-        <span className="font-mono text-xs">{trip.bus.plate}</span>
+        <span className="font-mono text-xs">{trip.vehicle.plate}</span>
       ),
     },
     {

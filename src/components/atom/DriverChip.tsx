@@ -4,6 +4,7 @@ interface DriverChipProps {
   icon: LucideIcon;
   text: string;
   size?: "sm" | "md";
+  className?: string;
 }
 
 const sizes = {
@@ -15,6 +16,7 @@ export default function DriverChip({
   icon: Icon,
   text,
   size = "sm",
+  className = "bg-slate-100",
 }: DriverChipProps) {
   return (
     <div
@@ -23,7 +25,7 @@ export default function DriverChip({
         items-center
         gap-2
         rounded-full
-        bg-slate-100
+        ${className}
         whitespace-nowrap
         ${sizes[size]}
       `}

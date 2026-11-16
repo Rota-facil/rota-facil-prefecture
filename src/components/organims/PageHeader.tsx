@@ -10,7 +10,7 @@ export default function PageHeader() {
     "/routes": "Rotas",
     "/trips": "Viagens",
     "/drivers": "Motoristas",
-    "/bus": "Ônibus",
+    "/vehicles": "Veículos",
     "/institutions": "Instituições",
     "/board-points": "Pontos de embarque",
     "/students": "Alunos",

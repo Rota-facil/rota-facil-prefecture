@@ -4,7 +4,6 @@ import {
   Activity,
   BrainCircuit,
   Building2,
-  BusIcon,
   FileDown,
   Flame,
   GraduationCap,
@@ -14,6 +13,7 @@ import {
   Plane,
   Route,
   ShieldCheck,
+  TruckIcon,
   UsersRound,
 } from "lucide-react";
 import Image from "next/image";
@@ -99,9 +99,9 @@ export function AppSidebar() {
             </SidebarMenuItem>
 
             <SidebarMenuItem>
-              <MySideBarMenuButton href={"/bus"}>
-                <BusIcon />
-                <span>Ônibus</span>
+              <MySideBarMenuButton href={"/vehicles"}>
+                <TruckIcon />
+                <span>Veículos</span>
               </MySideBarMenuButton>
             </SidebarMenuItem>
 

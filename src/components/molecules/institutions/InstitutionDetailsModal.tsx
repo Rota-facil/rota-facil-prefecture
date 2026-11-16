@@ -1,17 +1,22 @@
 "use client";
 
-import { Building2, MapPin, Pencil, Route, X } from "lucide-react";
+import { Building2, ImagePlus, MapPin, Pencil, Route, X } from "lucide-react";
 import { type FormEvent, useEffect, useState } from "react";
 import FormField from "@/components/atom/FormField";
+import PhotoPreview from "@/components/atom/PhotoPreview";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { InstitutionEntity } from "@/types/entites/InstitutionEntity";
 
 interface InstitutionDetailsModalProps {
   institution: InstitutionEntity;
+  photoUrl?: string;
   mode?: "details" | "create";
   onClose: () => void;
-  onSave: (institution: InstitutionEntity) => void | Promise<void>;
+  onSave: (
+    institution: InstitutionEntity,
+    photo?: File,
+  ) => void | Promise<void>;
 }
 
 interface InstitutionFormState {
@@ -32,6 +37,7 @@ function mapInstitutionToForm(
 
 export default function InstitutionDetailsModal({
   institution,
+  photoUrl,
   mode = "details",
   onClose,
   onSave,
@@ -41,10 +47,14 @@ export default function InstitutionDetailsModal({
   const [form, setForm] = useState<InstitutionFormState>(
     mapInstitutionToForm(institution),
   );
+  const [selectedPhoto, setSelectedPhoto] = useState<File>();
+  const [photoPreview, setPhotoPreview] = useState<string>();
 
   useEffect(() => {
     setIsEditing(isCreating);
     setForm(mapInstitutionToForm(institution));
+    setSelectedPhoto(undefined);
+    setPhotoPreview(undefined);
   }, [institution, isCreating]);
 
   function updateField(field: keyof InstitutionFormState, value: string) {
@@ -54,12 +64,15 @@ export default function InstitutionDetailsModal({
   async function submitForm(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    await onSave({
-      ...institution,
-      name: form.name.trim(),
-      latitude: Number(form.latitude),
-      longitude: Number(form.longitude),
-    });
+    await onSave(
+      {
+        ...institution,
+        name: form.name.trim(),
+        latitude: Number(form.latitude),
+        longitude: Number(form.longitude),
+      },
+      selectedPhoto,
+    );
     setIsEditing(false);
   }
 
@@ -70,6 +83,8 @@ export default function InstitutionDetailsModal({
     }
 
     setForm(mapInstitutionToForm(institution));
+    setSelectedPhoto(undefined);
+    setPhotoPreview(undefined);
     setIsEditing(false);
   }
 
@@ -96,8 +111,18 @@ export default function InstitutionDetailsModal({
           </Button>
 
           <div className="relative flex items-start gap-4 pr-10">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white/15 ring-1 ring-white/20">
-              <Building2 className="h-5 w-5" />
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl bg-white/15 ring-1 ring-white/20">
+              {photoPreview || photoUrl ? (
+                <PhotoPreview
+                  src={photoPreview ?? photoUrl ?? ""}
+                  alt={`Foto da ${institution.name || "instituição"}`}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center">
+                  <Building2 className="h-6 w-6" />
+                </div>
+              )}
             </div>
             <div className="min-w-0">
               <p className="text-lg font-bold">
@@ -180,6 +205,28 @@ export default function InstitutionDetailsModal({
                       }
                     />
                   </FormField>
+                </div>
+
+                <div className="grid gap-2">
+                  <p className="text-sm font-semibold text-slate-950">
+                    Foto da instituição
+                  </p>
+                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-[#CBD5E1] bg-slate-50 px-4 py-3 text-sm text-slate-600 hover:bg-slate-100">
+                    <ImagePlus className="h-4 w-4 text-[#1E3A8A]" />
+                    <span>{selectedPhoto?.name ?? "Selecionar imagem"}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        setSelectedPhoto(file);
+                        setPhotoPreview(
+                          file ? URL.createObjectURL(file) : undefined,
+                        );
+                      }}
+                    />
+                  </label>
                 </div>
 
                 <div className="flex justify-end gap-2">
