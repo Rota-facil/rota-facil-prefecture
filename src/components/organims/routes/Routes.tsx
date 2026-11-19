@@ -188,11 +188,39 @@ import type { CreateRouteRequest } from "@/types/request/RouteRequest";
 
 export default function Routes() {
   const [routes, setRoutes] = useState<RouteEntity[]>([]);
+  const [institutions, setInstitutions] = useState<InstitutionEntity[]>([]);
+  const [boardPoints, setBoardPoints] = useState<BoardPointEntity[]>([]);
+  const [vehicles, setVehicles] = useState<VehicleEntity[]>([]);
   const [shiftFilter, setShiftFilter] = useState<RouteShiftFilter>("ALL");
   const [statusFilter, setStatusFilter] = useState<RouteStatusFilter>("ALL");
   const [editingRoute, setEditingRoute] = useState<RouteEntity | undefined>();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [routePendingDelete, setRoutePendingDelete] = useState<RouteEntity>();
+
+  function normalizeRouteAssociations(routeItems: RouteEntity[]) {
+    return routeItems.map((routeItem) => ({
+      ...routeItem,
+      institutions: routeItem.institutions.map((routeInstitution) => {
+        const institution =
+          institutions.find((item) => item.id === routeInstitution.id) ??
+          institutions.find((item) => item.name === routeInstitution.name);
+
+        return institution
+          ? { ...routeInstitution, id: institution.id }
+          : routeInstitution;
+      }),
+      boardPoints: routeItem.boardPoints.map((routeBoardPoint) => {
+        const boardPoint =
+          boardPoints.find(
+            (item) => item.id === routeBoardPoint.boardPointId,
+          ) ?? boardPoints.find((item) => item.name === routeBoardPoint.name);
+
+        return boardPoint
+          ? { ...routeBoardPoint, boardPointId: boardPoint.id }
+          : routeBoardPoint;
+      }),
+    }));
+  }
 
   const filteredRoutes = useMemo(() => {
     return routes.filter((routeItem) => {
@@ -294,7 +322,7 @@ export default function Routes() {
   }
 
   async function refreshRoutes() {
-    setRoutes(await listRoutesSimple());
+    setRoutes(normalizeRouteAssociations(await listRoutesSimple()));
   }
 
   async function saveRoute(request: CreateRouteRequest) {
@@ -318,10 +346,6 @@ export default function Routes() {
     await refreshRoutes();
   }
 
-  const [institutions, setInstitutions] = useState<InstitutionEntity[]>([]);
-  const [boardPoints, setBoardPoints] = useState<BoardPointEntity[]>([]);
-  const [vehicles, setVehicles] = useState<VehicleEntity[]>([]);
-
   useEffect(() => {
     async function fetchResources() {
       const [routesFound, institutionsFound, boardPointsFound, vehiclesFound] =
@@ -332,7 +356,37 @@ export default function Routes() {
           listVehicles(),
         ]);
 
-      setRoutes(routesFound);
+      setRoutes(
+        routesFound.map((routeItem) => ({
+          ...routeItem,
+          institutions: routeItem.institutions.map((routeInstitution) => {
+            const institution =
+              institutionsFound.find(
+                (item) => item.id === routeInstitution.id,
+              ) ??
+              institutionsFound.find(
+                (item) => item.name === routeInstitution.name,
+              );
+
+            return institution
+              ? { ...routeInstitution, id: institution.id }
+              : routeInstitution;
+          }),
+          boardPoints: routeItem.boardPoints.map((routeBoardPoint) => {
+            const boardPoint =
+              boardPointsFound.content.find(
+                (item) => item.id === routeBoardPoint.boardPointId,
+              ) ??
+              boardPointsFound.content.find(
+                (item) => item.name === routeBoardPoint.name,
+              );
+
+            return boardPoint
+              ? { ...routeBoardPoint, boardPointId: boardPoint.id }
+              : routeBoardPoint;
+          }),
+        })),
+      );
       setInstitutions(institutionsFound);
       setBoardPoints(boardPointsFound.content);
       setVehicles(vehiclesFound);

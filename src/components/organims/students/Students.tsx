@@ -2,6 +2,7 @@
 
 import { MessageSquareText, Star } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import StudentAvatar from "@/components/atom/StudentAvatar";
 import StudentStatusBadge from "@/components/atom/StudentStatusBadge";
 import DataTable, {
   type DataTableColumn,
@@ -11,19 +12,11 @@ import StudentFilters, {
   type StudentFrequencyFilter,
   type StudentScoreFilter,
 } from "@/components/molecules/students/StudentFilters";
+import { listUserPhotos } from "@/service/UserPhotoService";
 import { listStudents } from "@/service/UserService";
 import type { StudentEntity } from "@/types/entites/StudentEntity";
 
 const PAGE_SIZE = 6;
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toUpperCase();
-}
 
 function getFrequencyBarColor(frequency: number) {
   if (frequency >= 90) {
@@ -80,6 +73,9 @@ export default function Students() {
   const [frequencyFilter, setFrequencyFilter] =
     useState<StudentFrequencyFilter>("ALL");
   const [students, setStudents] = useState<StudentEntity[]>([]);
+  const [studentPhotoUrls, setStudentPhotoUrls] = useState<
+    Record<string, string>
+  >({});
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState<StudentEntity>();
   const [totalItems, setTotalItems] = useState(0);
@@ -89,8 +85,20 @@ export default function Students() {
     async function fetchStudents() {
       const response = await listStudents(currentPage - 1, PAGE_SIZE);
       setStudents(response.content);
+      setStudentPhotoUrls({});
       setTotalItems(response.page.totalElements);
       setTotalPages(response.page.totalPages);
+
+      try {
+        const photos = await listUserPhotos(
+          response.content.map((student) => student.id),
+        );
+        setStudentPhotoUrls(
+          Object.fromEntries(photos.map((photo) => [photo.userId, photo.url])),
+        );
+      } catch {
+        setStudentPhotoUrls({});
+      }
     }
 
     fetchStudents();
@@ -111,9 +119,10 @@ export default function Students() {
       header: "Aluno",
       cell: (student) => (
         <div className="flex min-w-0 items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-700 to-blue-500 text-xs font-bold text-white shadow-sm">
-            {getInitials(student.name)}
-          </div>
+          <StudentAvatar
+            name={student.name}
+            photoUrl={studentPhotoUrls[student.id]}
+          />
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-slate-800">
               {student.name}

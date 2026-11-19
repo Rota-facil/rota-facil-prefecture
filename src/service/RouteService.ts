@@ -54,6 +54,8 @@ interface RouteInstitutionResponse {
   name: string;
   latitude?: number;
   longitude?: number;
+  institutionTimeGoing?: string;
+  institutionTimeFinish?: string;
 }
 
 interface RouteBoardPointResponse {
@@ -113,6 +115,12 @@ function mapRoute(response: RouteResponse): RouteEntity {
     institutions: response.institutions.map((institution) => ({
       id: institution.id,
       name: institution.name,
+      institutionGoing: formatTime(
+        institution.institutionTimeGoing ?? response.going,
+      ),
+      institutionFinish: formatTime(
+        institution.institutionTimeFinish ?? response.return_,
+      ),
     })),
     vehicles: (response.vehicles ?? []).map((vehicleItem) => ({
       id: vehicleItem.id,
@@ -205,14 +213,20 @@ export async function updateRoute(
       "Content-Type": "application/json",
       Authorization: `Bearer ${getToken()}`,
     },
-    body: JSON.stringify(request),
+    body: JSON.stringify({
+      ...request,
+      institutions: request.institutions.length ? request.institutions : null,
+      boardPoints: request.boardPoints.length ? request.boardPoints : null,
+    }),
   });
 
   if (!response.ok) {
     await handleHttpError(response, "Erro ao atualizar rota");
   }
 
-  return mapRoute(await response.json());
+  const data = (await response.json()) as RouteResponse;
+
+  return mapRoute(data);
 }
 
 export async function deleteRoute(routeId: string): Promise<void> {
