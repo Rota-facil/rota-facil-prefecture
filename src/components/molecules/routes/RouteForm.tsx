@@ -38,6 +38,12 @@ const defaultBoardPoint = (
   boardTimeFinish: "12:10",
 });
 
+const defaultInstitution = (institutionId: string) => ({
+  institutionId,
+  institutionGoing: "06:30",
+  institutionFinish: "12:00",
+});
+
 function mapRouteToRequest(route: RouteEntity): CreateRouteRequest {
   return {
     shift: route.shift,
@@ -50,8 +56,8 @@ function mapRouteToRequest(route: RouteEntity): CreateRouteRequest {
     vehicles: route.vehicles.map((vehicle) => vehicle.id),
     institutions: route.institutions.map((institution) => ({
       institutionId: institution.id,
-      institutionGoing: "06:30",
-      institutionFinish: "12:00",
+      institutionGoing: institution.institutionGoing,
+      institutionFinish: institution.institutionFinish,
     })),
     boardPoints: route.boardPoints.map((boardPoint) => ({
       boardPointId: boardPoint.boardPointId,
@@ -91,13 +97,7 @@ export default function RouteForm({
           returnFinish: "13:00",
           daysOfWeek: ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY"],
           institutions: firstInstitutionId
-            ? [
-                {
-                  institutionId: firstInstitutionId,
-                  institutionGoing: "06:30",
-                  institutionFinish: "12:00",
-                },
-              ]
+            ? [defaultInstitution(firstInstitutionId)]
             : [],
           vehicles: firstVehicleId ? [firstVehicleId] : [],
           boardPoints: firstBoardPointId
@@ -128,6 +128,73 @@ export default function RouteForm({
     }));
   }
 
+  function updateInstitution(
+    institutionId: string,
+    field: "institutionGoing" | "institutionFinish",
+    value: string,
+  ) {
+    setForm((currentForm) => ({
+      ...currentForm,
+      institutions: currentForm.institutions.map((institution) =>
+        institution.institutionId === institutionId
+          ? { ...institution, [field]: value }
+          : institution,
+      ),
+    }));
+  }
+
+  function removeInstitution(institutionId: string) {
+    setForm((currentForm) => ({
+      ...currentForm,
+      institutions: currentForm.institutions.filter(
+        (institution) => institution.institutionId !== institutionId,
+      ),
+    }));
+  }
+
+  function addInstitution() {
+    const nextInstitution = institutions.find(
+      (institution) =>
+        !form.institutions.some(
+          (selected) => selected.institutionId === institution.id,
+        ),
+    );
+
+    if (!nextInstitution) {
+      return;
+    }
+
+    setForm((currentForm) => ({
+      ...currentForm,
+      institutions: [
+        ...currentForm.institutions,
+        defaultInstitution(nextInstitution.id),
+      ],
+    }));
+  }
+
+  function removeVehicle(vehicleId: string) {
+    setForm((currentForm) => ({
+      ...currentForm,
+      vehicles: currentForm.vehicles.filter((id) => id !== vehicleId),
+    }));
+  }
+
+  function addVehicle() {
+    const nextVehicle = vehicles.find(
+      (vehicle) => !form.vehicles.includes(vehicle.id),
+    );
+
+    if (!nextVehicle) {
+      return;
+    }
+
+    setForm((currentForm) => ({
+      ...currentForm,
+      vehicles: [...currentForm.vehicles, nextVehicle.id],
+    }));
+  }
+
   function removeBoardPoint(index: number) {
     setForm((currentForm) => ({
       ...currentForm,
@@ -138,7 +205,14 @@ export default function RouteForm({
   }
 
   function addBoardPoint() {
-    if (!firstBoardPointId) {
+    const nextBoardPoint = boardPoints.find(
+      (boardPoint) =>
+        !form.boardPoints.some(
+          (selected) => selected.boardPointId === boardPoint.id,
+        ),
+    );
+
+    if (!nextBoardPoint) {
       return;
     }
 
@@ -146,7 +220,7 @@ export default function RouteForm({
       ...currentForm,
       boardPoints: [
         ...currentForm.boardPoints,
-        defaultBoardPoint(firstBoardPointId),
+        defaultBoardPoint(nextBoardPoint.id),
       ],
     }));
   }
@@ -244,133 +318,256 @@ export default function RouteForm({
         </div>
       </FormField>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <FormField label="Instituições">
-          <div className="grid gap-2 rounded-md border border-border p-3">
-            {institutions.map((institution) => (
-              <label
-                key={institution.id}
-                className="flex cursor-pointer items-center gap-2 text-xs text-slate-700"
-              >
-                <input
-                  type="checkbox"
-                  className="cursor-pointer"
-                  checked={form.institutions.some(
-                    (item) => item.institutionId === institution.id,
-                  )}
-                  onChange={() =>
-                    updateField(
-                      "institutions",
-                      form.institutions.some(
-                        (item) => item.institutionId === institution.id,
-                      )
-                        ? form.institutions.filter(
-                            (item) => item.institutionId !== institution.id,
-                          )
-                        : [
-                            ...form.institutions,
-                            {
-                              institutionId: institution.id,
-                              institutionGoing: "06:30",
-                              institutionFinish: "12:00",
-                            },
-                          ],
-                    )
-                  }
-                />
-                {institution.label}
-              </label>
-            ))}
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-x-10">
+        <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Instituições
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="h-11 cursor-pointer rounded-xl border-[#E5EAF0] px-4 text-sm font-semibold hover:bg-[#EEF2F7]"
+              onClick={addInstitution}
+              disabled={form.institutions.length >= institutions.length}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Adicionar instituição
+            </Button>
           </div>
-        </FormField>
 
-        <FormField label="Veículos recorrentes">
-          <div className="grid gap-2 rounded-md border border-border p-3">
-            {vehicles.map((vehicle) => (
-              <label
-                key={vehicle.id}
-                className="flex cursor-pointer items-center gap-2 text-xs text-slate-700"
+          <div className="grid gap-3">
+            {form.institutions.map((institution, index) => {
+              const selectedInstitution = institutions.find(
+                (option) => option.id === institution.institutionId,
+              );
+
+              return (
+                <div
+                  key={`${institution.institutionId}-${index}`}
+                  className="grid grid-cols-1 gap-3 rounded-lg border border-border p-3 md:grid-cols-[minmax(0,1fr)_120px_120px_36px]"
+                >
+                  <select
+                    value={institution.institutionId}
+                    onChange={(event) =>
+                      updateField(
+                        "institutions",
+                        form.institutions.map((item, itemIndex) =>
+                          itemIndex === index
+                            ? {
+                                ...item,
+                                institutionId: event.target.value,
+                              }
+                            : item,
+                        ),
+                      )
+                    }
+                    className="h-10 cursor-pointer rounded-xl border border-[#E5EAF0] bg-white px-3 text-sm text-slate-700 outline-none transition hover:bg-[#EEF2F7] focus-visible:ring-2 focus-visible:ring-[#3B82F6]/30"
+                  >
+                    {institutions
+                      .filter(
+                        (option) =>
+                          option.id === institution.institutionId ||
+                          !form.institutions.some(
+                            (item) => item.institutionId === option.id,
+                          ),
+                      )
+                      .map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label}
+                        </option>
+                      ))}
+                  </select>
+
+                  <Input
+                    required
+                    type="time"
+                    value={institution.institutionGoing}
+                    aria-label={`Horário de ida para ${selectedInstitution?.label ?? "instituição"}`}
+                    onChange={(event) =>
+                      updateInstitution(
+                        institution.institutionId,
+                        "institutionGoing",
+                        event.target.value,
+                      )
+                    }
+                  />
+
+                  <Input
+                    required
+                    type="time"
+                    value={institution.institutionFinish}
+                    aria-label={`Horário de volta para ${selectedInstitution?.label ?? "instituição"}`}
+                    onChange={(event) =>
+                      updateInstitution(
+                        institution.institutionId,
+                        "institutionFinish",
+                        event.target.value,
+                      )
+                    }
+                  />
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-lg"
+                    className="h-11 w-11 cursor-pointer rounded-xl text-slate-400 hover:bg-red-50 hover:text-[#DC2626]"
+                    aria-label="Remover instituição"
+                    onClick={() => removeInstitution(institution.institutionId)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex min-w-0 flex-col gap-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              Pontos de embarque
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              className="h-11 cursor-pointer rounded-xl border-[#E5EAF0] px-4 text-sm font-semibold hover:bg-[#EEF2F7]"
+              onClick={addBoardPoint}
+              disabled={form.boardPoints.length >= boardPoints.length}
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Adicionar ponto
+            </Button>
+          </div>
+
+          <div className="grid gap-3">
+            {form.boardPoints.map((boardPoint, index) => (
+              <div
+                key={`${boardPoint.boardPointId}-${index}`}
+                className="grid grid-cols-1 gap-3 rounded-lg border border-border p-3 md:grid-cols-[minmax(0,1fr)_120px_120px_36px]"
               >
-                <input
-                  type="checkbox"
-                  className="cursor-pointer"
-                  checked={form.vehicles.includes(vehicle.id)}
-                  onChange={() =>
-                    updateField(
-                      "vehicles",
-                      toggleValue(form.vehicles, vehicle.id),
+                <select
+                  value={boardPoint.boardPointId}
+                  onChange={(event) =>
+                    updateBoardPoint(index, "boardPointId", event.target.value)
+                  }
+                  className="h-10 cursor-pointer rounded-xl border border-[#E5EAF0] bg-white px-3 text-sm text-slate-700 outline-none transition hover:bg-[#EEF2F7] focus-visible:ring-2 focus-visible:ring-[#3B82F6]/30"
+                >
+                  {boardPoints
+                    .filter(
+                      (option) =>
+                        option.id === boardPoint.boardPointId ||
+                        !form.boardPoints.some(
+                          (item) => item.boardPointId === option.id,
+                        ),
+                    )
+                    .map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                </select>
+
+                <Input
+                  required
+                  type="time"
+                  value={boardPoint.boardTimeGoing}
+                  onChange={(event) =>
+                    updateBoardPoint(
+                      index,
+                      "boardTimeGoing",
+                      event.target.value,
                     )
                   }
                 />
-                {vehicle.label}
-              </label>
+
+                <Input
+                  required
+                  type="time"
+                  value={boardPoint.boardTimeFinish}
+                  onChange={(event) =>
+                    updateBoardPoint(
+                      index,
+                      "boardTimeFinish",
+                      event.target.value,
+                    )
+                  }
+                />
+
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-lg"
+                  className="h-11 w-11 cursor-pointer rounded-xl text-slate-400 hover:bg-red-50 hover:text-[#DC2626]"
+                  aria-label="Remover ponto"
+                  onClick={() => removeBoardPoint(index)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
             ))}
           </div>
-        </FormField>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Pontos de embarque
+            Veículos recorrentes
           </p>
           <Button
             type="button"
             variant="outline"
             size="lg"
             className="h-11 cursor-pointer rounded-xl border-[#E5EAF0] px-4 text-sm font-semibold hover:bg-[#EEF2F7]"
-            onClick={addBoardPoint}
+            onClick={addVehicle}
+            disabled={form.vehicles.length >= vehicles.length}
           >
             <Plus className="h-3.5 w-3.5" />
-            Adicionar ponto
+            Adicionar veículo
           </Button>
         </div>
 
         <div className="grid gap-3">
-          {form.boardPoints.map((boardPoint, index) => (
+          {form.vehicles.map((vehicleId, index) => (
             <div
-              key={`${boardPoint.boardPointId}-${index}`}
-              className="grid grid-cols-1 gap-3 rounded-lg border border-border p-3 md:grid-cols-[1fr_120px_120px_36px]"
+              key={vehicleId}
+              className="grid grid-cols-1 gap-3 rounded-lg border border-border p-3 md:grid-cols-[minmax(0,1fr)_36px]"
             >
               <select
-                value={boardPoint.boardPointId}
+                value={vehicleId}
                 onChange={(event) =>
-                  updateBoardPoint(index, "boardPointId", event.target.value)
+                  updateField(
+                    "vehicles",
+                    form.vehicles.map((item, itemIndex) =>
+                      itemIndex === index ? event.target.value : item,
+                    ),
+                  )
                 }
                 className="h-10 cursor-pointer rounded-xl border border-[#E5EAF0] bg-white px-3 text-sm text-slate-700 outline-none transition hover:bg-[#EEF2F7] focus-visible:ring-2 focus-visible:ring-[#3B82F6]/30"
               >
-                {boardPoints.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
+                {vehicles
+                  .filter(
+                    (option) =>
+                      option.id === vehicleId ||
+                      !form.vehicles.includes(option.id),
+                  )
+                  .map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
               </select>
-
-              <Input
-                required
-                type="time"
-                value={boardPoint.boardTimeGoing}
-                onChange={(event) =>
-                  updateBoardPoint(index, "boardTimeGoing", event.target.value)
-                }
-              />
-
-              <Input
-                required
-                type="time"
-                value={boardPoint.boardTimeFinish}
-                onChange={(event) =>
-                  updateBoardPoint(index, "boardTimeFinish", event.target.value)
-                }
-              />
 
               <Button
                 type="button"
                 variant="ghost"
                 size="icon-lg"
                 className="h-11 w-11 cursor-pointer rounded-xl text-slate-400 hover:bg-red-50 hover:text-[#DC2626]"
-                aria-label="Remover ponto"
-                onClick={() => removeBoardPoint(index)}
+                aria-label="Remover veículo"
+                onClick={() => removeVehicle(vehicleId)}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
