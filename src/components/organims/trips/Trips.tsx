@@ -1,9 +1,10 @@
 "use client";
 
-import { MapPinned, Plus } from "lucide-react";
+import { AlertTriangle, MapPinned, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import MetricCard from "@/components/atom/MetricCard";
+import TableActionButton from "@/components/atom/TableActionButton";
 import DataTable, {
   type DataTableColumn,
 } from "@/components/molecules/DataTable";
@@ -15,7 +16,12 @@ import TripProgressModal from "@/components/molecules/trips/TripProgressModal";
 import { Button } from "@/components/ui/button";
 import { getMetrics } from "@/service/MetricService";
 import { listRoutesSimple } from "@/service/RouteService";
-import { createTrip, listTrips } from "@/service/TripService";
+import {
+  type CreateTripRequest,
+  createTrip,
+  deleteTrip,
+  listTrips,
+} from "@/service/TripService";
 import type { RouteEntity } from "@/types/entites/RouteEntity";
 import type { TripEntity } from "@/types/entites/TripEntity";
 import { Progress } from "@/types/enums/Progress";
@@ -79,6 +85,7 @@ export default function Trips() {
   const [totalPages, setTotalPages] = useState(1);
   const [routes, setRoutes] = useState<RouteEntity[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [tripPendingDelete, setTripPendingDelete] = useState<TripEntity>();
 
   const fetchTrips = useCallback(async () => {
     const response = await listTrips(currentPage - 1, PAGE_SIZE);
@@ -104,22 +111,52 @@ export default function Trips() {
     void fetchResources();
   }, []);
 
-  async function handleCreateTrip(request: {
-    routeId: string;
-    vehicleId: string;
-  }): Promise<boolean> {
+  async function handleCreateTrip(
+    request: CreateTripRequest,
+  ): Promise<boolean> {
     try {
       await createTrip(request);
-      if (currentPage === 1) {
-        await fetchTrips();
-      } else {
-        setCurrentPage(1);
-      }
-      setMetrics(await getMetrics());
-      toast.success("Viagem criada com sucesso.");
-      return true;
     } catch {
       return false;
+    }
+
+    if (currentPage === 1) {
+      try {
+        await fetchTrips();
+      } catch {
+        toast.error("Viagem criada, mas não foi possível atualizar a lista.");
+      }
+    } else {
+      setCurrentPage(1);
+    }
+
+    try {
+      setMetrics(await getMetrics());
+    } catch {
+      // A falha das métricas não deve impedir o fechamento do modal.
+    }
+
+    toast.success("Viagem criada com sucesso.");
+    return true;
+  }
+
+  async function confirmDeleteTrip() {
+    if (!tripPendingDelete) {
+      return;
+    }
+
+    try {
+      await deleteTrip(tripPendingDelete.id);
+      setTripPendingDelete(undefined);
+      if (currentPage > 1 && trips.length === 1) {
+        setCurrentPage((page) => page - 1);
+      } else {
+        await fetchTrips();
+      }
+      setMetrics(await getMetrics());
+      toast.success("Viagem excluída com sucesso.");
+    } catch {
+      toast.error("Não foi possível excluir a viagem.");
     }
   }
 
@@ -180,16 +217,24 @@ export default function Trips() {
       id: "actions",
       header: "",
       cell: (trip) => (
-        <Button
-          type="button"
-          variant="outline"
-          size="lg"
-          className="h-8 cursor-pointer rounded-xl border-[#E5EAF0] px-3 text-xs font-semibold hover:bg-[#EEF2F7]"
-          onClick={() => setSelectedTrip(trip)}
-        >
-          <MapPinned className="h-3.5 w-3.5" />
-          Acompanhar no mapa
-        </Button>
+        <div className="flex items-center justify-end gap-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            className="h-8 cursor-pointer rounded-xl border-[#E5EAF0] px-3 text-xs font-semibold hover:bg-[#EEF2F7]"
+            onClick={() => setSelectedTrip(trip)}
+          >
+            <MapPinned className="h-3.5 w-3.5" />
+            Acompanhar no mapa
+          </Button>
+          <TableActionButton
+            label="Excluir viagem"
+            icon={Trash2}
+            variant="destructive"
+            onClick={() => setTripPendingDelete(trip)}
+          />
+        </div>
       ),
       className: "text-right",
       headerClassName: "text-right",
@@ -261,6 +306,66 @@ export default function Trips() {
         totalPages={totalPages}
         onPageChange={setCurrentPage}
       />
+
+      {tripPendingDelete && (
+        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+          <button
+            type="button"
+            className="absolute inset-0 cursor-default bg-slate-950/55 backdrop-blur-md"
+            aria-label="Fechar exclusão de viagem"
+            onClick={() => setTripPendingDelete(undefined)}
+          />
+          <div className="relative w-full max-w-md rounded-3xl border border-[#E5EAF0]/80 bg-white p-6 shadow-[0_24px_80px_-28px_rgba(15,23,42,0.55)]">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-lg"
+              className="absolute right-4 top-4 h-8 w-8 cursor-pointer rounded-xl text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              aria-label="Fechar confirmação"
+              onClick={() => setTripPendingDelete(undefined)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+
+            <div className="flex items-start gap-4 pr-8">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-red-50 text-[#DC2626]">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-slate-950">
+                  Excluir viagem
+                </p>
+                <p className="mt-1 text-sm leading-6 text-slate-500">
+                  Deseja excluir a viagem{" "}
+                  {tripPendingDelete.name || tripPendingDelete.code}? Essa ação
+                  não poderá ser desfeita.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="xs"
+                className="h-9 cursor-pointer rounded-xl border-[#E5EAF0] px-4 text-xs font-semibold hover:bg-[#EEF2F7]"
+                onClick={() => setTripPendingDelete(undefined)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="xs"
+                className="h-9 cursor-pointer rounded-xl bg-[#DC2626] px-4 text-xs font-semibold text-white shadow-[0_16px_36px_-20px_rgba(220,38,38,0.9)] hover:bg-red-700"
+                onClick={confirmDeleteTrip}
+              >
+                Excluir viagem
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {selectedTrip && (
         <TripProgressModal
