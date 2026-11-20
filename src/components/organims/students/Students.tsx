@@ -1,17 +1,28 @@
 "use client";
 
-import { MessageSquareText, Star } from "lucide-react";
+import { FileText, MessageSquareText, Star } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import StudentAvatar from "@/components/atom/StudentAvatar";
+import StudentEnrollmentCertificateStatusBadge, {
+  type StudentEnrollmentCertificateStatus,
+} from "@/components/atom/StudentEnrollmentCertificateStatusBadge";
 import StudentStatusBadge from "@/components/atom/StudentStatusBadge";
 import DataTable, {
   type DataTableColumn,
 } from "@/components/molecules/DataTable";
 import UserFeedbackModal from "@/components/molecules/feedbacks/UserFeedbackModal";
+import StudentEnrollmentCertificateModal from "@/components/molecules/students/StudentEnrollmentCertificateModal";
 import StudentFilters, {
+  type StudentDocumentFilter,
   type StudentFrequencyFilter,
   type StudentScoreFilter,
 } from "@/components/molecules/students/StudentFilters";
+import { Button } from "@/components/ui/button";
+import {
+  fetchStudentEnrollmentCertificate,
+  type StudentEnrollmentCertificate,
+} from "@/service/StudentDocumentService";
 import { listUserPhotos } from "@/service/UserPhotoService";
 import { listStudents } from "@/service/UserService";
 import type { StudentEntity } from "@/types/entites/StudentEntity";
@@ -72,12 +83,23 @@ export default function Students() {
   const [scoreFilter, setScoreFilter] = useState<StudentScoreFilter>("ALL");
   const [frequencyFilter, setFrequencyFilter] =
     useState<StudentFrequencyFilter>("ALL");
+  const [documentFilter, setDocumentFilter] =
+    useState<StudentDocumentFilter>("ALL");
   const [students, setStudents] = useState<StudentEntity[]>([]);
   const [studentPhotoUrls, setStudentPhotoUrls] = useState<
     Record<string, string>
   >({});
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedStudent, setSelectedStudent] = useState<StudentEntity>();
+  const [selectedStudentDocument, setSelectedStudentDocument] = useState<{
+    student: StudentEntity;
+    document: StudentEnrollmentCertificate;
+  }>();
+  const [loadingDocumentStudentId, setLoadingDocumentStudentId] =
+    useState<string>();
+  const [studentDocumentStatuses, setStudentDocumentStatuses] = useState<
+    Record<string, StudentEnrollmentCertificateStatus>
+  >({});
   const [totalItems, setTotalItems] = useState(0);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -86,6 +108,11 @@ export default function Students() {
       const response = await listStudents(currentPage - 1, PAGE_SIZE);
       setStudents(response.content);
       setStudentPhotoUrls({});
+      setStudentDocumentStatuses(
+        Object.fromEntries(
+          response.content.map((student) => [student.id, "LOADING"]),
+        ),
+      );
       setTotalItems(response.page.totalElements);
       setTotalPages(response.page.totalPages);
 
@@ -99,6 +126,23 @@ export default function Students() {
       } catch {
         setStudentPhotoUrls({});
       }
+
+      const documentStatuses = await Promise.all(
+        response.content.map(async (student) => {
+          try {
+            const document = await fetchStudentEnrollmentCertificate(
+              student.id,
+            );
+            return [
+              student.id,
+              document?.validationStatus ?? "NOT_REGISTERED",
+            ] as const;
+          } catch {
+            return [student.id, "NOT_REGISTERED"] as const;
+          }
+        }),
+      );
+      setStudentDocumentStatuses(Object.fromEntries(documentStatuses));
     }
 
     fetchStudents();
@@ -108,10 +152,42 @@ export default function Students() {
     return students.filter((student) => {
       return (
         matchesScoreFilter(student, scoreFilter) &&
-        matchesFrequencyFilter(student, frequencyFilter)
+        matchesFrequencyFilter(student, frequencyFilter) &&
+        (documentFilter === "ALL" ||
+          studentDocumentStatuses[student.id] === documentFilter)
       );
     });
-  }, [students, scoreFilter, frequencyFilter]);
+  }, [
+    students,
+    scoreFilter,
+    frequencyFilter,
+    documentFilter,
+    studentDocumentStatuses,
+  ]);
+
+  async function openStudentDocument(student: StudentEntity) {
+    setLoadingDocumentStudentId(student.id);
+    try {
+      const document = await fetchStudentEnrollmentCertificate(student.id);
+      if (!document) {
+        setStudentDocumentStatuses((current) => ({
+          ...current,
+          [student.id]: "NOT_REGISTERED",
+        }));
+        toast.info(
+          "Este aluno ainda não cadastrou um comprovante de matrícula.",
+        );
+        return;
+      }
+      setStudentDocumentStatuses((current) => ({
+        ...current,
+        [student.id]: document.validationStatus,
+      }));
+      setSelectedStudentDocument({ student, document });
+    } finally {
+      setLoadingDocumentStudentId(undefined);
+    }
+  }
 
   const columns: DataTableColumn<StudentEntity>[] = [
     {
@@ -201,6 +277,38 @@ export default function Students() {
       headerClassName: "text-center",
     },
     {
+      id: "enrollmentCertificate",
+      header: "Status do comprovante",
+      cell: (student) => (
+        <StudentEnrollmentCertificateStatusBadge
+          status={studentDocumentStatuses[student.id]}
+        />
+      ),
+      className: "min-w-40 text-center",
+      headerClassName: "text-center",
+    },
+    {
+      id: "enrollmentCertificateAction",
+      header: "Comprovante",
+      cell: (student) => (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="h-9 rounded-xl border-slate-200 px-3 font-semibold text-[#1E3A8A] hover:bg-blue-50"
+          disabled={loadingDocumentStudentId === student.id}
+          onClick={() => openStudentDocument(student)}
+        >
+          <FileText className="h-3.5 w-3.5" />
+          {loadingDocumentStudentId === student.id
+            ? "Carregando..."
+            : "Ver comprovante"}
+        </Button>
+      ),
+      className: "min-w-44 text-center",
+      headerClassName: "text-center",
+    },
+    {
       id: "status",
       header: "Status",
       cell: (student) => <StudentStatusBadge status={student.status} />,
@@ -225,8 +333,10 @@ export default function Students() {
         <StudentFilters
           score={scoreFilter}
           frequency={frequencyFilter}
+          document={documentFilter}
           onScoreChange={setScoreFilter}
           onFrequencyChange={setFrequencyFilter}
+          onDocumentChange={setDocumentFilter}
         />
         <p className="text-sm font-medium text-slate-500">
           {filteredStudents.length} aluno(s) encontrado(s)
@@ -250,6 +360,20 @@ export default function Students() {
           userId={selectedStudent.id}
           userName={selectedStudent.name}
           onClose={() => setSelectedStudent(undefined)}
+        />
+      )}
+
+      {selectedStudentDocument && (
+        <StudentEnrollmentCertificateModal
+          student={selectedStudentDocument.student}
+          document={selectedStudentDocument.document}
+          onClose={() => setSelectedStudentDocument(undefined)}
+          onDocumentChanged={(status) =>
+            setStudentDocumentStatuses((current) => ({
+              ...current,
+              [selectedStudentDocument.student.id]: status,
+            }))
+          }
         />
       )}
     </div>
