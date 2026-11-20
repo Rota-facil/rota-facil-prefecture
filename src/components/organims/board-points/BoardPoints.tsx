@@ -1,12 +1,9 @@
 "use client";
 
-import { AlertTriangle, MapPin, Pencil, Plus, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import TableActionButton from "@/components/atom/TableActionButton";
+import { AlertTriangle, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import BoardPointCard from "@/components/molecules/board-points/BoardPointCard";
 import BoardPointForm from "@/components/molecules/board-points/BoardPointForm";
-import DataTable, {
-  type DataTableColumn,
-} from "@/components/molecules/DataTable";
 import { Button } from "@/components/ui/button";
 import {
   createBoardPoint,
@@ -21,11 +18,7 @@ import {
 import type { BoardPointEntity } from "@/types/entites/BoardPointEntity";
 import type { CreateBoardPointRequest } from "@/types/request/BoardPointRequest";
 
-function formatCoordinate(value: number) {
-  return value.toFixed(4);
-}
-
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 6;
 
 export default function BoardPoints() {
   const [boardPoints, setBoardPoints] = useState<BoardPointEntity[]>([]);
@@ -40,109 +33,6 @@ export default function BoardPoints() {
   const [boardPointPhotoUrls, setBoardPointPhotoUrls] = useState<
     Record<string, string>
   >({});
-
-  const columns = useMemo<DataTableColumn<BoardPointEntity>[]>(
-    () => [
-      {
-        id: "code",
-        header: "Código",
-        cell: (boardPoint) => (
-          <span className="font-mono text-xs font-semibold text-[#1E3A8A]">
-            P-
-            {String(
-              currentPage * PAGE_SIZE +
-                boardPoints.findIndex((item) => item.id === boardPoint.id) +
-                1,
-            ).padStart(3, "0")}
-          </span>
-        ),
-        className: "w-28",
-      },
-      {
-        id: "name",
-        header: "Ponto de embarque",
-        cell: (boardPoint) => (
-          <div className="flex min-w-0 items-center gap-2">
-            <MapPin className="h-4 w-4 shrink-0 text-[#1E3A8A]" />
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-800">
-                {boardPoint.name}
-              </p>
-              <p className="text-xs text-slate-400">
-                {boardPoint.createdAtLabel}
-              </p>
-            </div>
-          </div>
-        ),
-        className: "min-w-72",
-      },
-      {
-        id: "photo",
-        header: "Foto",
-        cell: (boardPoint) =>
-          boardPointPhotoUrls[boardPoint.id] ? (
-            <img
-              src={boardPointPhotoUrls[boardPoint.id]}
-              alt={`Foto de ${boardPoint.name}`}
-              className="h-10 w-14 rounded-lg object-cover"
-            />
-          ) : (
-            <MapPin className="h-5 w-5 text-slate-300" />
-          ),
-        className: "w-20",
-      },
-      {
-        id: "latitude",
-        header: "Latitude",
-        cell: (boardPoint) => (
-          <span className="font-mono text-xs">
-            {formatCoordinate(boardPoint.latitude)}
-          </span>
-        ),
-      },
-      {
-        id: "longitude",
-        header: "Longitude",
-        cell: (boardPoint) => (
-          <span className="font-mono text-xs">
-            {formatCoordinate(boardPoint.longitude)}
-          </span>
-        ),
-      },
-      {
-        id: "routes",
-        header: "Rotas",
-        cell: (boardPoint) => boardPoint.routeCount,
-        className: "text-center font-medium",
-        headerClassName: "text-center",
-      },
-      {
-        id: "actions",
-        header: "Ações",
-        cell: (boardPoint) => (
-          <div className="flex justify-end gap-1">
-            <TableActionButton
-              label="Editar"
-              icon={Pencil}
-              onClick={() => {
-                setEditingBoardPoint(boardPoint);
-                setIsFormOpen(true);
-              }}
-            />
-            <TableActionButton
-              label="Excluir"
-              icon={Trash2}
-              variant="destructive"
-              onClick={() => setBoardPointPendingDelete(boardPoint)}
-            />
-          </div>
-        ),
-        className: "text-right",
-        headerClassName: "text-right",
-      },
-    ],
-    [boardPoints, boardPointPhotoUrls, currentPage],
-  );
 
   function closeForm() {
     setIsFormOpen(false);
@@ -225,8 +115,11 @@ export default function BoardPoints() {
   }
 
   useEffect(() => {
-    fetchBoardPoints();
+    void fetchBoardPoints();
   }, [fetchBoardPoints]);
+
+  const safeCurrentPage = Math.min(currentPage + 1, totalPages);
+
   return (
     <div className="-m-5 flex min-h-[calc(100vh-4rem)] flex-col gap-6 bg-slate-50 px-6 py-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -254,23 +147,62 @@ export default function BoardPoints() {
         </Button>
       </div>
 
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-slate-500">
-          {totalBoardPoints} ponto(s) cadastrado(s)
-        </p>
+      <p className="text-sm font-medium text-slate-500">
+        {totalBoardPoints} ponto(s) cadastrado(s)
+      </p>
+
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+        {boardPoints.map((boardPoint) => (
+          <BoardPointCard
+            key={boardPoint.id}
+            boardPoint={boardPoint}
+            photoUrl={boardPointPhotoUrls[boardPoint.id]}
+            onViewDetails={(point) => {
+              setEditingBoardPoint(point);
+              setIsFormOpen(true);
+            }}
+            onDelete={setBoardPointPendingDelete}
+          />
+        ))}
       </div>
 
-      <DataTable
-        columns={columns}
-        data={boardPoints}
-        getRowId={(boardPoint) => boardPoint.id}
-        emptyMessage="Nenhum ponto de embarque cadastrado."
-        pageSize={PAGE_SIZE}
-        currentPage={currentPage + 1}
-        totalItems={totalBoardPoints}
-        totalPages={totalPages}
-        onPageChange={(page) => setCurrentPage(page - 1)}
-      />
+      {boardPoints.length === 0 && (
+        <div className="rounded-2xl border border-slate-200/80 bg-white px-6 py-10 text-center text-sm text-muted-foreground shadow-[0_18px_45px_-28px_rgba(15,23,42,0.45)]">
+          Nenhum ponto de embarque cadastrado.
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3 rounded-2xl border border-[#E5EAF0] bg-white px-6 py-4 shadow-[0_18px_45px_-28px_rgba(15,23,42,0.45)] sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-sm font-medium text-slate-500">
+          Página {safeCurrentPage} de {totalPages}
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-lg"
+            className="h-7 w-11 cursor-pointer rounded-xl border-[#E5EAF0] text-slate-600 hover:bg-[#EEF2F7] disabled:cursor-not-allowed"
+            aria-label="Página anterior"
+            disabled={currentPage === 0}
+            onClick={() => setCurrentPage((page) => Math.max(0, page - 1))}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon-lg"
+            className="h-7 w-11 cursor-pointer rounded-xl border-[#E5EAF0] text-slate-600 hover:bg-[#EEF2F7] disabled:cursor-not-allowed"
+            aria-label="Próxima página"
+            disabled={safeCurrentPage >= totalPages}
+            onClick={() =>
+              setCurrentPage((page) => Math.min(totalPages - 1, page + 1))
+            }
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
 
       {boardPointPendingDelete && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center bg-slate-950/55 p-4 backdrop-blur-md">
