@@ -5,7 +5,6 @@ import {
   Check,
   FileText,
   Loader2,
-  MessageSquarePlus,
   ShieldAlert,
   X,
 } from "lucide-react";
@@ -17,11 +16,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useCurrentUser } from "@/hooks/UseCurrentUser";
 import {
-  addApplicationNote,
   approvePrefectureApplication,
   getPrefectureApplication,
+  getPrefectureApplicationDocuments,
   rejectPrefectureApplication,
-  requestApplicationInformation,
 } from "@/service/PrefectureApplicationService";
 import type {
   ApplicationStatus,
@@ -43,16 +41,27 @@ export default function PrefectureApplicationDetailsPage({
   const [application, setApplication] =
     useState<PrefectureApplicationDetails>();
   const [loading, setLoading] = useState(true);
-  const [note, setNote] = useState("");
-  const [message, setMessage] = useState("");
   const [rejectReason, setRejectReason] = useState("");
-  const [action, setAction] = useState<
-    "approve" | "reject" | "info" | undefined
-  >();
+  const [action, setAction] = useState<"approve" | "reject" | undefined>();
   async function load() {
     setLoading(true);
     try {
-      setApplication(await getPrefectureApplication(applicationId));
+      const [details, documentsResult] = await Promise.allSettled([
+        getPrefectureApplication(applicationId),
+        getPrefectureApplicationDocuments(applicationId),
+      ]);
+
+      if (details.status === "rejected") {
+        throw details.reason;
+      }
+
+      setApplication({
+        ...details.value,
+        documents:
+          documentsResult.status === "fulfilled"
+            ? documentsResult.value
+            : undefined,
+      });
     } catch {
       /* O serviço já apresenta a mensagem da API. */
     } finally {
@@ -92,24 +101,11 @@ export default function PrefectureApplicationDetailsPage({
       const updated =
         action === "approve"
           ? await approvePrefectureApplication(applicationId)
-          : action === "reject"
-            ? await rejectPrefectureApplication(applicationId, rejectReason)
-            : await requestApplicationInformation(applicationId, message);
+          : await rejectPrefectureApplication(applicationId, rejectReason);
       setApplication(updated);
       setAction(undefined);
       setRejectReason("");
-      setMessage("");
       toast.success("Solicitação atualizada com sucesso.");
-    } catch {
-      /* O erro é tratado pelo serviço HTTP. */
-    }
-  }
-  async function saveNote() {
-    if (!note.trim()) return;
-    try {
-      setApplication(await addApplicationNote(applicationId, note.trim()));
-      setNote("");
-      toast.success("Observação registrada.");
     } catch {
       /* O erro é tratado pelo serviço HTTP. */
     }
@@ -151,14 +147,6 @@ export default function PrefectureApplicationDetailsPage({
                 >
                   <X className="h-4 w-4" />
                   Rejeitar
-                </Button>
-                <Button
-                  variant="outline"
-                  className="rounded-xl"
-                  onClick={() => setAction("info")}
-                >
-                  <MessageSquarePlus className="h-4 w-4" />
-                  Solicitar informações
                 </Button>
               </>
             )}
@@ -232,36 +220,6 @@ export default function PrefectureApplicationDetailsPage({
                 ))}
               </div>
             </Section>
-            <Section title="Observações internas">
-              <div className="grid gap-3">
-                {(application.internalNotes ?? []).map((item) => (
-                  <div key={item.id} className="rounded-xl bg-slate-50 p-3">
-                    <p className="text-xs font-bold text-slate-700">
-                      {item.authorName}
-                    </p>
-                    <p className="mt-1 text-sm leading-5 text-slate-600">
-                      {item.content}
-                    </p>
-                    <p className="mt-2 text-[11px] text-slate-400">
-                      {item.createdAt}
-                    </p>
-                  </div>
-                ))}
-                <Textarea
-                  value={note}
-                  onChange={(event) => setNote(event.target.value)}
-                  placeholder="Registrar uma observação administrativa..."
-                  className="min-h-24 rounded-xl"
-                />
-                <Button
-                  className="rounded-xl bg-slate-900 text-white hover:bg-slate-800"
-                  disabled={!note.trim()}
-                  onClick={saveNote}
-                >
-                  Adicionar observação
-                </Button>
-              </div>
-            </Section>
           </div>
         </div>
       </div>
@@ -271,16 +229,12 @@ export default function PrefectureApplicationDetailsPage({
             <h2 className="text-xl font-black">
               {action === "approve"
                 ? "Aprovar solicitação?"
-                : action === "reject"
-                  ? "Rejeitar solicitação"
-                  : "Solicitar informações"}
+                : "Rejeitar solicitação"}
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">
               {action === "approve"
                 ? "A aprovação iniciará o processo de cadastro e provisionamento do acesso administrativo."
-                : action === "reject"
-                  ? "Informe a justificativa que será registrada na solicitação."
-                  : "Descreva os dados ou documentos que precisam ser complementados."}
+                : "Informe a justificativa que será registrada na solicitação."}
             </p>
             {action === "reject" ? (
               <Textarea
@@ -288,13 +242,6 @@ export default function PrefectureApplicationDetailsPage({
                 onChange={(event) => setRejectReason(event.target.value)}
                 className="mt-5 min-h-28 rounded-xl"
                 placeholder="Justificativa obrigatória"
-              />
-            ) : action === "info" ? (
-              <Textarea
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                className="mt-5 min-h-28 rounded-xl"
-                placeholder="Quais informações são necessárias?"
               />
             ) : null}
             <div className="mt-6 flex justify-end gap-2">
@@ -307,17 +254,12 @@ export default function PrefectureApplicationDetailsPage({
               </Button>
               <Button
                 className={`rounded-xl text-white ${action === "approve" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-blue-700 hover:bg-blue-800"}`}
-                disabled={
-                  (action === "reject" && !rejectReason.trim()) ||
-                  (action === "info" && !message.trim())
-                }
+                disabled={action === "reject" && !rejectReason.trim()}
                 onClick={runAction}
               >
                 {action === "approve"
                   ? "Confirmar aprovação"
-                  : action === "reject"
-                    ? "Confirmar rejeição"
-                    : "Enviar solicitação"}
+                  : "Confirmar rejeição"}
               </Button>
             </div>
           </div>

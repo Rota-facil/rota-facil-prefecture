@@ -70,5 +70,4 @@ export interface ApplicationStats {
   analysis: number;
   approved: number;
   rejected: number;
-  additionalInfoRequired: number;
 }
