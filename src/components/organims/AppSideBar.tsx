@@ -4,6 +4,7 @@ import {
   Activity,
   BrainCircuit,
   Building2,
+  ClipboardList,
   FileDown,
   Flame,
   GraduationCap,
@@ -151,6 +152,15 @@ export function AppSidebar() {
             <SidebarGroupLabel className={"font-semibold"}>
               <p>Sistema</p>
             </SidebarGroupLabel>
+
+            {user?.role === "SUPERUSER" && (
+              <SidebarMenuItem>
+                <MySideBarMenuButton href="/prefecture-applications">
+                  <ClipboardList />
+                  <span>Solicitações de adesão</span>
+                </MySideBarMenuButton>
+              </SidebarMenuItem>
+            )}
 
             <SidebarMenuItem>
               <MySideBarMenuButton href={getGrafanaUrl()} external>
