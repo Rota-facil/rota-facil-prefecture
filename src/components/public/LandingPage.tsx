@@ -16,8 +16,11 @@ import {
   UsersRound,
 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
-import { PublicFooter, PublicHeader } from "@/components/public/PublicShell";
+import {
+  ApplicationEntryLink,
+  PublicFooter,
+  PublicHeader,
+} from "@/components/public/PublicShell";
 
 const features = [
   [
@@ -179,13 +182,10 @@ export default function LandingPage() {
                 acompanhamento.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-                <Link
-                  href="/join"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-800 to-blue-500 px-5 py-3.5 text-sm font-bold text-white shadow-xl shadow-blue-700/20 transition hover:-translate-y-0.5"
-                >
+                <ApplicationEntryLink className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-800 to-blue-500 px-5 py-3.5 text-sm font-bold text-white shadow-xl shadow-blue-700/20 transition hover:-translate-y-0.5">
                   Quero conhecer para meu município{" "}
                   <ArrowRight className="h-4 w-4" />
-                </Link>
+                </ApplicationEntryLink>
                 <a
                   href="#students"
                   className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50"
@@ -421,12 +421,9 @@ export default function LandingPage() {
                   </div>
                 ))}
               </div>
-              <Link
-                href="/join"
-                className="mt-8 inline-flex items-center gap-2 rounded-xl bg-blue-800 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-800/20 transition hover:-translate-y-0.5"
-              >
+              <ApplicationEntryLink className="mt-8 inline-flex items-center gap-2 rounded-xl bg-blue-800 px-5 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-800/20 transition hover:-translate-y-0.5">
                 Conhecer para meu município <ArrowRight className="h-4 w-4" />
-              </Link>
+              </ApplicationEntryLink>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               {municipalTools.map(([title, description, src], index) => (
@@ -642,12 +639,9 @@ export default function LandingPage() {
                 município.
               </p>
             </div>
-            <Link
-              href="/join"
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3.5 text-sm font-bold text-blue-800 transition hover:bg-blue-50"
-            >
+            <ApplicationEntryLink className="inline-flex items-center justify-center gap-2 rounded-xl bg-white px-5 py-3.5 text-sm font-bold text-blue-800 transition hover:bg-blue-50">
               Solicitar adesão <ArrowRight className="h-4 w-4" />
-            </Link>
+            </ApplicationEntryLink>
           </div>
         </section>
       </main>

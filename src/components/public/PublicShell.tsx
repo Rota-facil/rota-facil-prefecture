@@ -1,6 +1,53 @@
+"use client";
+
 import { Menu, Route, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
+export const PUBLIC_ACCESS_TOKEN_STORAGE_KEY = "rota-facil:public-access-token";
+
+function TrackApplicationLink({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+
+  function handleClick(event: React.MouseEvent<HTMLAnchorElement>) {
+    const token = window.localStorage.getItem(PUBLIC_ACCESS_TOKEN_STORAGE_KEY);
+    if (!token) return;
+
+    event.preventDefault();
+    router.push(`/join/track?public_access_token=${encodeURIComponent(token)}`);
+  }
+
+  return (
+    <Link href="/join/track" onClick={handleClick}>
+      {children}
+    </Link>
+  );
+}
+
+export function ApplicationEntryLink({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  const router = useRouter();
+
+  function handleClick(event: React.MouseEvent<HTMLAnchorElement>) {
+    const token = window.localStorage.getItem(PUBLIC_ACCESS_TOKEN_STORAGE_KEY);
+    if (!token) return;
+
+    event.preventDefault();
+    router.push(`/join/track?public_access_token=${encodeURIComponent(token)}`);
+  }
+
+  return (
+    <Link href="/join" className={className} onClick={handleClick}>
+      {children}
+    </Link>
+  );
+}
 
 export function PublicHeader() {
   return (
@@ -103,9 +150,9 @@ export function PublicFooter() {
             <Link href="/login" className="hover:text-white">
               Entrar na plataforma
             </Link>
-            <Link href="/join/track" className="hover:text-white">
-              Acompanhar solicitação
-            </Link>
+            <TrackApplicationLink>
+              <span className="hover:text-white">Acompanhar solicitação</span>
+            </TrackApplicationLink>
             <Link href="/privacy" className="hover:text-white">
               Política de privacidade
             </Link>

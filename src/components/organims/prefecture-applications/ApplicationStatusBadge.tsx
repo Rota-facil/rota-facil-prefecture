@@ -2,13 +2,9 @@ import type { ApplicationStatus } from "@/types/PrefectureApplication";
 
 const config: Record<ApplicationStatus, { label: string; className: string }> =
   {
-    UNDER_ANALYSIS: {
+    ANALYSIS: {
       label: "Em análise",
       className: "bg-amber-50 text-amber-700 ring-amber-200",
-    },
-    ADDITIONAL_INFO_REQUIRED: {
-      label: "Aguardando informações",
-      className: "bg-violet-50 text-violet-700 ring-violet-200",
     },
     APPROVED: {
       label: "Aprovada",

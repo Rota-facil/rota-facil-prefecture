@@ -1,8 +1,4 @@
-export type ApplicationStatus =
-  | "UNDER_ANALYSIS"
-  | "ADDITIONAL_INFO_REQUIRED"
-  | "APPROVED"
-  | "REJECTED";
+export type ApplicationStatus = "ANALYSIS" | "APPROVED" | "REJECTED";
 
 export interface PrefectureApplicationForm {
   prefectureName: string;
@@ -14,6 +10,7 @@ export interface PrefectureApplicationForm {
   institutionalPhone: string;
   responsibleName: string;
   responsibleRole: string;
+  responsibleCpf: string;
   responsibleEmail: string;
   responsiblePhone: string;
   privacyAccepted: boolean;
@@ -21,14 +18,23 @@ export interface PrefectureApplicationForm {
 
 export interface PrefectureApplicationSummary {
   id: string;
-  protocol: string;
-  prefectureName: string;
+  name: string;
   municipality: string;
   state: string;
-  cnpj: string;
+  cnpj?: string;
+  ibgeCode?: string;
+  institutionalEmail: string;
+  institutionalPhone: string;
   responsibleName: string;
-  requestedAt: string;
+  responsibleEmail: string;
+  responsiblePhone: string;
+  responsibleCpf?: string;
   status: ApplicationStatus;
+  rejectionReason?: string | null;
+  reviewedId?: string | null;
+  reviewedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ApplicationDocument {
@@ -47,26 +53,20 @@ export interface ApplicationHistoryEvent {
 
 export interface PrefectureApplicationDetails
   extends PrefectureApplicationSummary {
-  institutionalEmail: string;
-  institutionalPhone: string;
-  ibgeCode?: string;
-  responsibleRole: string;
-  responsibleEmail: string;
-  responsiblePhone: string;
-  documents: ApplicationDocument[];
-  history: ApplicationHistoryEvent[];
-  internalNotes: Array<{
+  documents?: ApplicationDocument[];
+  responsibleRole?: string;
+  history?: ApplicationHistoryEvent[];
+  internalNotes?: Array<{
     id: string;
     authorName: string;
     content: string;
     createdAt: string;
   }>;
-  publicMessage?: string;
 }
 
 export interface ApplicationStats {
   total: number;
-  underAnalysis: number;
+  analysis: number;
   approved: number;
   rejected: number;
   additionalInfoRequired: number;

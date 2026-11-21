@@ -2,7 +2,6 @@ import { env } from "@/config/env";
 import { getToken } from "@/service/auth/TokenService";
 import { handleHttpError } from "@/service/HttpErrorService";
 import type {
-  ApplicationStats,
   ApplicationStatus,
   PrefectureApplicationDetails,
   PrefectureApplicationForm,
@@ -19,7 +18,6 @@ const APPLICATIONS_PATH = "/prefecture-applications";
 function authHeaders(): HeadersInit {
   const token = getToken();
   return {
-    "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 }
@@ -37,39 +35,49 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json();
 }
 
-export function createPrefectureApplication(data: PrefectureApplicationForm) {
-  return request<{ id: string; protocol: string }>(APPLICATIONS_PATH, {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-}
-
-export async function uploadApplicationDocument(
-  applicationId: string,
-  file: File,
+export async function createPrefectureApplication(
+  data: PrefectureApplicationForm,
+  files: File[],
 ) {
   const formData = new FormData();
-  formData.append("file", file);
-  const token = getToken();
-  const response = await fetch(
-    `${env.WEB_BASE_URL}${APPLICATIONS_PATH}/${applicationId}/documents`,
-    {
-      method: "POST",
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      body: formData,
-    },
+  const request = {
+    name: data.prefectureName,
+    municipality: data.municipality,
+    state: data.state,
+    ibgeCode: data.ibgeCode || null,
+    cnpj: data.cnpj,
+    institutionalEmail: data.institutionalEmail,
+    institutionalPhone: data.institutionalPhone,
+    responsibleName: data.responsibleName,
+    responsibleEmail: data.responsibleEmail,
+    responsiblePhone: data.responsiblePhone,
+    responsibleCpf: data.responsibleCpf,
+  };
+  formData.append(
+    "request",
+    new Blob([JSON.stringify(request)], { type: "application/json" }),
   );
+  for (const file of files) formData.append("files", file);
+
+  const response = await fetch(`${env.WEB_BASE_URL}${APPLICATIONS_PATH}`, {
+    method: "POST",
+    headers: authHeaders(),
+    body: formData,
+  });
 
   if (!response.ok) {
-    await handleHttpError(response, "Não foi possível enviar o documento");
+    await handleHttpError(response, "Não foi possível enviar a solicitação");
   }
 
-  return response.json();
+  return response.json() as Promise<{
+    id: string;
+    publicAccessToken: string;
+  }>;
 }
 
-export function getPublicApplication(token: string) {
+export function getPublicApplication(publicAccessToken: string) {
   return request<PrefectureApplicationDetails>(
-    `${APPLICATIONS_PATH}/public/${encodeURIComponent(token)}`,
+    `${APPLICATIONS_PATH}?public_access_token=${encodeURIComponent(publicAccessToken)}`,
   );
 }
 
@@ -92,11 +100,7 @@ export function listPrefectureApplications(params?: {
       number: number;
       size: number;
     };
-  }>(`${APPLICATIONS_PATH}?${query.toString()}`);
-}
-
-export function getApplicationStats() {
-  return request<ApplicationStats>(`${APPLICATIONS_PATH}/stats`);
+  }>(`${APPLICATIONS_PATH}/list?${query.toString()}`);
 }
 
 export function getPrefectureApplication(applicationId: string) {

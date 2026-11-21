@@ -29,8 +29,7 @@ import type {
 } from "@/types/PrefectureApplication";
 
 const statusLabels: Record<ApplicationStatus, string> = {
-  UNDER_ANALYSIS: "Em análise",
-  ADDITIONAL_INFO_REQUIRED: "Informações adicionais",
+  ANALYSIS: "Em análise",
   APPROVED: "Aprovada",
   REJECTED: "Rejeitada",
 };
@@ -128,15 +127,15 @@ export default function PrefectureApplicationDetailsPage({
         <div className="mt-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <p className="text-3xl font-black tracking-tight text-slate-950">
-              {application.prefectureName}
+              {application.name}
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              Protocolo {application.protocol} · {application.requestedAt}
+              Cadastro em {application.createdAt}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
             <ApplicationStatusBadge status={application.status} />
-            {application.status === "UNDER_ANALYSIS" && (
+            {application.status === "ANALYSIS" && (
               <>
                 <Button
                   className="rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
@@ -168,12 +167,12 @@ export default function PrefectureApplicationDetailsPage({
         <div className="mt-7 grid gap-5 lg:grid-cols-[1.2fr_.8fr]">
           <div className="grid gap-5">
             <Section title="Informações institucionais">
-              <Info label="Prefeitura" value={application.prefectureName} />
+              <Info label="Prefeitura" value={application.name} />
               <Info
                 label="Município"
                 value={`${application.municipality} - ${application.state}`}
               />
-              <Info label="CNPJ" value={application.cnpj} />
+              <Info label="CNPJ" value={application.cnpj ?? "—"} />
               <Info label="Código IBGE" value={application.ibgeCode ?? "—"} />
               <Info
                 label="E-mail institucional"
@@ -183,13 +182,13 @@ export default function PrefectureApplicationDetailsPage({
             </Section>
             <Section title="Responsável">
               <Info label="Nome" value={application.responsibleName} />
-              <Info label="Cargo" value={application.responsibleRole} />
+              <Info label="Cargo" value={application.responsibleRole ?? "—"} />
               <Info label="E-mail" value={application.responsibleEmail} />
               <Info label="Telefone" value={application.responsiblePhone} />
             </Section>
             <Section title="Documentação">
               <div className="grid gap-2">
-                {application.documents.length === 0 ? (
+                {!application.documents?.length ? (
                   <p className="text-sm text-slate-500">
                     Nenhum documento disponível.
                   </p>
@@ -213,7 +212,7 @@ export default function PrefectureApplicationDetailsPage({
           <div className="grid content-start gap-5">
             <Section title="Histórico">
               <div className="grid gap-5">
-                {application.history.map((event) => (
+                {(application.history ?? []).map((event) => (
                   <div key={event.id} className="flex gap-3">
                     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-700">
                       <Check className="h-4 w-4" />
@@ -235,7 +234,7 @@ export default function PrefectureApplicationDetailsPage({
             </Section>
             <Section title="Observações internas">
               <div className="grid gap-3">
-                {application.internalNotes.map((item) => (
+                {(application.internalNotes ?? []).map((item) => (
                   <div key={item.id} className="rounded-xl bg-slate-50 p-3">
                     <p className="text-xs font-bold text-slate-700">
                       {item.authorName}

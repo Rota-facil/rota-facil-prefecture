@@ -4,21 +4,19 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
-  CheckCircle2,
   FileUp,
   Loader2,
   Trash2,
   UploadCloud,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { PUBLIC_ACCESS_TOKEN_STORAGE_KEY } from "@/components/public/PublicShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  createPrefectureApplication,
-  uploadApplicationDocument,
-} from "@/service/PrefectureApplicationService";
+import { createPrefectureApplication } from "@/service/PrefectureApplicationService";
 import type { PrefectureApplicationForm } from "@/types/PrefectureApplication";
 
 const initialForm: PrefectureApplicationForm = {
@@ -31,6 +29,7 @@ const initialForm: PrefectureApplicationForm = {
   institutionalPhone: "",
   responsibleName: "",
   responsibleRole: "",
+  responsibleCpf: "",
   responsibleEmail: "",
   responsiblePhone: "",
   privacyAccepted: false,
@@ -55,6 +54,13 @@ function maskPhone(value: string) {
     ? d.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3")
     : d.replace(/^(\d{2})(\d{4})(\d{0,4})$/, "($1) $2-$3");
 }
+function maskCpf(value: string) {
+  const d = onlyDigits(value).slice(0, 11);
+  return d
+    .replace(/^(\d{3})(\d)/, "$1.$2")
+    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1-$2");
+}
 
 export default function JoinApplicationPage() {
   const [step, setStep] = useState(0);
@@ -62,7 +68,7 @@ export default function JoinApplicationPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [protocol, setProtocol] = useState<string>();
+  const router = useRouter();
 
   const update = (
     field: keyof PrefectureApplicationForm,
@@ -82,6 +88,7 @@ export default function JoinApplicationPage() {
       return (
         form.responsibleName &&
         form.responsibleRole &&
+        form.responsibleCpf &&
         form.responsibleEmail &&
         form.responsiblePhone
       );
@@ -107,10 +114,14 @@ export default function JoinApplicationPage() {
     setError("");
     setSubmitting(true);
     try {
-      const created = await createPrefectureApplication(form);
-      for (const file of files)
-        await uploadApplicationDocument(created.id, file);
-      setProtocol(created.protocol);
+      const created = await createPrefectureApplication(form, files);
+      window.localStorage.setItem(
+        PUBLIC_ACCESS_TOKEN_STORAGE_KEY,
+        created.publicAccessToken,
+      );
+      router.push(
+        `/join/track?public_access_token=${encodeURIComponent(created.publicAccessToken)}`,
+      );
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -121,47 +132,6 @@ export default function JoinApplicationPage() {
       setSubmitting(false);
     }
   }
-
-  if (protocol)
-    return (
-      <div className="min-h-screen bg-[#f8fbff]">
-        <div className="mx-auto flex min-h-screen max-w-xl flex-col justify-center px-5 py-12">
-          <Link
-            href="/"
-            className="mb-10 flex items-center gap-2 text-sm font-bold text-blue-700"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar para o início
-          </Link>
-          <div className="rounded-[2rem] border border-emerald-100 bg-white p-8 text-center shadow-xl shadow-blue-950/5">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-              <CheckCircle2 className="h-8 w-8" />
-            </div>
-            <h1 className="mt-6 text-2xl font-black text-slate-950">
-              Solicitação enviada
-            </h1>
-            <p className="mt-3 text-sm leading-6 text-slate-500">
-              Recebemos as informações do município. Guarde o protocolo para
-              acompanhar a análise.
-            </p>
-            <div className="mt-6 rounded-2xl bg-slate-50 p-5">
-              <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                Protocolo
-              </p>
-              <p className="mt-2 font-mono text-xl font-black text-blue-800">
-                {protocol}
-              </p>
-            </div>
-            <Link
-              href={`/join/track?protocol=${encodeURIComponent(protocol)}`}
-              className="mt-6 inline-flex items-center gap-2 text-sm font-bold text-blue-700 hover:text-blue-900"
-            >
-              Acompanhar solicitação <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
 
   return (
     <div className="min-h-screen bg-[#f8fbff]">
@@ -285,6 +255,12 @@ export default function JoinApplicationPage() {
                   placeholder="(00) 00000-0000"
                 />
                 <Field
+                  label="CPF"
+                  value={form.responsibleCpf}
+                  onChange={(value) => update("responsibleCpf", maskCpf(value))}
+                  placeholder="000.000.000-00"
+                />
+                <Field
                   className="sm:col-span-2"
                   label="E-mail profissional"
                   type="email"
@@ -378,6 +354,7 @@ export default function JoinApplicationPage() {
                   values={[
                     form.responsibleName,
                     form.responsibleRole,
+                    form.responsibleCpf,
                     form.responsibleEmail,
                     form.responsiblePhone,
                   ]}

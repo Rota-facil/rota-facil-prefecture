@@ -12,10 +12,7 @@ import { useEffect, useState } from "react";
 import ApplicationStatusBadge from "@/components/organims/prefecture-applications/ApplicationStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  getApplicationStats,
-  listPrefectureApplications,
-} from "@/service/PrefectureApplicationService";
+import { listPrefectureApplications } from "@/service/PrefectureApplicationService";
 import type {
   ApplicationStats,
   ApplicationStatus,
@@ -24,15 +21,14 @@ import type {
 
 const emptyStats: ApplicationStats = {
   total: 0,
-  underAnalysis: 0,
+  analysis: 0,
   approved: 0,
   rejected: 0,
   additionalInfoRequired: 0,
 };
 const filters: Array<{ label: string; value?: ApplicationStatus }> = [
   { label: "Todas" },
-  { label: "Em análise", value: "UNDER_ANALYSIS" },
-  { label: "Aguardando informações", value: "ADDITIONAL_INFO_REQUIRED" },
+  { label: "Em análise", value: "ANALYSIS" },
   { label: "Aprovadas", value: "APPROVED" },
   { label: "Rejeitadas", value: "REJECTED" },
 ];
@@ -50,12 +46,21 @@ export default function PrefectureApplicationsPage() {
     setLoading(true);
     setError("");
     try {
-      const [statsResponse, listResponse] = await Promise.all([
-        getApplicationStats(),
-        listPrefectureApplications({ status, search }),
-      ]);
-      setStats(statsResponse);
+      const listResponse = await listPrefectureApplications({ status, search });
       setApplications(listResponse.content);
+      setStats({
+        total: listResponse.page.totalElements,
+        analysis: listResponse.content.filter(
+          (item) => item.status === "ANALYSIS",
+        ).length,
+        approved: listResponse.content.filter(
+          (item) => item.status === "APPROVED",
+        ).length,
+        rejected: listResponse.content.filter(
+          (item) => item.status === "REJECTED",
+        ).length,
+        additionalInfoRequired: 0,
+      });
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -90,7 +95,7 @@ export default function PrefectureApplicationsPage() {
         <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           {[
             ["Total", stats.total, "text-slate-900"],
-            ["Em análise", stats.underAnalysis, "text-amber-700"],
+            ["Em análise", stats.analysis, "text-amber-700"],
             [
               "Aguardando informações",
               stats.additionalInfoRequired,
@@ -185,19 +190,19 @@ export default function PrefectureApplicationsPage() {
                   {applications.map((application) => (
                     <tr key={application.id} className="hover:bg-slate-50">
                       <td className="px-5 py-4 font-bold text-slate-800">
-                        {application.prefectureName}
+                        {application.name}
                       </td>
                       <td className="px-5 py-4 text-slate-600">
                         {application.municipality} - {application.state}
                       </td>
                       <td className="px-5 py-4 font-mono text-xs text-slate-600">
-                        {application.cnpj}
+                        {application.cnpj ?? "—"}
                       </td>
                       <td className="px-5 py-4 text-slate-600">
                         {application.responsibleName}
                       </td>
                       <td className="px-5 py-4 text-slate-500">
-                        {application.requestedAt}
+                        {application.createdAt}
                       </td>
                       <td className="px-5 py-4">
                         <ApplicationStatusBadge status={application.status} />
