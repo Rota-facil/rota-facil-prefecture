@@ -66,6 +66,7 @@ interface TripResponse {
 export interface CreateTripRequest {
   routeId: string;
   vehicleId: string;
+  name?: string;
 }
 
 function mapPoint(point: TripPointResponse): TripRoutePointEntity {
@@ -144,6 +145,7 @@ function mapTrip(response: TripResponse): TripEntity {
 
 export async function listActiveTrips(): Promise<TripEntity[]> {
   const response = await fetch(`${env.WEB_BASE_URL}/trips/today`, {
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${getToken()}`,
@@ -163,6 +165,7 @@ export async function listTrips(
   size: number,
 ): Promise<PageResponse<TripEntity>> {
   const response = await fetch(`${env.WEB_BASE_URL}/trips/today`, {
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${getToken()}`,
@@ -186,9 +189,7 @@ export async function listTrips(
   };
 }
 
-export async function createTrip(
-  request: CreateTripRequest,
-): Promise<TripEntity> {
+export async function createTrip(request: CreateTripRequest): Promise<void> {
   const response = await fetch(`${env.WEB_BASE_URL}/trips`, {
     method: "POST",
     headers: {
@@ -201,6 +202,17 @@ export async function createTrip(
   if (!response.ok) {
     await handleHttpError(response, "Erro ao criar viagem");
   }
+}
 
-  return mapTrip((await response.json()) as TripResponse);
+export async function deleteTrip(tripId: string): Promise<void> {
+  const response = await fetch(`${env.WEB_BASE_URL}/trips/${tripId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+
+  if (!response.ok) {
+    await handleHttpError(response, "Erro ao excluir viagem");
+  }
 }

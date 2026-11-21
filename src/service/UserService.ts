@@ -62,7 +62,7 @@ export async function listStudents(
   size: number,
 ): Promise<PageResponse<StudentEntity>> {
   const response = await fetch(
-    `${env.WEB_BASE_URL}/auth/students?page=${page}&size=${size}`,
+    `${env.WEB_BASE_URL}/users/students?page=${page}&size=${size}`,
     {
       method: "GET",
       headers: {

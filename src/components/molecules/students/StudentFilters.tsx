@@ -10,12 +10,20 @@ export type StudentFrequencyFilter =
   | "EXCELLENT"
   | "ATTENTION"
   | "CRITICAL";
+export type StudentDocumentFilter =
+  | "ALL"
+  | "ANALYSIS"
+  | "APPROVED"
+  | "REJECTED"
+  | "NOT_REGISTERED";
 
 interface StudentFiltersProps {
   score: StudentScoreFilter;
   frequency: StudentFrequencyFilter;
+  document: StudentDocumentFilter;
   onScoreChange: (score: StudentScoreFilter) => void;
   onFrequencyChange: (frequency: StudentFrequencyFilter) => void;
+  onDocumentChange: (document: StudentDocumentFilter) => void;
 }
 
 interface SelectOption<TValue extends string> {
@@ -42,6 +50,14 @@ const frequencyOptions: SelectOption<StudentFrequencyFilter>[] = [
   { label: "90% ou mais", value: "EXCELLENT" },
   { label: "75% a 89%", value: "ATTENTION" },
   { label: "Abaixo de 75%", value: "CRITICAL" },
+];
+
+const documentOptions: SelectOption<StudentDocumentFilter>[] = [
+  { label: "Todos comprovantes", value: "ALL" },
+  { label: "Em análise", value: "ANALYSIS" },
+  { label: "Aprovados", value: "APPROVED" },
+  { label: "Rejeitados", value: "REJECTED" },
+  { label: "Não cadastrados", value: "NOT_REGISTERED" },
 ];
 
 function StudentFilterSelect<TValue extends string>({
@@ -93,8 +109,10 @@ function StudentFilterSelect<TValue extends string>({
 export default function StudentFilters({
   score,
   frequency,
+  document,
   onScoreChange,
   onFrequencyChange,
+  onDocumentChange,
 }: StudentFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-3">
@@ -109,6 +127,12 @@ export default function StudentFilters({
         value={frequency}
         options={frequencyOptions}
         onChange={onFrequencyChange}
+      />
+      <StudentFilterSelect
+        label="Comprovante"
+        value={document}
+        options={documentOptions}
+        onChange={onDocumentChange}
       />
     </div>
   );

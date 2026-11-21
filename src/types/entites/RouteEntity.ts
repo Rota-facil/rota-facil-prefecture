@@ -9,6 +9,8 @@ export type RouteStatus = "ACTIVE" | "PAUSED";
 export interface RouteInstitutionEntity {
   id: string;
   name: string;
+  institutionGoing: string;
+  institutionFinish: string;
 }
 
 export interface RouteVehicleEntity {

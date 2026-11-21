@@ -6,4 +6,5 @@ export interface UserEntity {
   email: string;
   cpf: string;
   prefecture: PrefectureEntity;
+  role?: "STUDENT" | "DRIVER" | "ADMIN" | "SUPERUSER";
 }

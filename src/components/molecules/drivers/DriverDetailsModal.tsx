@@ -34,6 +34,7 @@ import {
   driverSchema,
 } from "@/lib/schemas/driverSchema";
 import { formatVehicleType } from "@/lib/vehicleType";
+
 import {
   type DriverDocument,
   evaluateDriverDocument,
@@ -42,6 +43,24 @@ import {
 import { listVehicles } from "@/service/VehicleService";
 import type { DriverEntity } from "@/types/entites/DriverEntity";
 import type { VehicleEntity } from "@/types/entites/VehicleEntity";
+
+const documentEvaluationButtonStyles = {
+  ANALYSIS: {
+    inactive:
+      "border-amber-200 bg-amber-50 text-amber-700 hover:border-amber-300 hover:bg-amber-100",
+    active: "border-amber-500 bg-amber-500 text-white hover:bg-amber-600",
+  },
+  APPROVED: {
+    inactive:
+      "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100",
+    active: "border-emerald-600 bg-emerald-600 text-white hover:bg-emerald-700",
+  },
+  REJECTED: {
+    inactive:
+      "border-red-200 bg-red-50 text-red-700 hover:border-red-300 hover:bg-red-100",
+    active: "border-red-600 bg-red-600 text-white hover:bg-red-700",
+  },
+} as const;
 
 interface DriverDetailsModalProps {
   driver: DriverEntity;
@@ -692,12 +711,8 @@ export default function DriverDetailsModal({
                             key={status}
                             type="button"
                             size="sm"
-                            className="h-10 rounded-xl px-4 text-sm font-semibold"
-                            variant={
-                              cnh.validationStatus === status
-                                ? "default"
-                                : "outline"
-                            }
+                            className={`h-10 rounded-xl border px-4 text-sm font-semibold transition-colors ${documentEvaluationButtonStyles[status][cnh.validationStatus === status ? "active" : "inactive"]}`}
+                            variant="outline"
                             onClick={async () => {
                               const updatedDocument =
                                 await evaluateDriverDocument(cnh.id, status);

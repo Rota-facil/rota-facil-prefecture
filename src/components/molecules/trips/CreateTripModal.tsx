@@ -1,8 +1,9 @@
 "use client";
 
-import { Route, Truck, X } from "lucide-react";
+import { FileText, Route, Truck, X } from "lucide-react";
 import { type FormEvent, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { CreateTripRequest } from "@/service/TripService";
 import type { RouteEntity } from "@/types/entites/RouteEntity";
 
@@ -19,6 +20,7 @@ export default function CreateTripModal({
 }: CreateTripModalProps) {
   const [routeId, setRouteId] = useState("");
   const [vehicleId, setVehicleId] = useState("");
+  const [name, setName] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const selectedRoute = useMemo(
@@ -33,7 +35,9 @@ export default function CreateTripModal({
 
     setSubmitting(true);
     try {
-      if (await onCreate({ routeId, vehicleId })) {
+      if (
+        await onCreate({ routeId, vehicleId, name: name.trim() || undefined })
+      ) {
         onClose();
       }
     } finally {
@@ -73,6 +77,25 @@ export default function CreateTripModal({
         </div>
 
         <form className="grid gap-5 p-6" onSubmit={submit}>
+          <label
+            htmlFor="trip-name"
+            className="grid gap-2 text-sm font-semibold text-slate-800"
+          >
+            <span className="flex items-center gap-2">
+              <FileText className="h-4 w-4 text-blue-600" />
+              Nome da viagem
+              <span className="font-normal text-slate-400">(opcional)</span>
+            </span>
+            <Input
+              id="trip-name"
+              value={name}
+              maxLength={120}
+              placeholder="Ex.: Viagem Centro - manhã"
+              className="h-11 rounded-xl border-slate-200 bg-white px-3 text-sm font-medium text-slate-700"
+              onChange={(event) => setName(event.target.value)}
+            />
+          </label>
+
           <label className="grid gap-2 text-sm font-semibold text-slate-800">
             <span className="flex items-center gap-2">
               <Route className="h-4 w-4 text-blue-600" />

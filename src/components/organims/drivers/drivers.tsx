@@ -13,10 +13,10 @@ import type {
 import type { DocumentValidationStatus } from "@/service/DriverDocumentService";
 import {
   fetchDriverCnh,
-  fetchDriverPhoto,
   uploadDriverCnh,
   uploadDriverPhoto,
 } from "@/service/DriverDocumentService";
+import { listUserPhotos } from "@/service/UserPhotoService";
 import {
   createNewDriver,
   deactivateDriver,
@@ -153,19 +153,16 @@ export default function Drivers() {
         ),
       );
       setDriverDocumentStatuses(Object.fromEntries(documents));
-      const photos = await Promise.all(
-        driversFound.map(
-          async (driver) =>
-            [driver.id, await fetchDriverPhoto(driver.id)] as const,
-        ),
-      );
-      setDriverPhotoUrls(
-        Object.fromEntries(
-          photos.filter((entry): entry is [string, string] =>
-            Boolean(entry[1]),
-          ),
-        ),
-      );
+      try {
+        const photos = await listUserPhotos(
+          driversFound.map((driver) => driver.id),
+        );
+        setDriverPhotoUrls(
+          Object.fromEntries(photos.map((photo) => [photo.userId, photo.url])),
+        );
+      } catch {
+        setDriverPhotoUrls({});
+      }
     }
     listDriversFromService();
   }, []);
