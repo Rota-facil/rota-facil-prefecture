@@ -8,6 +8,7 @@ import {
   FileDown,
   Flame,
   GraduationCap,
+  Landmark,
   LayoutDashboard,
   LogOut,
   PinIcon,
@@ -18,6 +19,7 @@ import {
   UsersRound,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import MySideBarMenuButton from "@/components/atom/MySideBarMenuButton";
 import {
   Sidebar,
@@ -37,6 +39,11 @@ import { removeToken } from "@/service/auth/TokenService";
 export function AppSidebar() {
   const { state } = useSidebar();
   const { user } = useCurrentUser();
+
+  if (user?.role === "SUPERUSER") {
+    return <SuperuserSidebar state={state} user={user} />;
+  }
+
   return (
     <Sidebar
       collapsible={"icon"}
@@ -153,7 +160,7 @@ export function AppSidebar() {
               <p>Sistema</p>
             </SidebarGroupLabel>
 
-            {user?.role === "SUPERUSER" && (
+            {String(user?.role) === "SUPERUSER" && (
               <SidebarMenuItem>
                 <MySideBarMenuButton href="/prefecture-applications">
                   <ClipboardList />
@@ -161,20 +168,6 @@ export function AppSidebar() {
                 </MySideBarMenuButton>
               </SidebarMenuItem>
             )}
-
-            <SidebarMenuItem>
-              <MySideBarMenuButton href={getGrafanaUrl()} external>
-                <Activity />
-                <span>Observabilidade</span>
-              </MySideBarMenuButton>
-            </SidebarMenuItem>
-
-            <SidebarMenuItem>
-              <MySideBarMenuButton href={"/audit"}>
-                <ShieldCheck />
-                <span>Auditoria</span>
-              </MySideBarMenuButton>
-            </SidebarMenuItem>
 
             <SidebarMenuItem>
               <MySideBarMenuButton href={"/report"}>
@@ -191,7 +184,9 @@ export function AppSidebar() {
           className={`flex items-center p-2 ${state === "collapsed" ? "justify-center" : "justify-between"}`}
         >
           <div className="flex items-center gap-3">
-            <div
+            <Link
+              href="/profile"
+              aria-label="Abrir meu perfil"
               className="
           flex
           h-8.5
@@ -205,7 +200,7 @@ export function AppSidebar() {
         "
             >
               {user?.name[0].toUpperCase() ?? "P"}
-            </div>
+            </Link>
 
             {state === "expanded" && (
               <div className="flex flex-col">
@@ -229,6 +224,125 @@ export function AppSidebar() {
           text-muted-foreground
           hover:text-foreground
         "
+              onClick={() => {
+                removeToken();
+                window.location.reload();
+              }}
+            />
+          )}
+        </div>
+      </SidebarFooter>
+    </Sidebar>
+  );
+}
+
+function SuperuserSidebar({
+  state,
+  user,
+}: {
+  state: "expanded" | "collapsed";
+  user: NonNullable<ReturnType<typeof useCurrentUser>["user"]>;
+}) {
+  return (
+    <Sidebar collapsible="icon" variant="sidebar" className="transition-all">
+      <SidebarHeader className="border-b">
+        <div className="flex items-center justify-start">
+          <Image
+            src="/icon-rota-facil-2.png"
+            alt="Ícone Rota Fácil"
+            width={75}
+            height={75}
+            className="shrink-0"
+          />
+          {state === "expanded" && (
+            <div className="mb-2 flex flex-col">
+              <span className="text-lg font-bold">Rota Fácil</span>
+              <span className="text-xs uppercase text-muted-foreground">
+                Gestão interna
+              </span>
+            </div>
+          )}
+        </div>
+      </SidebarHeader>
+
+      <SidebarContent>
+        <SidebarMenu>
+          <SidebarGroup>
+            <SidebarGroupLabel className="font-semibold">
+              Visão geral
+            </SidebarGroupLabel>
+            <SidebarMenuItem>
+              <MySideBarMenuButton href="/superuser">
+                <LayoutDashboard />
+                <span>Dashboard</span>
+              </MySideBarMenuButton>
+            </SidebarMenuItem>
+          </SidebarGroup>
+
+          <SidebarGroup>
+            <SidebarGroupLabel className="font-semibold">
+              Ecossistema
+            </SidebarGroupLabel>
+            <SidebarMenuItem>
+              <MySideBarMenuButton href="/prefecture-applications">
+                <ClipboardList />
+                <span>Solicitações</span>
+              </MySideBarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <MySideBarMenuButton href="/superuser/prefectures">
+                <Landmark />
+                <span>Prefeituras</span>
+              </MySideBarMenuButton>
+            </SidebarMenuItem>
+          </SidebarGroup>
+
+          <SidebarGroup>
+            <SidebarGroupLabel className="font-semibold">
+              Governança
+            </SidebarGroupLabel>
+            <SidebarMenuItem>
+              <MySideBarMenuButton href="/audit">
+                <ShieldCheck />
+                <span>Auditoria</span>
+              </MySideBarMenuButton>
+            </SidebarMenuItem>
+            <SidebarMenuItem>
+              <MySideBarMenuButton href={getGrafanaUrl()} external>
+                <Activity />
+                <span>Observabilidade</span>
+              </MySideBarMenuButton>
+            </SidebarMenuItem>
+          </SidebarGroup>
+        </SidebarMenu>
+      </SidebarContent>
+
+      <SidebarFooter className="border-t">
+        <div
+          className={`flex items-center p-2 ${state === "collapsed" ? "justify-center" : "justify-between"}`}
+        >
+          <div className="flex items-center gap-3">
+            <Link
+              href="/profile"
+              aria-label="Abrir meu perfil"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-700 to-cyan-500 font-semibold text-white transition hover:ring-4 hover:ring-blue-100"
+            >
+              {user.name[0]?.toUpperCase() ?? "R"}
+            </Link>
+            {state === "expanded" && (
+              <div className="flex min-w-0 flex-col">
+                <span className="truncate text-sm font-semibold">
+                  {user.name}
+                </span>
+                <span className="truncate text-[11px] text-muted-foreground">
+                  Gestor Rota Fácil
+                </span>
+              </div>
+            )}
+          </div>
+          {state === "expanded" && (
+            <LogOut
+              className="h-3.5 w-3.5 cursor-pointer text-muted-foreground hover:text-foreground"
               onClick={() => {
                 removeToken();
                 window.location.reload();

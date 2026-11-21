@@ -1,5 +1,6 @@
 import "../globals.css";
 import AuthGuard from "@/components/molecules/login/AuthGuard";
+import RoleAccessGuard from "@/components/molecules/login/RoleAccessGuard";
 import { AppSidebar } from "@/components/organims/AppSideBar";
 import PageHeader from "@/components/organims/PageHeader";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
@@ -19,7 +20,9 @@ export default function RootLayout({
           <SidebarInset>
             <PageHeader />
 
-            <div className={"m-5"}>{children}</div>
+            <RoleAccessGuard>
+              <div className={"m-5"}>{children}</div>
+            </RoleAccessGuard>
           </SidebarInset>
         </UserProvider>
       </SidebarProvider>
