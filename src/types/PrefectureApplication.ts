@@ -39,8 +39,9 @@ export interface PrefectureApplicationSummary {
 
 export interface ApplicationDocument {
   id: string;
-  name: string;
-  url?: string;
+  originalFilename: string;
+  url: string;
+  fileCategory: string;
   createdAt: string;
 }
 

@@ -202,7 +202,7 @@ export default function PrefectureApplicationDetailsPage({
                       className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 text-sm font-semibold text-blue-700 hover:bg-blue-50"
                     >
                       <FileText className="h-5 w-5" />
-                      {document.name}
+                      {document.originalFilename}
                     </a>
                   ))
                 )}

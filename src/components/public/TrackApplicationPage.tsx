@@ -7,7 +7,9 @@ import {
   CircleAlert,
   Clock3,
   FileCheck2,
+  FileText,
   Loader2,
+  Mail,
   Search,
   XCircle,
 } from "lucide-react";
@@ -16,8 +18,12 @@ import { useCallback, useEffect, useState } from "react";
 import { PUBLIC_ACCESS_TOKEN_STORAGE_KEY } from "@/components/public/PublicShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getPublicApplication } from "@/service/PrefectureApplicationService";
+import {
+  getPrefectureApplicationDocuments,
+  getPublicApplication,
+} from "@/service/PrefectureApplicationService";
 import type {
+  ApplicationDocument,
   ApplicationStatus,
   PrefectureApplicationDetails,
 } from "@/types/PrefectureApplication";
@@ -48,6 +54,9 @@ export default function TrackApplicationPage() {
   const [token, setToken] = useState("");
   const [application, setApplication] =
     useState<PrefectureApplicationDetails>();
+  const [documents, setDocuments] = useState<ApplicationDocument[]>([]);
+  const [documentsLoading, setDocumentsLoading] = useState(false);
+  const [documentsError, setDocumentsError] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -57,6 +66,9 @@ export default function TrackApplicationPage() {
 
     setError("");
     setApplication(undefined);
+    setDocuments([]);
+    setDocumentsError("");
+    setDocumentsLoading(true);
     setLoading(true);
     try {
       const result = await getPublicApplication(normalizedToken);
@@ -66,7 +78,17 @@ export default function TrackApplicationPage() {
       );
       setToken(normalizedToken);
       setApplication(result);
+      try {
+        setDocuments(await getPrefectureApplicationDocuments(result.id));
+      } catch {
+        setDocumentsError(
+          "Não foi possível carregar os documentos desta solicitação.",
+        );
+      } finally {
+        setDocumentsLoading(false);
+      }
     } catch (caught) {
+      setDocumentsLoading(false);
       setError(
         caught instanceof Error
           ? caught.message
@@ -210,6 +232,15 @@ export default function TrackApplicationPage() {
                           : application.rejectionReason ||
                             "A equipe concluiu a análise e registrou a decisão para esta candidatura."}
                     </p>
+                    {isAnalysis && (
+                      <a
+                        href={`mailto:suporte@rotafacil.com?subject=${encodeURIComponent(`Dúvida sobre candidatura ${application.id}`)}&body=${encodeURIComponent(`Olá, gostaria de falar sobre a candidatura da prefeitura ${application.name}, do município de ${application.municipality} - ${application.state}.\n\nID da candidatura: ${application.id}`)}`}
+                        className="mt-4 inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-3.5 py-2.5 text-xs font-bold text-blue-700 transition hover:border-blue-300 hover:bg-blue-50"
+                      >
+                        <Mail className="h-4 w-4" />
+                        Falar com o Rota Fácil por e-mail
+                      </a>
+                    )}
                   </div>
                 </div>
 
@@ -242,6 +273,63 @@ export default function TrackApplicationPage() {
                     value={formatDate(application.updatedAt)}
                   />
                 </div>
+
+                <section className="rounded-2xl border border-slate-200 bg-white">
+                  <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+                    <div>
+                      <p className="text-sm font-black text-slate-950">
+                        Documentos enviados
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Arquivos anexados ao cadastro da prefeitura.
+                      </p>
+                    </div>
+                    <FileText className="h-5 w-5 text-blue-600" />
+                  </div>
+                  {documentsLoading ? (
+                    <div className="flex items-center gap-2 px-5 py-5 text-sm text-slate-500">
+                      <Loader2 className="h-4 w-4 animate-spin text-blue-700" />
+                      Carregando documentos...
+                    </div>
+                  ) : documentsError ? (
+                    <p className="px-5 py-5 text-sm text-amber-700">
+                      {documentsError}
+                    </p>
+                  ) : documents.length === 0 ? (
+                    <p className="px-5 py-5 text-sm text-slate-500">
+                      Nenhum documento encontrado para esta solicitação.
+                    </p>
+                  ) : (
+                    <div className="grid gap-2 p-4">
+                      {documents.map((document) => (
+                        <a
+                          key={document.id}
+                          href={document.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-3 transition hover:border-blue-200 hover:bg-blue-50/60"
+                        >
+                          <span className="flex min-w-0 items-center gap-3">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-50 text-blue-700">
+                              <FileText className="h-4 w-4" />
+                            </span>
+                            <span className="min-w-0">
+                              <span className="block truncate text-sm font-bold text-slate-800">
+                                {document.originalFilename}
+                              </span>
+                              <span className="mt-0.5 block text-xs text-slate-400">
+                                {formatDate(document.createdAt)}
+                              </span>
+                            </span>
+                          </span>
+                          <span className="shrink-0 text-xs font-bold text-blue-700">
+                            Visualizar
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </section>
 
                 <p className="text-xs leading-5 text-slate-400">
                   Guarde este token para consultar a solicitação novamente. O

@@ -2,17 +2,13 @@ import { env } from "@/config/env";
 import { getToken } from "@/service/auth/TokenService";
 import { handleHttpError } from "@/service/HttpErrorService";
 import type {
+  ApplicationDocument,
   ApplicationStatus,
   PrefectureApplicationDetails,
   PrefectureApplicationForm,
   PrefectureApplicationSummary,
 } from "@/types/PrefectureApplication";
 
-/**
- * Contrato esperado do módulo de adesão.
- * O monólito atual ainda não expõe estes endpoints; as funções abaixo não
- * simulam respostas e propagarão o erro da API até o módulo ser disponibilizado.
- */
 const APPLICATIONS_PATH = "/prefecture-applications";
 
 function authHeaders(): HeadersInit {
@@ -78,6 +74,12 @@ export async function createPrefectureApplication(
 export function getPublicApplication(publicAccessToken: string) {
   return request<PrefectureApplicationDetails>(
     `${APPLICATIONS_PATH}?public_access_token=${encodeURIComponent(publicAccessToken)}`,
+  );
+}
+
+export function getPrefectureApplicationDocuments(applicationId: string) {
+  return request<ApplicationDocument[]>(
+    `/files/prefecture-applications/documents/${encodeURIComponent(applicationId)}`,
   );
 }
 
