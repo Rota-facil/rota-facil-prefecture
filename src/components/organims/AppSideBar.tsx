@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import MySideBarMenuButton from "@/components/atom/MySideBarMenuButton";
 import {
   Sidebar,
@@ -35,6 +36,7 @@ import {
 import { getGrafanaUrl } from "@/config/env";
 import { useCurrentUser } from "@/hooks/UseCurrentUser";
 import { removeToken } from "@/service/auth/TokenService";
+import { getCurrentUserPhoto } from "@/service/ProfileService";
 
 export function AppSidebar() {
   const { state } = useSidebar();
@@ -187,19 +189,12 @@ export function AppSidebar() {
             <Link
               href="/profile"
               aria-label="Abrir meu perfil"
-              className="
-          flex
-          h-8.5
-          w-8.5
-          items-center
-          justify-center
-          rounded-full
-          bg-gradient-to-br from-blue-700 to-blue-500
-          text-white
-          font-semibold
-        "
+              className="rounded-full"
             >
-              {user?.name[0].toUpperCase() ?? "P"}
+              <ProfileAvatar
+                name={user?.name ?? "P"}
+                className="h-8.5 w-8.5 bg-gradient-to-br from-blue-700 to-blue-500"
+              />
             </Link>
 
             {state === "expanded" && (
@@ -325,9 +320,12 @@ function SuperuserSidebar({
             <Link
               href="/profile"
               aria-label="Abrir meu perfil"
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-700 to-cyan-500 font-semibold text-white transition hover:ring-4 hover:ring-blue-100"
+              className="rounded-full transition hover:ring-4 hover:ring-blue-100"
             >
-              {user.name[0]?.toUpperCase() ?? "R"}
+              <ProfileAvatar
+                name={user.name}
+                className="h-8 w-8 bg-gradient-to-br from-blue-700 to-cyan-500"
+              />
             </Link>
             {state === "expanded" && (
               <div className="flex min-w-0 flex-col">
@@ -352,5 +350,38 @@ function SuperuserSidebar({
         </div>
       </SidebarFooter>
     </Sidebar>
+  );
+}
+
+function ProfileAvatar({
+  name,
+  className,
+}: {
+  name: string;
+  className: string;
+}) {
+  const [photoUrl, setPhotoUrl] = useState<string>();
+
+  useEffect(() => {
+    let active = true;
+    getCurrentUserPhoto()
+      .then((url) => {
+        if (active && url) setPhotoUrl(url);
+      })
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return (
+    <span
+      aria-hidden="true"
+      className={`flex items-center justify-center overflow-hidden rounded-full bg-cover bg-center font-semibold text-white ${className}`}
+      style={photoUrl ? { backgroundImage: `url(${photoUrl})` } : undefined}
+    >
+      {!photoUrl && name.trim().charAt(0).toUpperCase()}
+    </span>
   );
 }

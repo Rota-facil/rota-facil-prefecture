@@ -138,16 +138,16 @@ export default function ProfilePage() {
                   ) : (
                     user.name[0]?.toUpperCase()
                   ))}
-                <button
-                  type="button"
-                  aria-label="Escolher foto de perfil"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-slate-950/75 py-2 text-xs font-bold text-white transition hover:bg-slate-950"
-                >
-                  <Camera className="h-3.5 w-3.5" />
-                  Alterar foto
-                </button>
               </div>
+              <button
+                type="button"
+                aria-label="Escolher foto de perfil"
+                onClick={() => fileInputRef.current?.click()}
+                className="relative z-10 -mt-3 inline-flex items-center gap-1 rounded-full bg-slate-950 px-3 py-1.5 text-[11px] font-bold text-white shadow-md transition hover:bg-slate-800"
+              >
+                <Camera className="h-3.5 w-3.5" />
+                Alterar foto
+              </button>
               <input
                 ref={fileInputRef}
                 type="file"
