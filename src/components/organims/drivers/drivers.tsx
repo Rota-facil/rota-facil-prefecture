@@ -251,7 +251,6 @@ export default function Drivers() {
       name: data.name,
       cpf: data.cpf,
       email: data.email,
-      password: data.password,
     });
 
     if (photo) {

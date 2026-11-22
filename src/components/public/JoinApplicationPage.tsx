@@ -19,10 +19,21 @@ import { Input } from "@/components/ui/input";
 import { createPrefectureApplication } from "@/service/PrefectureApplicationService";
 import type { PrefectureApplicationForm } from "@/types/PrefectureApplication";
 
+const regionOptions = [
+  { value: "NORTH", label: "Norte" },
+  { value: "SOUTH", label: "Sul" },
+  { value: "SOUTHEAST", label: "Sudeste" },
+  { value: "WEST", label: "Oeste" },
+  { value: "EAST", label: "Leste" },
+  { value: "NORTH_EAST", label: "Nordeste" },
+  { value: "WEST_CENTER", label: "Centro-Oeste" },
+] as const;
+
 const initialForm: PrefectureApplicationForm = {
   prefectureName: "",
   municipality: "",
   state: "",
+  region: "",
   ibgeCode: "",
   cnpj: "",
   institutionalEmail: "",
@@ -80,6 +91,7 @@ export default function JoinApplicationPage() {
         form.prefectureName &&
         form.municipality &&
         form.state &&
+        form.region &&
         form.cnpj &&
         form.institutionalEmail &&
         form.institutionalPhone
@@ -201,6 +213,22 @@ export default function JoinApplicationPage() {
                   placeholder="UF"
                   maxLength={2}
                 />
+                <label className="grid gap-2 text-sm font-semibold text-slate-800">
+                  <span>Região</span>
+                  <select
+                    required
+                    value={form.region}
+                    className={`${inputClass} w-full cursor-pointer outline-none transition focus:border-blue-400 focus:ring-4 focus:ring-blue-100`}
+                    onChange={(event) => update("region", event.target.value)}
+                  >
+                    <option value="">Selecione a região</option>
+                    {regionOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
                 <Field
                   label="Código IBGE (opcional)"
                   value={form.ibgeCode}
@@ -345,6 +373,8 @@ export default function JoinApplicationPage() {
                   values={[
                     form.prefectureName,
                     `${form.municipality} - ${form.state}`,
+                    regionOptions.find((option) => option.value === form.region)
+                      ?.label ?? form.region,
                     form.cnpj,
                     form.institutionalEmail,
                   ]}

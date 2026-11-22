@@ -6,12 +6,9 @@ import {
   Car,
   Check,
   ChevronDown,
-  Eye,
-  EyeOff,
   FileText,
   IdCard,
   ImagePlus,
-  Lock,
   Mail,
   Send,
   User,
@@ -90,7 +87,6 @@ export default function DriverDetailsModal({
   const isCreating = mode === "create";
   const [isEditing, setIsEditing] = useState(false);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<File>();
   const [selectedCnh, setSelectedCnh] = useState<File>();
   const [cnh, setCnh] = useState<DriverDocument | null>(null);
@@ -132,7 +128,6 @@ export default function DriverDetailsModal({
       name: "",
       cpf: "",
       email: "",
-      password: "",
     },
   });
 
@@ -178,7 +173,6 @@ export default function DriverDetailsModal({
   function handleClose() {
     setIsEditing(false);
     setIsSelectOpen(false);
-    setShowPassword(false);
     reset();
     resetCreate();
     setSelectedPhoto(undefined);
@@ -196,7 +190,6 @@ export default function DriverDetailsModal({
   function handleSubmitCreateForm(data: DriverCreateFormData) {
     onCreate?.(data, selectedPhoto, selectedCnh);
     resetCreate();
-    setShowPassword(false);
   }
 
   if (!open) return null;
@@ -237,7 +230,8 @@ export default function DriverDetailsModal({
               <div className="min-w-0">
                 <p className="text-lg font-bold">Novo motorista</p>
                 <p className="mt-1 text-sm text-white/75">
-                  Informe nome, e-mail, CPF e senha do motorista.
+                  Informe nome, e-mail e CPF do motorista. A senha será gerada
+                  automaticamente.
                 </p>
               </div>
             </div>
@@ -258,7 +252,8 @@ export default function DriverDetailsModal({
                   Dados do motorista
                 </p>
                 <p className="text-xs text-slate-500">
-                  Nome, e-mail, CPF e senha usados no acesso do motorista.
+                  Nome, e-mail e CPF do motorista. A senha será gerada
+                  automaticamente.
                 </p>
 
                 <div className="mt-4 grid gap-4">
@@ -284,7 +279,6 @@ export default function DriverDetailsModal({
                       </span>
                     )}
                   </div>
-
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-dashed border-[#CBD5E1] bg-slate-50 px-4 py-3 text-sm text-slate-600 hover:bg-slate-100">
                       <ImagePlus className="h-4 w-4 text-[#1E3A8A]" />
@@ -359,46 +353,6 @@ export default function DriverDetailsModal({
                         </span>
                       )}
                     </div>
-                  </div>
-
-                  <div>
-                    <div className="mb-1.5 flex items-center gap-1.5">
-                      <Lock className="h-3.5 w-3.5 text-[#1E3A8A]" />
-                      <label
-                        htmlFor="driver-create-password"
-                        className="text-[11px] font-semibold uppercase tracking-wide text-slate-400"
-                      >
-                        Senha
-                      </label>
-                    </div>
-                    <div className="relative">
-                      <Input
-                        id="driver-create-password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="Mínimo de 6 caracteres"
-                        {...registerCreate("password")}
-                        className="h-10 rounded-xl border-[#E5EAF0] bg-white px-3 pr-10 text-sm"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((current) => !current)}
-                        aria-label={
-                          showPassword ? "Ocultar senha" : "Mostrar senha"
-                        }
-                        className="absolute right-2 top-1/2 flex h-6 w-6 -translate-y-1/2 cursor-pointer items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-[#EEF2F7] hover:text-slate-600"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                    {createErrors.password && (
-                      <span className="mt-1 block text-[11px] font-medium text-[#DC2626]">
-                        {createErrors.password.message}
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>

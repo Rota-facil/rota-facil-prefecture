@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  ArrowLeft,
-  Check,
-  FileText,
-  Loader2,
-  MessageSquarePlus,
-  ShieldAlert,
-  X,
-} from "lucide-react";
+import { ArrowLeft, Check, FileText, Loader2, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -17,22 +9,23 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useCurrentUser } from "@/hooks/UseCurrentUser";
 import {
-  addApplicationNote,
-  approvePrefectureApplication,
+  evaluatePrefectureApplication,
   getPrefectureApplication,
-  rejectPrefectureApplication,
-  requestApplicationInformation,
+  getPrefectureApplicationDocuments,
 } from "@/service/PrefectureApplicationService";
 import type {
   ApplicationStatus,
   PrefectureApplicationDetails,
 } from "@/types/PrefectureApplication";
 
-const statusLabels: Record<ApplicationStatus, string> = {
-  ANALYSIS: "Em análise",
-  APPROVED: "Aprovada",
-  REJECTED: "Rejeitada",
-};
+const evaluationStatuses: Array<{
+  value: ApplicationStatus;
+  label: string;
+}> = [
+  { value: "ANALYSIS", label: "Em análise" },
+  { value: "APPROVED", label: "Aprovada" },
+  { value: "REJECTED", label: "Rejeitada" },
+];
 
 export default function PrefectureApplicationDetailsPage({
   applicationId,
@@ -43,16 +36,29 @@ export default function PrefectureApplicationDetailsPage({
   const [application, setApplication] =
     useState<PrefectureApplicationDetails>();
   const [loading, setLoading] = useState(true);
-  const [note, setNote] = useState("");
-  const [message, setMessage] = useState("");
   const [rejectReason, setRejectReason] = useState("");
-  const [action, setAction] = useState<
-    "approve" | "reject" | "info" | undefined
-  >();
+  const [evaluationOpen, setEvaluationOpen] = useState(false);
+  const [evaluationStatus, setEvaluationStatus] =
+    useState<ApplicationStatus>("ANALYSIS");
   async function load() {
     setLoading(true);
     try {
-      setApplication(await getPrefectureApplication(applicationId));
+      const [details, documentsResult] = await Promise.allSettled([
+        getPrefectureApplication(applicationId),
+        getPrefectureApplicationDocuments(applicationId),
+      ]);
+
+      if (details.status === "rejected") {
+        throw details.reason;
+      }
+
+      setApplication({
+        ...details.value,
+        documents:
+          documentsResult.status === "fulfilled"
+            ? documentsResult.value
+            : undefined,
+      });
     } catch {
       /* O serviço já apresenta a mensagem da API. */
     } finally {
@@ -86,30 +92,19 @@ export default function PrefectureApplicationDetailsPage({
         Não foi possível carregar a solicitação.
       </div>
     );
-  async function runAction() {
-    if (!action) return;
+  async function runEvaluation() {
     try {
-      const updated =
-        action === "approve"
-          ? await approvePrefectureApplication(applicationId)
-          : action === "reject"
-            ? await rejectPrefectureApplication(applicationId, rejectReason)
-            : await requestApplicationInformation(applicationId, message);
-      setApplication(updated);
-      setAction(undefined);
+      const updated = await evaluatePrefectureApplication(
+        applicationId,
+        evaluationStatus,
+        evaluationStatus === "REJECTED" ? rejectReason : undefined,
+      );
+      setApplication((current) =>
+        current ? { ...updated, documents: current.documents } : updated,
+      );
+      setEvaluationOpen(false);
       setRejectReason("");
-      setMessage("");
-      toast.success("Solicitação atualizada com sucesso.");
-    } catch {
-      /* O erro é tratado pelo serviço HTTP. */
-    }
-  }
-  async function saveNote() {
-    if (!note.trim()) return;
-    try {
-      setApplication(await addApplicationNote(applicationId, note.trim()));
-      setNote("");
-      toast.success("Observação registrada.");
+      toast.success("Avaliação atualizada com sucesso.");
     } catch {
       /* O erro é tratado pelo serviço HTTP. */
     }
@@ -135,33 +130,19 @@ export default function PrefectureApplicationDetailsPage({
           </div>
           <div className="flex flex-wrap gap-2">
             <ApplicationStatusBadge status={application.status} />
-            {application.status === "ANALYSIS" && (
-              <>
-                <Button
-                  className="rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
-                  onClick={() => setAction("approve")}
-                >
-                  <Check className="h-4 w-4" />
-                  Aprovar
-                </Button>
-                <Button
-                  variant="outline"
-                  className="rounded-xl border-red-200 text-red-700 hover:bg-red-50"
-                  onClick={() => setAction("reject")}
-                >
-                  <X className="h-4 w-4" />
-                  Rejeitar
-                </Button>
-                <Button
-                  variant="outline"
-                  className="rounded-xl"
-                  onClick={() => setAction("info")}
-                >
-                  <MessageSquarePlus className="h-4 w-4" />
-                  Solicitar informações
-                </Button>
-              </>
-            )}
+            <Button
+              className="rounded-xl bg-blue-700 text-white hover:bg-blue-800"
+              onClick={() => {
+                setEvaluationStatus(application.status);
+                setRejectReason(application.rejectionReason ?? "");
+                setEvaluationOpen(true);
+              }}
+            >
+              <Check className="h-4 w-4" />
+              {application.status === "ANALYSIS"
+                ? "Avaliar solicitação"
+                : "Alterar avaliação"}
+            </Button>
           </div>
         </div>
         <div className="mt-7 grid gap-5 lg:grid-cols-[1.2fr_.8fr]">
@@ -210,114 +191,72 @@ export default function PrefectureApplicationDetailsPage({
             </Section>
           </div>
           <div className="grid content-start gap-5">
-            <Section title="Histórico">
-              <div className="grid gap-5">
-                {(application.history ?? []).map((event) => (
-                  <div key={event.id} className="flex gap-3">
-                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-700">
-                      <Check className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-800">
-                        {statusLabels[event.status]}
-                      </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        {event.description}
-                      </p>
-                      <p className="mt-1 text-[11px] text-slate-400">
-                        {event.createdAt}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Section>
-            <Section title="Observações internas">
+            <Section title="Resultado da avaliação">
               <div className="grid gap-3">
-                {(application.internalNotes ?? []).map((item) => (
-                  <div key={item.id} className="rounded-xl bg-slate-50 p-3">
-                    <p className="text-xs font-bold text-slate-700">
-                      {item.authorName}
+                <ApplicationStatusBadge status={application.status} />
+                {application.rejectionReason ? (
+                  <div className="rounded-xl border border-red-100 bg-red-50 p-4">
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-red-600">
+                      Motivo da rejeição
                     </p>
-                    <p className="mt-1 text-sm leading-5 text-slate-600">
-                      {item.content}
-                    </p>
-                    <p className="mt-2 text-[11px] text-slate-400">
-                      {item.createdAt}
+                    <p className="mt-2 text-sm leading-6 text-red-950">
+                      {application.rejectionReason}
                     </p>
                   </div>
-                ))}
-                <Textarea
-                  value={note}
-                  onChange={(event) => setNote(event.target.value)}
-                  placeholder="Registrar uma observação administrativa..."
-                  className="min-h-24 rounded-xl"
-                />
-                <Button
-                  className="rounded-xl bg-slate-900 text-white hover:bg-slate-800"
-                  disabled={!note.trim()}
-                  onClick={saveNote}
-                >
-                  Adicionar observação
-                </Button>
+                ) : (
+                  <p className="text-sm leading-6 text-slate-500">
+                    Nenhum motivo de rejeição foi registrado.
+                  </p>
+                )}
               </div>
             </Section>
           </div>
         </div>
       </div>
-      {action && (
+      {evaluationOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-5">
           <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
-            <h2 className="text-xl font-black">
-              {action === "approve"
-                ? "Aprovar solicitação?"
-                : action === "reject"
-                  ? "Rejeitar solicitação"
-                  : "Solicitar informações"}
-            </h2>
+            <h2 className="text-xl font-black">Atualizar avaliação</h2>
             <p className="mt-2 text-sm leading-6 text-slate-500">
-              {action === "approve"
-                ? "A aprovação iniciará o processo de cadastro e provisionamento do acesso administrativo."
-                : action === "reject"
-                  ? "Informe a justificativa que será registrada na solicitação."
-                  : "Descreva os dados ou documentos que precisam ser complementados."}
+              Escolha o status atual da solicitação. Você pode alterar essa
+              decisão posteriormente.
             </p>
-            {action === "reject" ? (
+            <div className="mt-5 grid gap-2 sm:grid-cols-3">
+              {evaluationStatuses.map((status) => (
+                <button
+                  type="button"
+                  key={status.value}
+                  onClick={() => setEvaluationStatus(status.value)}
+                  className={`rounded-xl border px-3 py-3 text-sm font-bold transition ${evaluationStatus === status.value ? "border-blue-700 bg-blue-50 text-blue-800" : "border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-slate-50"}`}
+                >
+                  {status.label}
+                </button>
+              ))}
+            </div>
+            {evaluationStatus === "REJECTED" ? (
               <Textarea
                 value={rejectReason}
                 onChange={(event) => setRejectReason(event.target.value)}
                 className="mt-5 min-h-28 rounded-xl"
                 placeholder="Justificativa obrigatória"
               />
-            ) : action === "info" ? (
-              <Textarea
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                className="mt-5 min-h-28 rounded-xl"
-                placeholder="Quais informações são necessárias?"
-              />
             ) : null}
             <div className="mt-6 flex justify-end gap-2">
               <Button
                 variant="outline"
                 className="rounded-xl"
-                onClick={() => setAction(undefined)}
+                onClick={() => setEvaluationOpen(false)}
               >
                 Cancelar
               </Button>
               <Button
-                className={`rounded-xl text-white ${action === "approve" ? "bg-emerald-600 hover:bg-emerald-700" : "bg-blue-700 hover:bg-blue-800"}`}
+                className="rounded-xl bg-blue-700 text-white hover:bg-blue-800"
                 disabled={
-                  (action === "reject" && !rejectReason.trim()) ||
-                  (action === "info" && !message.trim())
+                  evaluationStatus === "REJECTED" && !rejectReason.trim()
                 }
-                onClick={runAction}
+                onClick={runEvaluation}
               >
-                {action === "approve"
-                  ? "Confirmar aprovação"
-                  : action === "reject"
-                    ? "Confirmar rejeição"
-                    : "Enviar solicitação"}
+                Salvar avaliação
               </Button>
             </div>
           </div>

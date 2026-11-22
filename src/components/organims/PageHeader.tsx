@@ -17,7 +17,11 @@ export default function PageHeader() {
     "/predictive-analysis": "Análise preditiva",
     "/heat-map": "Mapa de calor",
     "/audit": "Auditoria",
+    "/profile": "Meu perfil",
     "/report": "Relatórios",
+    "/superuser": "Dashboard interno",
+    "/superuser/prefectures": "Prefeituras conectadas",
+    "/prefecture-applications": "Solicitações de adesão",
   };
 
   const usePathName = usePathname();

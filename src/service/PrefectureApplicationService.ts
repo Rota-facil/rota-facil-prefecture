@@ -40,6 +40,7 @@ export async function createPrefectureApplication(
     name: data.prefectureName,
     municipality: data.municipality,
     state: data.state,
+    region: data.region,
     ibgeCode: data.ibgeCode || null,
     cnpj: data.cnpj,
     institutionalEmail: data.institutionalEmail,
@@ -105,43 +106,57 @@ export function listPrefectureApplications(params?: {
   }>(`${APPLICATIONS_PATH}/list?${query.toString()}`);
 }
 
+export interface ManagedPrefecture {
+  id: string;
+  name: string;
+  region: string;
+}
+
+export function listManagedPrefectures() {
+  return request<ManagedPrefecture[]>("/prefectures");
+}
+
+export function deleteManagedPrefecture(prefectureId: string) {
+  return request<void>(`/prefectures/${encodeURIComponent(prefectureId)}`, {
+    method: "DELETE",
+  });
+}
+
+export interface PrefectureOverview extends ManagedPrefecture {
+  activeUsers: number;
+  activeStudents: number;
+  activeDrivers: number;
+  activeVehicles: number;
+  activeRoutes: number;
+  activeTrips: number;
+  activeInstitutions: number;
+  activeBoardPoints: number;
+}
+
+export function getPrefectureOverview(prefectureId: string) {
+  return request<PrefectureOverview>(
+    `/prefectures/${encodeURIComponent(prefectureId)}/overview`,
+  );
+}
+
 export function getPrefectureApplication(applicationId: string) {
   return request<PrefectureApplicationDetails>(
     `${APPLICATIONS_PATH}/${applicationId}`,
   );
 }
 
-export function approvePrefectureApplication(applicationId: string) {
-  return request<PrefectureApplicationDetails>(
-    `${APPLICATIONS_PATH}/${applicationId}/approve`,
-    { method: "POST" },
-  );
-}
-
-export function rejectPrefectureApplication(
+export function evaluatePrefectureApplication(
   applicationId: string,
-  justification: string,
+  status: Extract<ApplicationStatus, "APPROVED" | "REJECTED" | "ANALYSIS">,
+  reasonOfRejection?: string,
 ) {
   return request<PrefectureApplicationDetails>(
-    `${APPLICATIONS_PATH}/${applicationId}/reject`,
-    { method: "POST", body: JSON.stringify({ justification }) },
-  );
-}
-
-export function requestApplicationInformation(
-  applicationId: string,
-  message: string,
-) {
-  return request<PrefectureApplicationDetails>(
-    `${APPLICATIONS_PATH}/${applicationId}/additional-information`,
-    { method: "POST", body: JSON.stringify({ message }) },
-  );
-}
-
-export function addApplicationNote(applicationId: string, content: string) {
-  return request<PrefectureApplicationDetails>(
-    `${APPLICATIONS_PATH}/${applicationId}/notes`,
-    { method: "POST", body: JSON.stringify({ content }) },
+    `${APPLICATIONS_PATH}/evaluate/${encodeURIComponent(applicationId)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status, reasonOfRejection }),
+    },
   );
 }
 

@@ -24,7 +24,6 @@ const emptyStats: ApplicationStats = {
   analysis: 0,
   approved: 0,
   rejected: 0,
-  additionalInfoRequired: 0,
 };
 const filters: Array<{ label: string; value?: ApplicationStatus }> = [
   { label: "Todas" },
@@ -59,7 +58,6 @@ export default function PrefectureApplicationsPage() {
         rejected: listResponse.content.filter(
           (item) => item.status === "REJECTED",
         ).length,
-        additionalInfoRequired: 0,
       });
     } catch (caught) {
       setError(
@@ -92,15 +90,10 @@ export default function PrefectureApplicationsPage() {
             Atualizar
           </Button>
         </div>
-        <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {[
             ["Total", stats.total, "text-slate-900"],
             ["Em análise", stats.analysis, "text-amber-700"],
-            [
-              "Aguardando informações",
-              stats.additionalInfoRequired,
-              "text-violet-700",
-            ],
             ["Aprovadas", stats.approved, "text-emerald-700"],
             ["Rejeitadas", stats.rejected, "text-red-700"],
           ].map(([label, value, color]) => (
@@ -154,8 +147,7 @@ export default function PrefectureApplicationsPage() {
               <FileSearch className="h-9 w-9 text-slate-300" />
               <p className="max-w-md text-sm text-slate-500">{error}</p>
               <p className="text-xs text-slate-400">
-                Os contratos de integração estão preparados no frontend,
-                aguardando os endpoints do módulo de adesão.
+                Tente novamente em alguns instantes.
               </p>
             </div>
           ) : loading ? (
