@@ -144,20 +144,18 @@ export function getPrefectureApplication(applicationId: string) {
   );
 }
 
-export function approvePrefectureApplication(applicationId: string) {
-  return request<PrefectureApplicationDetails>(
-    `${APPLICATIONS_PATH}/${applicationId}/approve`,
-    { method: "POST" },
-  );
-}
-
-export function rejectPrefectureApplication(
+export function evaluatePrefectureApplication(
   applicationId: string,
-  justification: string,
+  status: Extract<ApplicationStatus, "APPROVED" | "REJECTED" | "ANALYSIS">,
+  reasonOfRejection?: string,
 ) {
   return request<PrefectureApplicationDetails>(
-    `${APPLICATIONS_PATH}/${applicationId}/reject`,
-    { method: "POST", body: JSON.stringify({ justification }) },
+    `${APPLICATIONS_PATH}/evaluate/${encodeURIComponent(applicationId)}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status, reasonOfRejection }),
+    },
   );
 }
 
