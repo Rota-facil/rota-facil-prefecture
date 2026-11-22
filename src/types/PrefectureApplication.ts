@@ -1,9 +1,18 @@
 export type ApplicationStatus = "ANALYSIS" | "APPROVED" | "REJECTED";
+export type PrefectureRegion =
+  | "NORTH"
+  | "SOUTH"
+  | "SOUTHEAST"
+  | "WEST"
+  | "EAST"
+  | "NORTH_EAST"
+  | "WEST_CENTER";
 
 export interface PrefectureApplicationForm {
   prefectureName: string;
   municipality: string;
   state: string;
+  region: PrefectureRegion | "";
   ibgeCode: string;
   cnpj: string;
   institutionalEmail: string;
@@ -21,6 +30,7 @@ export interface PrefectureApplicationSummary {
   name: string;
   municipality: string;
   state: string;
+  region: PrefectureRegion;
   cnpj?: string;
   ibgeCode?: string;
   institutionalEmail: string;

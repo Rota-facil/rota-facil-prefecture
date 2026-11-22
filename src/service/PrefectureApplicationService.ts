@@ -40,6 +40,7 @@ export async function createPrefectureApplication(
     name: data.prefectureName,
     municipality: data.municipality,
     state: data.state,
+    region: data.region,
     ibgeCode: data.ibgeCode || null,
     cnpj: data.cnpj,
     institutionalEmail: data.institutionalEmail,
