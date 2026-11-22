@@ -109,7 +109,7 @@ export async function listDrivers(): Promise<DriverEntity[]> {
 export async function createNewDriver(
   createDriver: CreateDriverRequest,
 ): Promise<DriverEntity> {
-  const response = await fetch(`${env.WEB_BASE_URL}/auth/driver/register`, {
+  const response = await fetch(`${env.WEB_BASE_URL}/users/drivers`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
