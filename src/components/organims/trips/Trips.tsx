@@ -20,7 +20,9 @@ import {
   type CreateTripRequest,
   createTrip,
   deleteTrip,
+  fetchTripDetails,
   listTrips,
+  startTrip,
 } from "@/service/TripService";
 import type { RouteEntity } from "@/types/entites/RouteEntity";
 import type { TripEntity } from "@/types/entites/TripEntity";
@@ -86,6 +88,34 @@ export default function Trips() {
   const [routes, setRoutes] = useState<RouteEntity[]>([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [tripPendingDelete, setTripPendingDelete] = useState<TripEntity>();
+
+  async function handleStartTrip() {
+    if (!selectedTrip) {
+      return;
+    }
+
+    const startedTrip = await startTrip(selectedTrip.id);
+    let updatedTrip = startedTrip;
+
+    try {
+      updatedTrip = await fetchTripDetails(startedTrip.id);
+    } catch {
+      // O retorno do início ainda atualiza o modal caso o detalhe falhe.
+    }
+
+    setSelectedTrip(updatedTrip);
+    setTrips((currentTrips) =>
+      currentTrips.map((trip) =>
+        trip.id === updatedTrip.id ? updatedTrip : trip,
+      ),
+    );
+    try {
+      setMetrics(await getMetrics());
+    } catch {
+      // A falha das métricas não deve impedir a atualização da viagem.
+    }
+    toast.success("Viagem iniciada com sucesso.");
+  }
 
   const fetchTrips = useCallback(async () => {
     const response = await listTrips(currentPage - 1, PAGE_SIZE);
@@ -371,6 +401,7 @@ export default function Trips() {
         <TripProgressModal
           trip={selectedTrip}
           onClose={() => setSelectedTrip(undefined)}
+          onStart={handleStartTrip}
         />
       )}
 

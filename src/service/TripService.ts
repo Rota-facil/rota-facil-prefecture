@@ -30,6 +30,10 @@ interface TripResponse {
   students: number;
   latitude: number;
   longitude: number;
+  wayPointSequence?: string | null;
+  distanceTravelEstimated?: number | null;
+  durationEstimated?: number | null;
+  path?: number[][] | null;
   createdAt: string;
   actualStatus: Progress;
   vehicle: {
@@ -39,7 +43,7 @@ interface TripResponse {
     plate: string;
     driver?: {
       id: string;
-      name: string;
+      name?: string | null;
       email: string;
     } | null;
   };
@@ -67,6 +71,11 @@ export interface CreateTripRequest {
   routeId: string;
   vehicleId: string;
   name?: string;
+}
+
+export interface StartTripRequest {
+  latitude: number;
+  longitude: number;
 }
 
 function mapPoint(point: TripPointResponse): TripRoutePointEntity {
@@ -107,7 +116,7 @@ function mapTrip(response: TripResponse): TripEntity {
       driver: response.vehicle.driver
         ? {
             id: response.vehicle.driver.id,
-            name: response.vehicle.driver.name,
+            name: response.vehicle.driver.name ?? response.vehicle.driver.email,
             email: response.vehicle.driver.email,
             cpf: "",
             prefecture: { id: response.vehicle.prefectureId, name: "" },
@@ -140,7 +149,27 @@ function mapTrip(response: TripResponse): TripEntity {
       description: status.description,
       createdAt: new Date(status.createdAt),
     })),
+    wayPointSequence: response.wayPointSequence ?? undefined,
+    distanceTravelEstimated: response.distanceTravelEstimated ?? undefined,
+    durationEstimated: response.durationEstimated ?? undefined,
+    path: response.path ?? undefined,
   };
+}
+
+export async function fetchTripDetails(tripId: string): Promise<TripEntity> {
+  const response = await fetch(`${env.WEB_BASE_URL}/trips/${tripId}`, {
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
+    },
+  });
+
+  if (!response.ok) {
+    await handleHttpError(response, "Erro ao carregar detalhes da viagem");
+  }
+
+  return mapTrip((await response.json()) as TripResponse);
 }
 
 export async function listActiveTrips(): Promise<TripEntity[]> {
@@ -202,6 +231,28 @@ export async function createTrip(request: CreateTripRequest): Promise<void> {
   if (!response.ok) {
     await handleHttpError(response, "Erro ao criar viagem");
   }
+}
+
+export async function startTrip(tripId: string): Promise<TripEntity> {
+  const request: StartTripRequest = {
+    latitude: -6.15814555635142,
+    longitude: -37.766544839894244,
+  };
+
+  const response = await fetch(`${env.WEB_BASE_URL}/trips/${tripId}/init`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    await handleHttpError(response, "Erro ao iniciar viagem");
+  }
+
+  return mapTrip((await response.json()) as TripResponse);
 }
 
 export async function deleteTrip(tripId: string): Promise<void> {

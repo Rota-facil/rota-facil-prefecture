@@ -38,6 +38,10 @@ export interface TripEntity {
   createdAt: Date;
   startedAtLabel: string;
   tripStatus: TripStatusEntity[];
+  wayPointSequence?: string;
+  distanceTravelEstimated?: number;
+  durationEstimated?: number;
+  path?: number[][];
   ignoredInstitutions?: TripRoutePointEntity[];
   ignoredBoardPoints?: TripRoutePointEntity[];
 }

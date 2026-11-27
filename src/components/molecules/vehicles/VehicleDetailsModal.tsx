@@ -21,6 +21,7 @@ import type { DriverEntity } from "@/types/entites/DriverEntity";
 import type {
   VehicleEntity,
   VehicleOperationStatus,
+  VehicleType,
 } from "@/types/entites/VehicleEntity";
 import type { CreateVehicleRequest } from "@/types/request/CreateVehicleRequest";
 
@@ -42,7 +43,14 @@ interface VehicleFormState {
   capacity: string;
   driverId: string;
   status: VehicleOperationStatus;
+  vehicleType: VehicleType;
 }
+
+const vehicleTypeOptions = [
+  { value: "BUS", label: "Ônibus" },
+  { value: "CAR", label: "Carro" },
+  { value: "VAN", label: "Van" },
+] satisfies { value: VehicleType; label: string }[];
 
 const statusMap = {
   OPERATION: "vehicleOperating",
@@ -55,6 +63,7 @@ function mapVehicleToForm(vehicle: VehicleEntity): VehicleFormState {
     capacity: String(vehicle.capacity),
     driverId: vehicle.driver?.id ?? "",
     status: vehicle.status ?? "OUT_OF_OPERATION",
+    vehicleType: vehicle.vehicleType ?? "BUS",
   };
 }
 
@@ -130,6 +139,7 @@ export default function VehicleDetailsModal({
           plate: form.plate.trim().toUpperCase(),
           capacity: Number(form.capacity),
           driverId: selectedDriver?.id ?? null,
+          vehicleType: form.vehicleType,
         },
         selectedPhoto,
       );
@@ -358,6 +368,28 @@ export default function VehicleDetailsModal({
                     )}
                   </div>
                 </FormField>
+
+                {isCreating && (
+                  <FormField label="Tipo de veículo">
+                    <select
+                      required
+                      value={form.vehicleType}
+                      className="h-9 w-full rounded-xl border border-[#E5EAF0] bg-slate-50 px-3 text-sm font-semibold text-slate-800 outline-none transition-all focus:border-[#3B82F6] focus:ring-2 focus:ring-blue-100"
+                      onChange={(event) =>
+                        updateField(
+                          "vehicleType",
+                          event.target.value as VehicleType,
+                        )
+                      }
+                    >
+                      {vehicleTypeOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </FormField>
+                )}
 
                 <FormField label="Status operacional">
                   <div className="relative" ref={statusSelectRef}>

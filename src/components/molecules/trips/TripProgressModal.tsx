@@ -1,17 +1,29 @@
 "use client";
 
-import { Building2, MapPin, Route, Truck, X } from "lucide-react";
+import {
+  Building2,
+  MapPin,
+  Maximize2,
+  Minimize2,
+  Play,
+  Route,
+  Truck,
+  X,
+} from "lucide-react";
+import { useEffect, useState } from "react";
 import StatusBar from "@/components/atom/statusBar";
 import { Button } from "@/components/ui/button";
+import { fetchTripDetails } from "@/service/TripService";
 import type {
   TripEntity,
   TripRoutePointEntity,
 } from "@/types/entites/TripEntity";
-import { ProgressMap } from "@/types/enums/Progress";
+import { Progress, ProgressMap } from "@/types/enums/Progress";
 
 interface TripProgressModalProps {
   trip: TripEntity;
   onClose: () => void;
+  onStart?: () => Promise<void>;
 }
 
 export function hasValidCoordinates(latitude: number, longitude: number) {
@@ -19,6 +31,9 @@ export function hasValidCoordinates(latitude: number, longitude: number) {
 }
 
 export function buildOpenStreetMapHtml(trip: TripEntity) {
+  const path = (trip.path ?? []).filter(
+    (point) => point.length >= 2 && point.every(Number.isFinite),
+  );
   const shouldShowVehicle = hasValidCoordinates(trip.latitude, trip.longitude);
   const vehicleMarker = shouldShowVehicle
     ? [
@@ -50,7 +65,12 @@ export function buildOpenStreetMapHtml(trip: TripEntity) {
     ...boardPointMarkers,
     ...institutionMarkers,
   ];
-  const firstMarker = markers[0] ?? { latitude: -14.235, longitude: -51.9253 };
+  const firstPathPoint = path[0];
+  const firstMarker =
+    markers[0] ??
+    (firstPathPoint
+      ? { latitude: firstPathPoint[1], longitude: firstPathPoint[0] }
+      : { latitude: -14.235, longitude: -51.9253 });
 
   return `<!doctype html>
 <html>
@@ -74,11 +94,23 @@ export function buildOpenStreetMapHtml(trip: TripEntity) {
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const markers = ${JSON.stringify(markers)};
+    const routePath = ${JSON.stringify(path)};
     const map = L.map('map', { zoomControl: true }).setView([${firstMarker.latitude}, ${firstMarker.longitude}], 15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
+
+    const pathCoordinates = routePath.map(([longitude, latitude]) => [latitude, longitude]);
+    if (pathCoordinates.length > 1) {
+      L.polyline(pathCoordinates, {
+        color: '#2563EB',
+        weight: 5,
+        opacity: 0.9,
+        lineCap: 'round',
+        lineJoin: 'round'
+      }).addTo(map);
+    }
 
     const iconHtml = {
       vehicle: '<div class="marker-shell vehicle-marker"><svg viewBox="0 0 24 24"><path d="M6 17h12"/><path d="M6 17v2"/><path d="M18 17v2"/><path d="M5 6c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2v10H5V6Z"/><path d="M7 8h10"/><path d="M8 13h.01"/><path d="M16 13h.01"/></svg></div>',
@@ -93,6 +125,7 @@ export function buildOpenStreetMapHtml(trip: TripEntity) {
     };
 
     const bounds = [];
+    pathCoordinates.forEach((position) => bounds.push(position));
     markers.forEach((marker) => {
       const position = [marker.latitude, marker.longitude];
       bounds.push(position);
@@ -199,7 +232,7 @@ function PointList({
   points: TripRoutePointEntity[];
 }) {
   return (
-    <div className="rounded-2xl border border-[#E5EAF0] bg-white p-4">
+    <div className="min-w-0 rounded-2xl border border-[#E5EAF0] bg-white p-4">
       <div className="mb-3 flex items-center gap-2">
         {icon}
         <p className="text-sm font-semibold text-slate-950">{title}</p>
@@ -208,9 +241,9 @@ function PointList({
         {points.map((point) => (
           <div
             key={point.id}
-            className="flex items-center justify-between gap-3 rounded-xl bg-slate-50 px-3 py-2"
+            className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-xl bg-slate-50 px-3 py-2"
           >
-            <span className="truncate text-sm font-medium text-slate-700">
+            <span className="min-w-0 flex-1 break-words text-sm font-medium text-slate-700">
               {point.name}
             </span>
             <span className="shrink-0 font-mono text-[11px] text-slate-400">
@@ -226,11 +259,69 @@ function PointList({
 export default function TripProgressModal({
   trip,
   onClose,
+  onStart,
 }: TripProgressModalProps) {
-  const status = ProgressMap[trip.actualStatus];
-  const ignoredInstitutions = trip.ignoredInstitutions ?? [];
-  const ignoredBoardPoints = trip.ignoredBoardPoints ?? [];
-  const showVehicleOnMap = hasValidCoordinates(trip.latitude, trip.longitude);
+  const [isStarting, setIsStarting] = useState(false);
+  const [tripDetails, setTripDetails] = useState(trip);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(true);
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setTripDetails(trip);
+    setIsLoadingDetails(true);
+
+    fetchTripDetails(trip.id)
+      .then((details) => {
+        if (active) setTripDetails(details);
+      })
+      .catch(() => {
+        // O resumo da listagem continua disponível se o detalhe falhar.
+      })
+      .finally(() => {
+        if (active) setIsLoadingDetails(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [trip]);
+
+  useEffect(() => {
+    if (!isMapExpanded) {
+      return;
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setIsMapExpanded(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isMapExpanded]);
+
+  const status = ProgressMap[tripDetails.actualStatus];
+  const ignoredInstitutions = tripDetails.ignoredInstitutions ?? [];
+  const ignoredBoardPoints = tripDetails.ignoredBoardPoints ?? [];
+  const showVehicleOnMap = hasValidCoordinates(
+    tripDetails.latitude,
+    tripDetails.longitude,
+  );
+
+  async function handleStartTrip() {
+    if (!onStart) {
+      return;
+    }
+
+    setIsStarting(true);
+    try {
+      await onStart();
+    } finally {
+      setIsStarting(false);
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
@@ -256,28 +347,92 @@ export default function TripProgressModal({
 
           <div className="relative flex flex-col gap-3 pr-10 md:flex-row md:items-start md:justify-between">
             <div>
-              <p className="text-xl font-bold">{trip.name}</p>
+              <p className="text-xl font-bold">{tripDetails.name}</p>
               <p className="mt-1 text-sm text-white/75">
-                {trip.route.name} • {trip.startedAtLabel}
+                {tripDetails.route.name} • {tripDetails.startedAtLabel}
               </p>
             </div>
-            <StatusBar variant={status.value} size="sm" />
+            <div className="flex flex-wrap items-center gap-2">
+              {tripDetails.actualStatus === Progress.NOT_STARTED && onStart && (
+                <Button
+                  type="button"
+                  size="xs"
+                  disabled={isStarting}
+                  className="h-9 cursor-pointer rounded-xl bg-white px-3 text-xs font-semibold text-[#1E3A8A] hover:bg-blue-50"
+                  onClick={handleStartTrip}
+                >
+                  <Play className="h-3.5 w-3.5 fill-current" />
+                  {isStarting ? "Iniciando..." : "Iniciar viagem"}
+                </Button>
+              )}
+              <StatusBar variant={status.value} size="sm" />
+            </div>
           </div>
         </div>
 
         <div className="max-h-[calc(90vh-108px)] overflow-y-auto p-6 [scrollbar-color:#CBD5E1_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-track]:bg-transparent">
-          <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
-            <div className="overflow-hidden rounded-2xl border border-[#E5EAF0] bg-slate-100">
+          <div className="grid gap-5">
+            <div
+              className={
+                isMapExpanded
+                  ? "fixed inset-0 z-[110] flex flex-col bg-slate-100"
+                  : "relative overflow-hidden rounded-2xl border border-[#E5EAF0] bg-slate-100"
+              }
+            >
+              <div className="flex items-center justify-between gap-3 border-b border-[#E5EAF0] bg-white px-4 py-3">
+                <p className="text-sm font-semibold text-slate-900">
+                  Mapa da viagem
+                </p>
+                <div className="flex items-center gap-2">
+                  {isMapExpanded &&
+                    tripDetails.actualStatus === Progress.NOT_STARTED &&
+                    onStart && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={isStarting}
+                        className="h-9 cursor-pointer rounded-xl bg-[#1E3A8A] px-3 text-xs font-semibold text-white hover:bg-[#183276]"
+                        onClick={handleStartTrip}
+                      >
+                        <Play className="h-3.5 w-3.5 fill-current" />
+                        {isStarting ? "Iniciando..." : "Iniciar viagem"}
+                      </Button>
+                    )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 cursor-pointer rounded-xl bg-white px-3 text-xs font-semibold text-slate-700 shadow-sm"
+                    aria-label={
+                      isMapExpanded ? "Voltar ao modal" : "Expandir mapa"
+                    }
+                    onClick={() => setIsMapExpanded((expanded) => !expanded)}
+                  >
+                    {isMapExpanded ? (
+                      <Minimize2 className="h-4 w-4" />
+                    ) : (
+                      <Maximize2 className="h-4 w-4" />
+                    )}
+                    <span className="hidden sm:inline">
+                      {isMapExpanded ? "Voltar" : "Expandir mapa"}
+                    </span>
+                  </Button>
+                </div>
+              </div>
               <iframe
-                title={`Mapa da viagem ${trip.code}`}
-                srcDoc={buildOpenStreetMapHtml(trip)}
-                className="h-[360px] w-full border-0"
+                title={`Mapa da viagem ${tripDetails.code}`}
+                srcDoc={buildOpenStreetMapHtml(tripDetails)}
+                className={
+                  isMapExpanded
+                    ? "min-h-0 w-full flex-1 border-0"
+                    : "h-[360px] w-full border-0"
+                }
                 loading="lazy"
               />
               <MapLegend showVehicle={showVehicleOnMap} />
             </div>
 
-            <div className="grid gap-3">
+            <div className="grid gap-5 lg:grid-cols-2">
               <div className="rounded-2xl border border-[#E5EAF0] bg-white p-4">
                 <div className="mb-3 flex items-center gap-2">
                   <Truck className="h-4 w-4 text-[#1E3A8A]" />
@@ -289,26 +444,26 @@ export default function TripProgressModal({
                   <div className="flex justify-between gap-3">
                     <span>Motorista</span>
                     <strong className="text-right text-slate-900">
-                      {trip.vehicle.driver?.name ?? "Sem motorista"}
+                      {tripDetails.vehicle.driver?.name ?? "Sem motorista"}
                     </strong>
                   </div>
                   <div className="flex justify-between gap-3">
                     <span>Veículo</span>
                     <strong className="font-mono text-slate-900">
-                      {trip.vehicle.plate}
+                      {tripDetails.vehicle.plate}
                     </strong>
                   </div>
                   <div className="flex justify-between gap-3">
                     <span>Alunos</span>
                     <strong className="text-slate-900">
-                      {trip.students}/{trip.expectedStudents}
+                      {tripDetails.students}/{tripDetails.expectedStudents}
                     </strong>
                   </div>
                   <div className="flex justify-between gap-3">
                     <span>Coordenadas atuais</span>
                     <strong className="text-right font-mono text-xs text-slate-900">
                       {showVehicleOnMap
-                        ? `${trip.latitude.toFixed(5)}, ${trip.longitude.toFixed(5)}`
+                        ? `${tripDetails.latitude.toFixed(5)}, ${tripDetails.longitude.toFixed(5)}`
                         : "Aguardando localização"}
                     </strong>
                   </div>
@@ -325,15 +480,47 @@ export default function TripProgressModal({
                 <div className="grid grid-cols-2 gap-2 text-sm text-slate-600">
                   <span>Ida</span>
                   <strong className="text-right text-slate-900">
-                    {trip.route.going} - {trip.route.goingFinish}
+                    {tripDetails.route.going} - {tripDetails.route.goingFinish}
                   </strong>
                   <span>Retorno</span>
                   <strong className="text-right text-slate-900">
-                    {trip.route.return_} - {trip.route.returnFinish}
+                    {tripDetails.route.return_} -{" "}
+                    {tripDetails.route.returnFinish}
                   </strong>
                 </div>
               </div>
             </div>
+          </div>
+
+          <div className="mt-5 rounded-2xl border border-[#E5EAF0] bg-white p-4">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Route className="h-4 w-4 text-[#1E3A8A]" />
+                <p className="text-sm font-semibold text-slate-950">
+                  Trajeto planejado
+                </p>
+              </div>
+              {isLoadingDetails ? (
+                <span className="text-xs text-slate-400">Carregando...</span>
+              ) : (
+                <div className="flex flex-wrap justify-end gap-2">
+                  <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-[#1E3A8A]">
+                    {tripDetails.distanceTravelEstimated !== undefined
+                      ? `${tripDetails.distanceTravelEstimated.toFixed(2)} km`
+                      : "Distância indisponível"}
+                  </span>
+                  <span className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700">
+                    {tripDetails.durationEstimated !== undefined
+                      ? `${tripDetails.durationEstimated.toFixed(2)} h`
+                      : "Duração indisponível"}
+                  </span>
+                </div>
+              )}
+            </div>
+            <p className="text-sm leading-6 text-slate-600">
+              {tripDetails.wayPointSequence ??
+                "A sequência de pontos ainda não foi calculada."}
+            </p>
           </div>
 
           <div className="mt-5 rounded-2xl border border-[#E5EAF0] bg-white p-4">
@@ -344,7 +531,7 @@ export default function TripProgressModal({
               </p>
             </div>
             <div className="grid max-h-64 gap-2 overflow-y-auto pr-1 [scrollbar-color:#CBD5E1_transparent] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-slate-300 [&::-webkit-scrollbar-track]:bg-transparent">
-              {trip.tripStatus.map((statusItem) => (
+              {tripDetails.tripStatus.map((statusItem) => (
                 <div
                   key={statusItem.id}
                   className="flex items-start justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3"
@@ -372,12 +559,12 @@ export default function TripProgressModal({
             <PointList
               title="Pontos de embarque da rota"
               icon={<MapPin className="h-4 w-4 text-[#1E3A8A]" />}
-              points={trip.route.boardPoints}
+              points={tripDetails.route.boardPoints}
             />
             <PointList
               title="Instituições da rota"
               icon={<Building2 className="h-4 w-4 text-[#1E3A8A]" />}
-              points={trip.route.institutions}
+              points={tripDetails.route.institutions}
             />
           </div>
 

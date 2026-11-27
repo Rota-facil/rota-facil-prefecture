@@ -34,6 +34,7 @@ function createEmptyVehicle(): VehicleEntity {
     capacity: 1,
     plate: "",
     status: "OPERATION",
+    vehicleType: "BUS",
     createdAt: new Date(),
   };
 }
